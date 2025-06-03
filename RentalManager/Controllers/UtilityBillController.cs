@@ -132,6 +132,24 @@ namespace RentalManager.Controllers
 
 
 
+        [HttpGet("By-Property/{PropertyId}")]
+        public async Task<IActionResult> GetUtilityBillsByProperty(int PropertyId)
+        {
+            var charges = await _context.UnitCharges
+                .Include(u => u.Property)
+                .Where(u => u.PropertyId == PropertyId)
+                .ToListAsync();
+
+            if (charges == null || !charges.Any())
+            {
+                return NotFound(new ApiResponse<object>(null!, "There are no Charges for the specified property."));
+            }
+
+            var chargeDtos = charges.Select(u => u.ToReadDto()).ToList();
+
+            return Ok(new ApiResponse<List<READUtilityBillDto>>(chargeDtos, "Charges fetched successfully."));
+        }
+
 
     }
 }

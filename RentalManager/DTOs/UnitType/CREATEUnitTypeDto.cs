@@ -13,6 +13,9 @@ namespace RentalManager.DTOs.UnitType
 
         [Required]
         public decimal Amount { get; set; }
+
+        [Required]
+        public int PropertyId { get; set; }
     }
 }
 

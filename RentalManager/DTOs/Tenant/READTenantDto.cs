@@ -14,7 +14,11 @@ namespace RentalManager.DTOs.Tenant
 
         public READUserDto User { get; set; } = null!;
 
+        public int unitId { get; set; }
+
         public string? Unit { get; set; }
+
+        public int TenantStatusId { get; set; }
 
         public string TenantStatus { get; set; } = string.Empty;
     }

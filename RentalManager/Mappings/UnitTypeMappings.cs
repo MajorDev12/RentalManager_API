@@ -1,4 +1,5 @@
-﻿using RentalManager.DTOs.Unit;
+﻿using RentalManager.DTOs.Tenant;
+using RentalManager.DTOs.Unit;
 using RentalManager.DTOs.UnitType;
 using RentalManager.Models;
 
@@ -12,7 +13,8 @@ namespace RentalManager.Mappings
             {
                 Name = dto.Name,
                 Amount = dto.Amount,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+                PropertyId = dto.PropertyId
             };
         }
 
@@ -24,7 +26,9 @@ namespace RentalManager.Mappings
                 Id = dto.Id,
                 Name = dto.Name,
                 Amount = dto.Amount,
-                Notes = dto.Notes
+                Notes = dto.Notes,
+                PropertyId = dto.PropertyId,
+                PropertyName = dto.Property.Name
             };
         }
 
@@ -36,7 +40,19 @@ namespace RentalManager.Mappings
                 Name = dto.Name,
                 Amount = dto.Amount,
                 Notes = dto.Notes,
+                PropertyId = dto.PropertyId
             };
+        }
+
+
+        public static UnitType UpdateEntity(this UPDATEUnitTypeDto updatedData, UnitType existingData)
+        {
+            existingData.PropertyId = updatedData.PropertyId;
+            existingData.Name = updatedData.Name;
+            existingData.Amount = updatedData.Amount;
+            existingData.Notes = updatedData.Notes;
+
+            return existingData;
         }
     }
 }

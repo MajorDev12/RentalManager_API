@@ -130,7 +130,7 @@ namespace RentalManager.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return StatusCode(500, new ApiResponse<object>("An error occurred while creating tenant.", ex.Message));
+                return StatusCode(500, new ApiResponse<object>("An error occurred while creating tenant."));
             }
         }
 
@@ -138,7 +138,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
             if (!ModelState.IsValid)
@@ -177,7 +177,7 @@ namespace RentalManager.Controllers
                     return NotFound(new ApiResponse<object>("Tenant not found."));
                 }
 
-                var user = updatedTenant.User.ToEntity(existintTenant.User);
+                var user = updatedTenant.User.UpdateEntity(existintTenant.User);
                 var tenant = updatedTenant.UpdateEntity(existintTenant, existintTenant.User, unit.Id, status.Id);
                 await _context.SaveChangesAsync();
 

@@ -49,7 +49,7 @@ namespace RentalManager.Mappings
 
 
 
-        public static User ToEntity(this UPDATEUserDto dto, User existingUser)
+        public static User UpdateEntity(this UPDATEUserDto dto, User existingUser)
         {
             existingUser.FirstName = dto.FirstName;
             existingUser.LastName = dto.LastName;
@@ -80,9 +80,11 @@ namespace RentalManager.Mappings
                 NationalId = dto.NationalId,
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
+                GenderId = dto.GenderId,
                 GenderName = dto.Gender.Item,
                 UserStatus = dto.UserStatus.Item,
                 RoleName = dto.Role.Name,
+                propertyId = dto.PropertyId,
                 PropertyName = dto.Property.Name
             };
         }

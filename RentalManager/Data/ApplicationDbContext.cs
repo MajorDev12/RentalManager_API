@@ -176,6 +176,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.Amount).HasColumnType("decimal(18,4)").IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
+                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 

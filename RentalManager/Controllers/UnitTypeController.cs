@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
-using RentalManager.DTOs.Unit;
 using RentalManager.DTOs.UnitType;
+using RentalManager.DTOs.UtilityBill;
 using RentalManager.Mappings;
 using RentalManager.Models;
 
@@ -24,11 +24,13 @@ namespace RentalManager.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUnitType()
         {
-            var types = await _context.UnitTypes.ToListAsync();
+            var types = await _context.UnitTypes
+                .Include(p => p.Property)
+                .ToListAsync();
 
             if (!types.Any())
             {
-                return NotFound(new ApiResponse<object>("There are no Utility Bills available."));
+                return NotFound(new ApiResponse<object>("There are no Unit Types available."));
             }
 
             var typeDtos = types.Select(it => it.ToReadDto()).ToList();
@@ -73,33 +75,33 @@ namespace RentalManager.Controllers
             await _context.SaveChangesAsync();
 
             var createdUnitType = await _context.UnitTypes
+                .Include(p => p.Property)
                 .FirstOrDefaultAsync(u => u.Id == type.Id);
 
             var unitTypeDto = createdUnitType?.ToReadDto();
-            return Ok(new ApiResponse<READUnitTypeDto>(unitTypeDto!, "Unit added successfully."));
+            return Ok(new ApiResponse<READUnitTypeDto>(unitTypeDto!, "Unit Type added successfully."));
         }
 
 
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditUnitType(int id, [FromBody] UPDATEUnitTypeDto dto)
         {
 
             var types = await _context.UnitTypes
+                .Include(item => item.Property)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (types == null)
-                return NotFound(new ApiResponse<object>("House not found."));
+                return NotFound(new ApiResponse<object>("Unit Type not found."));
 
-
-            // Manual update
-            types.Name = dto.Name;
-            types.Amount = dto.Amount;
-            types.Notes = dto.Notes;
-
+            var updatedDto = dto.UpdateEntity(types);
             await _context.SaveChangesAsync();
 
-            return Ok(new ApiResponse<READUnitTypeDto>(types.ToReadDto(), ""));
+            var updatedtype = await _context.UnitTypes
+                .FirstOrDefaultAsync(u => u.Id == types.Id);
+
+            return Ok(new ApiResponse<READUnitTypeDto>(updatedtype!.ToReadDto(), ""));
 
         }
 
@@ -111,7 +113,7 @@ namespace RentalManager.Controllers
 
             if (types == null)
             {
-                return NotFound($"House with ID {id} was not found.");
+                return NotFound($"Unit Type with ID {id} was not found.");
             }
 
             _context.UnitTypes.Remove(types);
@@ -120,6 +122,25 @@ namespace RentalManager.Controllers
             return Ok(new ApiResponse<object>(null, "Data Deleted Successfully"));
         }
 
+
+
+        [HttpGet("By-Property/{PropertyId}")]
+        public async Task<IActionResult> GetUnitTypesByProperty(int PropertyId)
+        {
+            var types = await _context.UnitTypes
+                .Include(u => u.Property)
+                .Where(u => u.PropertyId == PropertyId)
+                .ToListAsync();
+
+            if (types == null || !types.Any())
+            {
+                return NotFound(new ApiResponse<object>(null!, "There are no Unit Type for the specified property."));
+            }
+
+            var typeDtos = types.Select(u => u.ToReadDto()).ToList();
+
+            return Ok(new ApiResponse<List<READUnitTypeDto>>(typeDtos, "Unit Type fetched successfully."));
+        }
 
 
     }

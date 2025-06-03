@@ -117,7 +117,7 @@ namespace RentalManager.Controllers
             if (user == null)
                 return NotFound(new ApiResponse<object>("User not found."));
 
-            var userDto = dto.ToEntity(user);
+            var userDto = dto.UpdateEntity(user);
 
             await _context.SaveChangesAsync();
 

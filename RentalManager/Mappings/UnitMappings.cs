@@ -23,6 +23,7 @@ namespace RentalManager.Mappings
         {
             return new READUnitDto
             {
+                Id = dto.Id,
                 Name = dto.Name,
                 Status = dto.Status,
                 Notes = dto.Notes,
@@ -38,7 +39,6 @@ namespace RentalManager.Mappings
         {
             return new UPDATEUnitDto
             {
-                Id = dto.Id,
                 Name = dto.Name,
                 Status = dto.Status,
                 Notes = dto.Notes,

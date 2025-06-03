@@ -1,0 +1,162 @@
+-- SystemCode (Id is auto-incremented)
+SET IDENTITY_INSERT SystemCodes ON;
+
+INSERT INTO SystemCodes (Id, Code, Notes, CreatedOn) VALUES 
+(1, 'ROLE', 'User roles in the system', GETDATE()),
+(2, 'GENDER', 'User gender categories', GETDATE()),
+(3, 'UTILITYBILL', 'Types of bills', GETDATE()),
+(4, 'PAYMENTMETHOD', 'Types of payments', GETDATE()),
+(5, 'TENANTSTATUS', 'Status types for tenants', GETDATE()),
+(6, 'USERSTATUS', 'Status types for all users', GETDATE()),
+(7, 'LOGLEVEL', 'Log status', GETDATE());
+
+
+SET IDENTITY_INSERT SystemCodes OFF;
+
+
+-- SystemCodeItem (Id is auto-incremented)
+SET IDENTITY_INSERT SystemCodeItems ON;
+
+-- ROLE (SystemCodeId = 1)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(1, 1, 'Admin', 'System Administrator', GETDATE()),
+(2, 1, 'Landlord', 'Property Owner', GETDATE()),
+(3, 1, 'Tenant', 'Property Tenant', GETDATE());
+
+-- GENDER (SystemCodeId = 2)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(4, 2, 'Male', 'Male gender', GETDATE()),
+(5, 2, 'Female', 'Female gender', GETDATE());
+
+-- UTILITYBILL (SystemCodeId = 3)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(6, 3, 'House Rent', 'Monthly house rent payment', GETDATE()),
+(7, 3, 'Water Bill', 'Monthly water bill', GETDATE()),
+(8, 3, 'Electricity Bill', 'Monthly electricity bill', GETDATE()),
+(9, 3, 'Garbage Collection', 'Garbage disposal fees', GETDATE());
+
+-- PAYMENTMETHOD (SystemCodeId = 4)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(10, 4, 'Cash', 'Pay directly to the landlord', GETDATE()),
+(11, 4, 'Mpesa', 'Pay using paybill number', GETDATE()),
+(12, 4, 'Bank', 'Pay using property bank account', GETDATE());
+
+-- TENANTSTATUS (SystemCodeId = 5)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(13, 5, 'Pending', 'Aspiring tenant', GETDATE()),
+(14, 5, 'Terminated', 'Aspiring tenant', GETDATE()),
+(15, 5, 'Active', 'Tenant has joined a house', GETDATE()),
+(16, 5, 'Evicted', 'Tenant was evicted', GETDATE()),
+(17, 5, 'Vacated', 'Tenant left voluntarily', GETDATE());
+
+-- LOGLEVEL (SystemCodeId = 7)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(18, 7, 'Info', 'Doesn’t affect anything', GETDATE()),
+(19, 7, 'Warning', 'May cause unusual behaviour', GETDATE()),
+(20, 7, 'Error', 'Fatal error', GETDATE());
+
+-- USERSTATUS (SystemCodeId = 6)
+INSERT INTO SystemCodeItems (Id, SystemCodeId, Item, Notes, CreatedOn) VALUES 
+(21, 6, 'Active', 'Active user', GETDATE()),
+(22, 6, 'Inactive', 'No longer active', GETDATE()),
+(23, 6, 'Suspended', 'Temporarily disabled', GETDATE());
+
+SET IDENTITY_INSERT SystemCodeItems OFF;
+
+
+-- Property (Id is auto-incremented)
+SET IDENTITY_INSERT Properties ON;
+
+INSERT INTO Properties(
+    Id, Name, Country, County, Area, PhysicalAddress, Longitude, Latitude, Floor, Notes, 
+    EmailAddress, MobileNumber, CreatedOn
+)
+VALUES 
+(1, 'Sunset Villas', 'Kenya', 'Nairobi', 'Nairobi West', 'Plot 234, Ole Sangale Rd', 
+    36.814762, -1.306432, 3, 'Gated estate with parking', 'contact@sunsetvillas.co.ke', '+254712345678', GETDATE()),
+(2, 'Riverside Apartments', 'Kenya', 'Nairobi', 'Kilimani', '12 Riverside Dr', 
+    36.787345, -1.292345, 5, 'Has rooftop pool', 'info@riversideapts.co.ke', '+254798765432', GETDATE()),
+(3, 'Green Meadows', 'Kenya', 'Kiambu', 'Ruiru', 'Next to Spur Mall', 
+    36.948276, -1.123487, 2, 'Affordable gated community', 'green@meadows.co.ke', '+254701234567', GETDATE());
+
+SET IDENTITY_INSERT Properties OFF;
+
+
+-- UnitType (Id is auto-incremented)
+SET IDENTITY_INSERT UnitTypes ON;
+
+INSERT INTO UnitTypes (Id, Name, Notes, Amount, CreatedOn)
+VALUES 
+(1, 'Single Room', 'Basic room for one person', 5000, GETDATE()),
+(2, 'Bedsitter', 'Open-plan small unit', 7000, GETDATE()),
+(3, '1 Bedroom', 'Unit with 1 bedroom and living area', 10000, GETDATE());
+
+SET IDENTITY_INSERT UnitTypes OFF;
+
+
+-- Unit (Id is auto-incremented)
+SET IDENTITY_INSERT Units ON;
+
+INSERT INTO Units (Id, UnitTypeId, PropertyId, Name, Status, Notes, CreatedOn)
+VALUES 
+(1, 1, 2, 'Unit A01', 'Vacant', 'Near entrance', GETDATE()),
+(2, 2, 2, 'Unit A02', 'Occupied', 'Upper floor', GETDATE()),
+(3, 3, 2, 'Unit A03', 'Vacant', 'Near garden', GETDATE());
+
+SET IDENTITY_INSERT Units OFF;
+
+
+-- UtilityBill (Id is auto-incremented)
+SET IDENTITY_INSERT UnitCharges ON;
+
+INSERT INTO UnitCharges (Id, PropertyId, Name, Amount, CreatedOn)
+VALUES 
+(1, 2, 'Water', 1200, GETDATE()),
+(2, 2, 'Electricity', 1800, GETDATE()),
+(3, 2, 'Garbage Collection', 500, GETDATE());
+
+SET IDENTITY_INSERT UnitCharges OFF;
+
+
+-- Role (Id is auto-incremented)
+SET IDENTITY_INSERT Roles ON;
+
+INSERT INTO Roles (Id, PropertyId, Name, IsEnabled, CreatedOn)
+VALUES 
+(1, 2, 'Admin', 1, GETDATE()),
+(2, 2, 'Tenant', 1, GETDATE()),
+(3, 2, 'Landlord', 1, GETDATE());
+
+SET IDENTITY_INSERT Roles OFF;
+
+
+-- User (Id is auto-incremented or GUID depending on your setup; assuming int + IDENTITY)
+SET IDENTITY_INSERT [Users] ON;
+
+INSERT INTO [Users] (Id, RoleId, PropertyId, FirstName, LastName, EmailAddress, MobileNumber, PasswordHash, IsActive, CreatedOn)
+VALUES 
+(1, 1, 2, 'Alice', 'Admin', 'alice@rent.com', '0711000001', 'hashedpass1', 0, GETDATE()),
+(2, 2, 2, 'Bob', 'Tenant', 'bob@rent.com', '0711000002', 'hashedpass2', 0, GETDATE()),
+(3, 3, 2, 'Charles', 'Landlord', 'charles@rent.com', '0711000003', 'hashedpass3', 0, GETDATE());
+
+SET IDENTITY_INSERT [Users] OFF;
+
+
+-- Tenant (Id is auto-incremented)
+SET IDENTITY_INSERT Tenants ON;
+
+INSERT INTO Tenants (Id, UserId, UnitId, FullName, EmailAddress, MobileNumber, Status)
+VALUES 
+(1, 2, 2, 'Bob Tenant', 'bob@rent.com', '0711000002', 1);
+
+SET IDENTITY_INSERT Tenants OFF;
+
+
+-- Landlord (Id is auto-incremented)
+SET IDENTITY_INSERT Landlords ON;
+
+INSERT INTO Landlords (Id, UserId, FullName, MobileNumber, Email)
+VALUES 
+(1, 3, 'Charles Landlord', '0711000003', 'charles@rent.com');
+
+SET IDENTITY_INSERT Landlords OFF;

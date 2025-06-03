@@ -1,0 +1,610 @@
+CREATE TABLE SystemCode (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Code VARCHAR(20) NOT NULL,
+    Notes VARCHAR(50),
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE()
+);
+
+
+
+CREATE TABLE SystemCodeItem (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    SystemCodeId INT NOT NULL,
+    Item VARCHAR(20) NOT NULL,
+    Notes VARCHAR(50),
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    CreatedBy INT,
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+    
+    CONSTRAINT FK_SystemCodeItem_SystemCode FOREIGN KEY (SystemCodeId) REFERENCES SystemCode(Id),
+    CONSTRAINT FK_SystemCodeItem_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_SystemCodeItem_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+CREATE TABLE Property (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(50) NOT NULL,
+    Country VARCHAR(50) NOT NULL,
+    County VARCHAR(50) NOT NULL,
+    Area VARCHAR(50) NOT NULL,
+    PhysicalAddress VARCHAR(50) NOT NULL,
+    Longitude DECIMAL(9,6),
+    Latitude DECIMAL(9,6),
+    Floor INT NOT NULL,
+    Notes VARCHAR(50),
+    EmailAddress VARCHAR(50) NOT NULL,
+    MobileNumber VARCHAR(20) NOT NULL,
+    CreatedBy INT NOT NULL,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME NOT NULL,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Property_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES User(Id),
+    CONSTRAINT FK_Property_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES User(Id)
+);
+
+
+CREATE TABLE Unit (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UnitTypeId INT NOT NULL,
+    PropertyId INT NOT NULL,
+    Name VARCHAR(50) NOT NULL,
+    Status VARCHAR(20),
+    Notes VARCHAR(100),
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Unit_UnitType FOREIGN KEY (UnitTypeId) REFERENCES UnitType(Id),
+    CONSTRAINT FK_Unit_Property FOREIGN KEY (PropertyId) REFERENCES Property(Id),
+    CONSTRAINT FK_Unit_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES User(Id),
+    CONSTRAINT FK_Unit_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES User(Id)
+);
+
+
+
+CREATE TABLE UnitType (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(20) NOT NULL,
+    Notes VARCHAR(50),
+    Amount MONEY NOT NULL,
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_UnitType_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES User(Id),
+    CONSTRAINT FK_UnitType_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES User(Id)
+);
+
+
+
+CREATE TABLE UtilityBill (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    PropertyId INT NOT NULL,
+    Name VARCHAR(20) NOT NULL,
+    Amount MONEY NOT NULL,
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_UtilityBill_Property FOREIGN KEY (PropertyId) REFERENCES Property(Id),
+    CONSTRAINT FK_UtilityBill_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_UtilityBill_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE Role (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    PropertyId INT NOT NULL,
+    Name VARCHAR(20) NOT NULL,
+    IsEnabled BIT NOT NULL DEFAULT 1,
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    IsSystemDefined BIT NOT NULL DEFAULT 0,
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Role_Property FOREIGN KEY (PropertyId) REFERENCES Property(Id),
+    CONSTRAINT FK_Role_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_Role_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE [User] (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    RoleId INT,
+    PropertyId INT,
+    FirstName VARCHAR(20) NOT NULL,
+    LastName VARCHAR(50) NOT NULL,
+    EmailAddress VARCHAR(20),
+    MobileNumber VARCHAR(20) NOT NULL,
+    AlternativeNumber VARCHAR(20),
+    Gender INT,
+    PasswordHash VARCHAR(20) NOT NULL,
+    LastPasswordChange DATETIME,
+    NationalId INT,
+    ProfilePhotoUrl VARCHAR(MAX),
+    IsActive BIT NOT NULL DEFAULT 1,
+    UserStatus INT,
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_User_Role FOREIGN KEY (RoleId) REFERENCES Role(Id),
+    CONSTRAINT FK_User_Property FOREIGN KEY (PropertyId) REFERENCES Property(Id),
+    CONSTRAINT FK_User_Gender FOREIGN KEY (Gender) REFERENCES SystemCodeItem(Id),
+    CONSTRAINT FK_User_UserStatus FOREIGN KEY (UserStatus) REFERENCES SystemCodeItem(Id),
+    CONSTRAINT FK_User_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_User_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE UserLogin (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    FailedAttempts INT DEFAULT 0,
+    Succeeded BIT NOT NULL,
+    IpAddress VARCHAR(20),
+    UserToken VARCHAR(20),
+    TokenExpiry DATETIME,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    IsActive BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_UserLogin_User FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE Tenant (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    RoleId INT NOT NULL,
+    UnitId INT NOT NULL,
+    FullName VARCHAR(50) NOT NULL,
+    EmailAddress VARCHAR(50),
+    MobileNumber VARCHAR(20) NOT NULL,
+    Status INT,
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Tenant_User FOREIGN KEY (UserId) REFERENCES [User](Id),
+    CONSTRAINT FK_Tenant_Role FOREIGN KEY (RoleId) REFERENCES Role(Id),
+    CONSTRAINT FK_Tenant_Unit FOREIGN KEY (UnitId) REFERENCES Unit(Id),
+    CONSTRAINT FK_Tenant_Status FOREIGN KEY (Status) REFERENCES SystemCodeItem(Id),
+    CONSTRAINT FK_Tenant_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE Landlord (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    RoleId INT NOT NULL,
+    FullName VARCHAR(50) NOT NULL,
+    MobileNumber VARCHAR(20) NOT NULL,
+    Email VARCHAR(50),
+    NationalId INT,
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Landlord_User FOREIGN KEY (UserId) REFERENCES [User](Id),
+    CONSTRAINT FK_Landlord_Role FOREIGN KEY (RoleId) REFERENCES Role(Id),
+    CONSTRAINT FK_Landlord_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE Payment (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    TenantId INT NOT NULL,
+    UtilityBillId INT,
+    AmountPaid DECIMAL(10,2) NOT NULL,
+    PaymentDate DATETIME NOT NULL,
+    PaymentMethod INT,
+    TransactionCode VARCHAR(100),
+    Notes TEXT NULL,
+    CreatedBy INT,
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_Payment_Tenant FOREIGN KEY (TenantId) REFERENCES Tenant(Id),
+    CONSTRAINT FK_Payment_UtilityBill FOREIGN KEY (UtilityBillId) REFERENCES UtilityBill(Id),
+    CONSTRAINT FK_Payment_PaymentMethod FOREIGN KEY (PaymentMethod) REFERENCES SystemCodeItem(Id),
+    CONSTRAINT FK_Payment_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_Payment_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+CREATE TABLE SystemLog (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    UserId INT NOT NULL,
+    LogLevelId INT NOT NULL,
+    Action VARCHAR(50),
+    Notes VARCHAR(50),
+    IpAddress VARCHAR(50),
+    CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
+    CreatedBy INT,
+    UpdatedOn DATETIME,
+    UpdatedBy INT,
+
+    CONSTRAINT FK_SystemLog_User FOREIGN KEY (UserId) REFERENCES [User](Id),
+    CONSTRAINT FK_SystemLog_LogLevel FOREIGN KEY (LogLevelId) REFERENCES SystemCodeItem(Id),
+    CONSTRAINT FK_SystemLog_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT FK_SystemLog_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
+);
+
+
+
+
+
+
+
+                //Generate System Data
+
+
+
+-- SystemCodes
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (1, 'ROLE', 'User roles in the system');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (2, 'GENDER', 'User gender categories');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (3, 'UTILITYBILL', 'Types of bills');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (4, 'PAYMENTMETHOD', 'Types of payments');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (5, 'TENANTSTATUS', 'status types for tenants');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (6, 'USERSTATUS', 'status types for all users');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (7, 'LOGLEVEL', 'log status');
+
+
+
+
+-- ROLE (SystemCodeId = 1)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (1, 1, 'Admin', 'System Administrator');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (2, 1, 'Landlord', 'Property Owner');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (3, 1, 'Tenant', 'Property Tenant');
+
+-- GENDER (SystemCodeId = 2)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (4, 2, 'Male', 'Male gender');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (5, 2, 'Female', 'Female gender');
+
+-- UTILITYBILL (SystemCodeId = 3)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (6, 3, 'House Rent', 'Monthly house rent payment');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (7, 3, 'Water Bill', 'Monthly water bill');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (8, 3, 'Electricity Bill', 'Monthly electricity bill');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (9, 3, 'Garbage Collection', 'Garbage disposal fees');
+
+-- PAYMENTMETHOD (SystemCodeId = 4)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (10, 4, 'Cash', 'Pay directly to the landlord');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (11, 4, 'Mpesa', 'Pay Using paybill number');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (12, 4, 'Bank', 'Pay using property bank account');
+
+-- TENANTSTATUS (SystemCodeId = 5)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (13, 5, 'Pending', 'Aspiring tenant');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (14, 5, 'Terminated', 'Aspiring tenant');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (15, 5, 'Active', 'Tenant has joined a house');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (16, 5, 'Evicted', 'Tenant was evicted');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (17, 5, 'Vacated', 'Tenant left voluntarily');
+
+-- LOGLEVEL (SystemCodeId = 7)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (18, 7, 'Info', 'doesnt affect anything');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (19, 7, 'Warning', 'may cause unussual behaviour');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (20, 7, 'Error', 'Fatal error');
+
+-- USERSTATUS (SystemCodeId = 6)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (21, 6, 'Active', 'Active user');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (22, 6, 'Inactive', 'Nolonger active');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (23, 6, 'Suspended', 'Temporarily disabled');
+
+
+INSERT INTO Property (
+    Name, Country, County, Area, PhysicalAddress, Longitude, Latitude, Floor, Notes, 
+    EmailAddress, MobileNumber, CreatedBy, UpdatedOn, UpdatedBy
+)
+VALUES 
+(
+    'Sunset Villas', 'Kenya', 'Nairobi', 'Nairobi West', 'Plot 234, Ole Sangale Rd', 
+    36.814762, -1.306432, 3, 'Gated estate with parking', 
+    'contact@sunsetvillas.co.ke', '+254712345678', 1, GETDATE(), 1
+),
+(
+    'Riverside Apartments', 'Kenya', 'Nairobi', 'Kilimani', '12 Riverside Dr', 
+    36.787345, -1.292345, 5, 'Has rooftop pool', 
+    'info@riversideapts.co.ke', '+254798765432', 1, GETDATE(), 1
+),
+(
+    'Green Meadows', 'Kenya', 'Kiambu', 'Ruiru', 'Next to Spur Mall', 
+    36.948276, -1.123487, 2, 'Affordable gated community', 
+    'green@meadows.co.ke', '+254701234567', 1, GETDATE(), 1
+);
+
+
+-- Insert Unit Types
+INSERT INTO UnitType (Name, Notes, Amount, CreatedBy, UpdatedBy)
+VALUES 
+('Single Room', 'Basic room for one person', 5000, NULL, NULL),
+('Bedsitter', 'Open-plan small unit', 7000, NULL, NULL),
+('1 Bedroom', 'Unit with 1 bedroom and living area', 10000, NULL, NULL);
+
+
+
+-- Insert Units (assuming UnitType Ids 1-3 and PropertyId = 1)
+INSERT INTO Unit (UnitTypeId, PropertyId, Name, Status, Notes, CreatedBy)
+VALUES 
+(1, 1, 'Unit A1', 'Vacant', 'Near entrance', NULL),
+(2, 1, 'Unit B2', 'Occupied', 'Upper floor', NULL),
+(3, 1, 'Unit C3', 'Vacant', 'Near garden', NULL);
+
+
+
+-- Insert Utility Bills
+INSERT INTO UtilityBill (PropertyId, Name, Amount, CreatedBy)
+VALUES 
+(1, 'Water', 1200, NULL),
+(1, 'Electricity', 1800, NULL),
+(1, 'Garbage Collection', 500, NULL);
+
+
+
+-- Insert Roles
+INSERT INTO Role (PropertyId, Name, IsEnabled, CreatedBy, IsSystemDefined)
+VALUES 
+(1, 'Admin', 1, NULL, 1),
+(1, 'Tenant', 1, NULL, 1),
+(1, 'Landlord', 1, NULL, 1);
+
+
+
+-- Insert Users
+INSERT INTO [User] (RoleId, PropertyId, FirstName, LastName, EmailAddress, MobileNumber, PasswordHash)
+VALUES 
+(1, 1, 'Alice', 'Admin', 'alice@rent.com', '0711000001', 'hashedpass1'), -- Id = 1
+(2, 1, 'Bob', 'Tenant', 'bob@rent.com', '0711000002', 'hashedpass2'),     -- Id = 2
+(3, 1, 'Charles', 'Landlord', 'charles@rent.com', '0711000003', 'hashedpass3'); -- Id = 3
+
+
+
+-- Insert Tenant (linked to User Id 2)
+INSERT INTO Tenant (UserId, RoleId, UnitId, FullName, EmailAddress, MobileNumber)
+VALUES 
+(2, 2, 2, 'Bob Tenant', 'bob@rent.com', '0711000002');
+
+
+
+-- Insert Landlord (linked to User Id 3)
+INSERT INTO Landlord (UserId, RoleId, FullName, MobileNumber, Email)
+VALUES 
+(3, 3, 'Charles Landlord', '0711000003', 'charles@rent.com');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- =============================
+-- Insert System Code Data
+-- =============================
+SET IDENTITY_INSERT SystemCode ON;
+
+INSERT INTO SystemCode (Id, Code, Notes)
+VALUES
+(1, 'ROLE', 'User roles in the system'),
+(2, 'GENDER', 'User gender categories'),
+(3, 'UTILITYBILL', 'Types of bills'),
+(4, 'PAYMENTMETHOD', 'Types of payments'),
+(5, 'TENANTSTATUS', 'Status types for tenants'),
+(6, 'USERSTATUS', 'Status types for all users'),
+(7, 'LOGLEVEL', 'Log status');
+
+SET IDENTITY_INSERT SystemCode OFF;
+
+
+SET IDENTITY_INSERT SystemCodeItem ON;
+
+-- Insert all SystemCodeItems
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes)
+VALUES
+-- ROLE
+(1, 1, 'Admin', 'System Administrator'),
+(2, 1, 'Landlord', 'Property Owner'),
+(3, 1, 'Tenant', 'Property Tenant'),
+
+-- GENDER
+(4, 2, 'Male', 'Male gender'),
+(5, 2, 'Female', 'Female gender'),
+
+-- UTILITYBILL
+(6, 3, 'House Rent', 'Monthly house rent payment'),
+(7, 3, 'Water Bill', 'Monthly water bill'),
+(8, 3, 'Electricity Bill', 'Monthly electricity bill'),
+(9, 3, 'Garbage Collection', 'Garbage disposal fees'),
+
+-- PAYMENTMETHOD
+(10, 4, 'Cash', 'Pay directly to the landlord'),
+(11, 4, 'Mpesa', 'Pay Using paybill number'),
+(12, 4, 'Bank', 'Pay using property bank account'),
+
+-- TENANTSTATUS
+(13, 5, 'Pending', 'Aspiring tenant'),
+(14, 5, 'Terminated', 'Aspiring tenant'),
+(15, 5, 'Active', 'Tenant has joined a house'),
+(16, 5, 'Evicted', 'Tenant was evicted'),
+(17, 5, 'Vacated', 'Tenant left voluntarily'),
+
+-- LOGLEVEL
+(18, 7, 'Info', 'Doesn’t affect anything'),
+(19, 7, 'Warning', 'May cause unusual behaviour'),
+(20, 7, 'Error', 'Fatal error'),
+
+-- USERSTATUS
+(21, 6, 'Active', 'Active user'),
+(22, 6, 'Inactive', 'No longer active'),
+(23, 6, 'Suspended', 'Temporarily disabled');
+
+SET IDENTITY_INSERT SystemCodeItem OFF;
+
+
+-- =============================
+-- Insert Property Data (no CreatedBy yet)
+-- =============================
+
+SET IDENTITY_INSERT Property ON;
+
+INSERT INTO Property (
+    Id, Name, Country, County, Area, PhysicalAddress, Longitude, Latitude, Floor, Notes,
+    EmailAddress, MobileNumber
+)
+VALUES 
+(1, 'Sunset Villas', 'Kenya', 'Nairobi', 'Nairobi West', 'Plot 234, Ole Sangale Rd',
+    36.814762, -1.306432, 3, 'Gated estate with parking',
+    'contact@sunsetvillas.co.ke', '+254712345678'),
+(2, 'Riverside Apartments', 'Kenya', 'Nairobi', 'Kilimani', '12 Riverside Dr',
+    36.787345, -1.292345, 5, 'Has rooftop pool',
+    'info@riversideapts.co.ke', '+254798765432'),
+(3, 'Green Meadows', 'Kenya', 'Kiambu', 'Ruiru', 'Next to Spur Mall',
+    36.948276, -1.123487, 2, 'Affordable gated community',
+    'green@meadows.co.ke', '+254701234567');
+
+SET IDENTITY_INSERT Property OFF;
+
+
+
+
+-- =============================
+-- Insert Roles (no CreatedBy yet)
+-- =============================
+
+SET IDENTITY_INSERT Role ON;
+
+INSERT INTO Role (Id, PropertyId, Name, IsEnabled)
+VALUES 
+(1, 1, 'Admin', 1),
+(2, 1, 'Tenant', 1),
+(3, 1, 'Landlord', 1);
+
+
+SET IDENTITY_INSERT Role OFF;
+
+
+
+-- =============================
+-- Insert Users (should match Role & Property)
+-- =============================
+
+
+
+SET IDENTITY_INSERT [User] ON;
+
+INSERT INTO [User] (Id, RoleId, PropertyId, FirstName, LastName, EmailAddress, MobileNumber, PasswordHash)
+VALUES 
+(1,1, 1, 'Alice', 'Admin', 'alice@rent.com', '0711000001', 'hashedpass1'), -- Id = 1
+(2, 2, 1, 'Bob', 'Tenant', 'bob@rent.com', '0711000002', 'hashedpass2'),     -- Id = 2
+(3, 3, 1, 'Charles', 'Landlord', 'charles@rent.com', '0711000003', 'hashedpass3'); -- Id = 3
+
+
+SET IDENTITY_INSERT [User] OFF;
+
+
+
+
+
+
+
+-- =============================
+-- Now Update Property with CreatedBy
+-- =============================
+UPDATE Property SET CreatedBy = 1, UpdatedOn = GETDATE(), UpdatedBy = 1 WHERE Id IN (1, 2, 3);
+
+
+
+
+-- =============================
+-- Insert Unit Types
+-- =============================
+
+SET IDENTITY_INSERT UnitType ON;
+
+INSERT INTO UnitType (Id, Name, Notes, Amount)
+VALUES 
+(1, 'Single Room', 'Basic room for one person', 5000),
+(2, 'Bedsitter', 'Open-plan small unit', 7000),
+(3, '1 Bedroom', 'Unit with 1 bedroom and living area', 10000);
+
+SET IDENTITY_INSERT UnitType OFF;
+
+
+
+
+
+
+-- =============================
+-- Insert Units
+-- =============================
+SET IDENTITY_INSERT Unit ON;
+
+INSERT INTO Unit (Id, UnitTypeId, PropertyId, Name, Status, Notes)
+VALUES 
+(1, 1, 1, 'Unit A01', 'Vacant', 'Near entrance'),
+(2, 2, 1, 'Unit A02', 'Occupied', 'Upper floor'),
+(3, 3, 1, 'Unit A03', 'Vacant', 'Near garden');
+
+
+SET IDENTITY_INSERT Unit ON;
+
+
+
+
+
+-- =============================
+-- Insert Utility Bills
+-- =============================
+
+SET IDENTITY_INSERT UtilityBill ON;
+
+INSERT INTO UtilityBill (Id, PropertyId, Name, Amount)
+VALUES 
+(1, 1, 'Water', 1200),
+(2, 1, 'Electricity', 1800),
+(3, 1, 'Garbage Collection', 500);
+
+
+SET IDENTITY_INSERT UtilityBill ON;
+
+
+
+
+-- =============================
+-- Insert Tenant (User Id 2)
+-- =============================
+INSERT INTO Tenant (UserId, RoleId, UnitId, FullName, EmailAddress, MobileNumber)
+VALUES 
+(2, 2, 2, 'Bob Tenant', 'bob@rent.com', '0711000002');
+
+
+-- =============================
+-- Insert Landlord (User Id 3)
+-- =============================
+INSERT INTO Landlord (UserId, RoleId, FullName, MobileNumber, Email)
+VALUES 
+(3, 3, 'Charles Landlord', '0711000003', 'charles@rent.com');
+

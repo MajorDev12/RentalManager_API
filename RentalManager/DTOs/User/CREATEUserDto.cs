@@ -28,6 +28,7 @@ namespace RentalManager.DTOs.User
 
         public bool IsActive { get; set; } = false;
 
+        [Required]
         public int GenderId { get; set; }
         public int RoleId { get; set; }
         public int UserStatusId { get; set; }
