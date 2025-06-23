@@ -6,6 +6,8 @@ using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Services.PropertyService;
 using RentalManager.Repositories.RoleRepository;
 using RentalManager.Services.RoleService;
+using RentalManager.Repositories.SystemCodeRepository;
+using RentalManager.Services.SystemCodeService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,10 +36,12 @@ builder.Services.AddControllers(options =>
 // Register Repositories
 builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<ISystemCodeRepository, SystemCodeRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<ISystemCodeService, SystemCodeService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

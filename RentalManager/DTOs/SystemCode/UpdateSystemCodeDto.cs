@@ -4,8 +4,9 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RentalManager.DTOs.SystemCode
 {
-    public class UpdateSystemCodeDto
+    public class UPDATESystemCodeDto
     {
+
         [Required]
         [MaxLength(50)]
         public string Code { get; set; } = string.Empty;

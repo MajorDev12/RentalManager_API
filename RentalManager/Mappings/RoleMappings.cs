@@ -31,6 +31,7 @@ namespace RentalManager.Mappings
         {
             return new READRoleDto
             {
+                Id = dto.Id,
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
                 PropertyName = dto.Property.Name

@@ -2,7 +2,7 @@
 
 namespace RentalManager.DTOs.SystemCode
 {
-    public class ReadSystemCodeDto
+    public class READSystemCodeDto
     {
         public int Id { get; set; }
 

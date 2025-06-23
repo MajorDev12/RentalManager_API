@@ -5,6 +5,8 @@ using RentalManager.Data;
 using RentalManager.DTOs.SystemCode;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.SystemCodeRepository;
+using RentalManager.Services.SystemCodeService;
 
 namespace RentalManager.Controllers
 {
@@ -12,27 +14,28 @@ namespace RentalManager.Controllers
     [ApiController]
     public class SystemCodeController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISystemCodeService _service;
 
-        public SystemCodeController (ApplicationDbContext context)
+        public SystemCodeController (ISystemCodeService service)
         {
-            _context = context;
+            _service = service;
         }
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ReadSystemCodeDto>>> GetSystemCodes()
+        public async Task<ActionResult<IEnumerable<READSystemCodeDto>>> GetSystemCodes()
         {
-            var systemCodes = await _context.SystemCodes.ToListAsync();
 
-            if (systemCodes == null)
+            try
             {
-                return NotFound($"There is no SystemCode available.");
+                var codes = await _service.GetAll();
+                return Ok(codes);
+
             }
-
-            var systemCodeDtos = systemCodes.Select(sc => sc.ToReadDto()).ToList();
-
-            return Ok(systemCodeDtos);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -40,54 +43,51 @@ namespace RentalManager.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSystemCodeById(int id)
         {
-            var systemCode = await _context.SystemCodes.FirstOrDefaultAsync(e => e.Id == id);
-
-            if (systemCode == null)
+            try
             {
-                return NotFound();
-            }
+                var code = await _service.GetById(id);
+                return Ok(code);
 
-            return Ok(systemCode.ToReadDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         [HttpPost]
-        public async Task<IActionResult> AddSystemCode([FromBody] CreateSystemCodeDto AddedSystemCode)
+        public async Task<IActionResult> AddSystemCode([FromBody] CREATESystemCodeDto AddedSystemCode)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                var code = await _service.Add(AddedSystemCode);
+                return Ok(code);
 
-            var systemCode = AddedSystemCode.ToEntity();
-
-            _context.SystemCodes.Add(systemCode);
-            await _context.SaveChangesAsync();
-
-            var allSystemCodes = await _context.SystemCodes.ToListAsync();
-
-            var codeDtos = allSystemCodes.Select(i => i.ToReadDto()).ToList();
-
-            return Ok(codeDtos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
 
 
-        [HttpPut]
-        public async Task<IActionResult> EditSystemCode(int id, [FromBody] UpdateSystemCodeDto UpdatedSystemCode)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditSystemCode(int id, [FromBody] UPDATESystemCodeDto UpdatedSystemCode)
         {
 
-            var existingCode = await _context.SystemCodes.FindAsync(id);
-            if (existingCode == null)
-                return NotFound("SystemCode not found.");
+            try
+            {
+                var codes = await _service.Update(id, UpdatedSystemCode);
+                return Ok(codes);
 
-
-            existingCode.Code = UpdatedSystemCode.Code;
-            existingCode.Notes = UpdatedSystemCode.Notes;
-            existingCode.UpdatedOn = UpdatedSystemCode.UpdatedOn; 
-
-            await _context.SaveChangesAsync();
-
-            return Ok(existingCode.ToReadDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -95,21 +95,16 @@ namespace RentalManager.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSystemCode(int id)
         {
-            var systemCode = await _context.SystemCodes.FindAsync(id);
-
-            if (systemCode == null)
+            try
             {
-                return NotFound($"SystemCode with ID {id} was not found.");
+                var codes = await _service.Delete(id);
+                return Ok(codes);
+
             }
-
-            _context.SystemCodes.Remove(systemCode);
-            await _context.SaveChangesAsync();
-
-            var SystemCodes = await _context.SystemCodes.ToListAsync();
-
-            var allSystemCodes = SystemCodes.Select(p => p.ToReadDto()).ToList();
-
-            return Ok(allSystemCodes);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 

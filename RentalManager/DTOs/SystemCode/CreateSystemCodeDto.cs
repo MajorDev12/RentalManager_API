@@ -2,7 +2,7 @@
 
 namespace RentalManager.DTOs.SystemCode
 {
-    public class CreateSystemCodeDto
+    public class CREATESystemCodeDto
     {
         [Required]
         [MaxLength(50)]
