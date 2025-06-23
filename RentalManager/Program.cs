@@ -1,5 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using RentalManager.Data;
+using RentalManager.Helpers.Validations;
+using RentalManager.Repositories.PropertyRepository;
+using RentalManager.Services.PropertyService;
+using RentalManager.Repositories.RoleRepository;
+using RentalManager.Services.RoleService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +18,26 @@ builder.Services.AddCors(options =>
                         .AllowAnyHeader());
 });
 
+builder.Services.Configure<ApiBehaviorOptions>(options => 
+{
+    options.SuppressModelStateInvalidFilter = true;
+});
 
-// Add Authentication
 
 
+// Add Filters
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<ModelStateValidator>();
+});
 
+// Register Repositories
+builder.Services.AddScoped<IPropertyRepository, PropertyRepository>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 
+// Register Services
+builder.Services.AddScoped<IPropertyService, PropertyService>();
+builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

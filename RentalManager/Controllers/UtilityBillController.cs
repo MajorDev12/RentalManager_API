@@ -90,7 +90,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditUtilityBill(int id, [FromBody] UPDATEUtilityBillDto dto)
         {
 

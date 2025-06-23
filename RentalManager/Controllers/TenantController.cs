@@ -69,31 +69,22 @@ namespace RentalManager.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTenant([FromBody] CREATETenantDto AddedTenant)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                return BadRequest(new ApiResponse<object>("Validation failed.", errors));
-            }
 
             // Validate referenced Unit and Status
-            var unit = await _context.Units.FindAsync(AddedTenant.UnitId);
-            var status = await _context.SystemCodeItems.FindAsync(AddedTenant.Status);
             var property = await _context.Properties.FindAsync(AddedTenant.User.PropertyId);
 
-            if (status == null || unit == null || property == null)
+            if (property == null)
             {
-                return BadRequest(new ApiResponse<object>("Invalid status, unit or property provided."));
+                return BadRequest(new ApiResponse<object>("Invalid property provided."));
             }
-
             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Tenant");
+            var defaultStatus = await _context.SystemCodeItems.FirstOrDefaultAsync(r => r.Item == "Pending");
+            var defaultUserStatus = await _context.SystemCodeItems.FirstOrDefaultAsync(r => r.Item == "Active");
 
-            if (defaultRole == null)
+
+            if (defaultRole == null || defaultStatus == null || defaultUserStatus == null)
             {
-                return BadRequest(new ApiResponse<object>("Missing default role"));
+                return BadRequest(new ApiResponse<object>("Missing default role, TenantStatus or UserStatus"));
             }
 
             // Begin Transaction
@@ -102,12 +93,12 @@ namespace RentalManager.Controllers
             try
             {
                 // Create user
-                var user = AddedTenant.User.ToEntity(defaultRole.Id);
+                var user = AddedTenant.User.ToEntity(defaultRole.Id, defaultUserStatus.Id);
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
                 // Create tenant
-                var tenant = AddedTenant.ToEntity(user, unit.Id, status.Id);
+                var tenant = AddedTenant.ToEntity(user, defaultStatus.Id);
                 _context.Tenants.Add(tenant);
                 await _context.SaveChangesAsync();
 
@@ -141,24 +132,13 @@ namespace RentalManager.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
-            if (!ModelState.IsValid)
-            {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                return BadRequest(new ApiResponse<object>("Validation failed.", errors));
-            }
 
             // Validate referenced Unit and Status
-            var unit = await _context.Units.FindAsync(updatedTenant.UnitId);
-            var status = await _context.SystemCodeItems.FindAsync(updatedTenant.Status);
             var property = await _context.Properties.FindAsync(updatedTenant.User.PropertyId);
 
-            if (status == null || unit == null || property == null)
+            if (property == null)
             {
-                return BadRequest(new ApiResponse<object>("Invalid status, unit or property provided."));
+                return BadRequest(new ApiResponse<object>("Invalid property provided."));
             }
 
 
@@ -178,7 +158,7 @@ namespace RentalManager.Controllers
                 }
 
                 var user = updatedTenant.User.UpdateEntity(existintTenant.User);
-                var tenant = updatedTenant.UpdateEntity(existintTenant, existintTenant.User, unit.Id, status.Id);
+                var tenant = updatedTenant.UpdateEntity(existintTenant, existintTenant.User);
                 await _context.SaveChangesAsync();
 
                 // Commit transaction

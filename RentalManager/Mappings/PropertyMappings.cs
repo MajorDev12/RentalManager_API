@@ -21,6 +21,7 @@ namespace RentalManager.Mappings
         };
 
 
+
         public static READPropertyDto ToReadDto(this Property dto) => new READPropertyDto
         {
             Id = dto.Id,
@@ -53,6 +54,38 @@ namespace RentalManager.Mappings
             EmailAddress = dto.EmailAddress,
             MobileNumber = dto.MobileNumber,
         };
+
+        public static Property ToUpdateEntity(this UPDATEPropertyDto dto) => new Property
+        {
+            Name = dto.Name,
+            Country = dto.Country,
+            County = dto.County,
+            Area = dto.Area,
+            PhysicalAddress = dto.PhysicalAddress,
+            Longitude = dto.Longitude,
+            Latitude = dto.Latitude,
+            Floor = dto.Floor,
+            Notes = dto.Notes,
+            EmailAddress = dto.EmailAddress,
+            MobileNumber = dto.MobileNumber,
+        };
+
+        public static Property ToUpdateEntity(this Property updatedProperty, Property existing)
+        {
+            existing.Name = updatedProperty.Name;
+            existing.Country = updatedProperty.Country;
+            existing.County = updatedProperty.County;
+            existing.Area = updatedProperty.Area;
+            existing.PhysicalAddress = updatedProperty.PhysicalAddress;
+            existing.Longitude = updatedProperty.Longitude;
+            existing.Latitude = updatedProperty.Latitude;
+            existing.Floor = updatedProperty.Floor;
+            existing.EmailAddress = updatedProperty.EmailAddress;
+            existing.MobileNumber = updatedProperty.MobileNumber;
+            existing.Notes = updatedProperty.Notes;
+
+            return existing;
+        }
 
 
 

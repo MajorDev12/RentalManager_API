@@ -5,6 +5,7 @@ using RentalManager.DTOs.Property;
 using RentalManager.DTOs.SystemCode;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Services.PropertyService;
 
 namespace RentalManager.Controllers
 {
@@ -13,21 +14,26 @@ namespace RentalManager.Controllers
     public class PropertyController : Controller
     {
 
-        private readonly ApplicationDbContext _context;
+        private readonly IPropertyService _PropertyContext;
 
-        public PropertyController(ApplicationDbContext context)
+        public PropertyController(IPropertyService context)
         {
-            _context = context;
+            _PropertyContext = context;
         }
 
         [HttpGet("Properties")]
         public async Task<ActionResult<IEnumerable<READPropertyDto>>> GetProperties()
         {
-            var properties = await _context.Properties.ToListAsync();
-
-            var propertyDtos = properties.Select(p => p.ToReadDto()).ToList();
-
-            return Ok(new ApiResponse<List<READPropertyDto>>(propertyDtos, ""));
+            
+            try
+            {
+                var properties = await _PropertyContext.GetAll();
+                return Ok(properties);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -36,40 +42,35 @@ namespace RentalManager.Controllers
         [HttpGet("Properties/{id}")]
         public async Task<IActionResult> GetPropertyById(int id)
         {
-            var property = await _context.Properties.FirstOrDefaultAsync(pr => pr.Id == id);
-
-            if (property == null)
+            try
             {
-                return NotFound(new ApiResponse<object>("property was not found"));
+                var property = await _PropertyContext.GetById(id);
+                return Ok(property);
             }
-
-            return Ok(new ApiResponse<READPropertyDto>(property.ToReadDto(), ""));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            
         }
 
 
 
 
 
-        [HttpPost("Property/{id}")]
+        [HttpPost("Property")]
         public async Task<IActionResult> AddProperty([FromBody] CREATEPropertyDto AddedProperty)
         {
-            if (!ModelState.IsValid)
+
+            try
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                return BadRequest(new ApiResponse<object>("Validation failed.", errors));
+                var property = await _PropertyContext.Create(AddedProperty);
+                return Ok(property);
             }
-
-            var property = AddedProperty.ToEntity();
-
-            _context.Properties.Add(property);
-            await _context.SaveChangesAsync();
-
-            var propertyDto = property.ToReadDto();
-            return Ok(new ApiResponse<READPropertyDto>(propertyDto, "Property added successfully."));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -81,40 +82,15 @@ namespace RentalManager.Controllers
         public async Task<IActionResult> EditProperty(int id, [FromBody] UPDATEPropertyDto dto)
         {
 
-            var property = await _context.Properties.FindAsync(id);
-
-            if (property == null)
-                return NotFound(new ApiResponse<object>("Property not found."));
-
-
-
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
-
-                return BadRequest(new ApiResponse<object>("Validation failed", errors));
+                var property = await _PropertyContext.Update(dto);
+                return Ok(property);
             }
-
-
-            // Manual update
-            property.Name = dto.Name;
-            property.Country = dto.Country;
-            property.County = dto.County;
-            property.Area = dto.Area;
-            property.PhysicalAddress = dto.PhysicalAddress;
-            property.Longitude = dto.Longitude;
-            property.Latitude = dto.Latitude;
-            property.Floor = dto.Floor;
-            property.EmailAddress = dto.EmailAddress;
-            property.MobileNumber = dto.MobileNumber;
-            property.Notes = dto.Notes;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new ApiResponse<READPropertyDto>(property.ToReadDto(), "Property updated successfully."));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -123,19 +99,15 @@ namespace RentalManager.Controllers
         [HttpDelete("Property/{id}")]
         public async Task<IActionResult> DeleteProperty(int id)
         {
-            var property = await _context.Properties.FindAsync(id);
-
-            if (property == null)
+            try
             {
-                return NotFound(new ApiResponse<object>("property Id was not found"));
+                var property = await _PropertyContext.Delete(id);
+                return Ok(property);
             }
-
-            _context.Properties.Remove(property);
-            await _context.SaveChangesAsync();
-
-            var propertyDtos = property.ToReadDto();
-
-            return Ok(new ApiResponse<READPropertyDto>(propertyDtos, "Property deleted successfuly"));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 

@@ -26,7 +26,7 @@ namespace RentalManager.Mappings
         }
 
 
-        public static User ToEntity(this CREATEUserDto dto, int roleId)
+        public static User ToEntity(this CREATEUserDto dto, int roleId, int UserStatus)
         {
             return new User
             {
@@ -42,7 +42,7 @@ namespace RentalManager.Mappings
                 IsActive = dto.IsActive,
                 GenderId = dto.GenderId,
                 RoleId = roleId,
-                UserStatusId = dto.UserStatusId,
+                UserStatusId = UserStatus,
                 PropertyId = dto.PropertyId
             };
         }
@@ -60,7 +60,6 @@ namespace RentalManager.Mappings
             existingUser.ProfilePhotoUrl = dto.ProfilePhotoUrl;
             existingUser.IsActive = dto.IsActive;
             existingUser.GenderId = dto.GenderId;
-            existingUser.UserStatusId = dto.UserStatusId;
             existingUser.PropertyId = dto.PropertyId;
 
             return existingUser;

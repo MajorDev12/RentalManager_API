@@ -14,7 +14,7 @@ namespace RentalManager.DTOs.Tenant
 
         public READUserDto User { get; set; } = null!;
 
-        public int unitId { get; set; }
+        public int? unitId { get; set; }
 
         public string? Unit { get; set; }
 

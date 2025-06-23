@@ -16,6 +16,16 @@ namespace RentalManager.Mappings
             };
         }
 
+        public static Role ToEntity(this UPDATERoleDto dto)
+        {
+            return new Role
+            {
+                Name = dto.Name,
+                IsEnabled = dto.IsEnabled,
+                PropertyId = dto.PropertyId
+            };
+        }
+
 
         public static READRoleDto ToReadDto(this Role dto)
         {
@@ -36,6 +46,15 @@ namespace RentalManager.Mappings
                 IsEnabled = dto.IsEnabled,
                 PropertyId = dto.PropertyId
             };
+        }
+
+        public static Role ToUpdateEntity(this Role updatedRole, Role existing)
+        {
+            existing.Name = updatedRole.Name;
+            existing.IsEnabled = updatedRole.IsEnabled;
+            existing.PropertyId = updatedRole.PropertyId;
+
+            return existing;
         }
     }
 }
