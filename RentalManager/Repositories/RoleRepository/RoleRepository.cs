@@ -53,19 +53,15 @@ namespace RentalManager.Repositories.RoleRepository
             return updated;
         }
 
-        public async Task<Role> DeleteAsync(Role role)
+        public async Task DeleteAsync(Role role)
         {
             _context.Roles.Remove(role);
             await _context.SaveChangesAsync();
-            return role;
         }
 
         public async Task<Role> FindAsync(int id)
         {
-            var role = await _context.Roles.FindAsync(id);
-            if (role == null) return null;
-
-            return role;
+            return await _context.Roles.FindAsync(id);
         }
     }
 }

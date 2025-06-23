@@ -23,7 +23,7 @@ namespace RentalManager.Controllers
 
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<READSystemCodeDto>>> GetSystemCodes()
+        public async Task<IActionResult> GetSystemCodes()
         {
 
             try

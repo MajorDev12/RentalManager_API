@@ -4,7 +4,6 @@ namespace RentalManager.DTOs.Role
 {
     public class UPDATERoleDto
     {
-        public int Id { get; set; }
 
         [Required]
         [MaxLength(20)]

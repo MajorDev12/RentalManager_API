@@ -8,7 +8,7 @@ namespace RentalManager.Repositories.RoleRepository
         Task<Role> GetByIdAsync(int id);
         Task<Role> AddAsync(Role role);
         Task<Role> UpdateAsync(Role role);
-        Task<Role> DeleteAsync(Role role);
+        Task DeleteAsync(Role role);
         Task<Role> FindAsync(int id);
     }
 }

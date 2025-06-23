@@ -72,13 +72,13 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditRole(int id, [FromBody] UPDATERoleDto dto)
         {
 
             try
             {
-                var role = await _repo.Update(dto);
+                var role = await _repo.Update(id, dto);
                 return Ok(role);
             }
             catch (Exception ex)

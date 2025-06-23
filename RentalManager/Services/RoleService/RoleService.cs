@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RentalManager.DTOs.Role;
+using RentalManager.DTOs.SystemCode;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
@@ -82,23 +83,29 @@ namespace RentalManager.Services.RoleService
             }
         }
 
-        public async Task<ApiResponse<READRoleDto>> Update(UPDATERoleDto role)
+        public async Task<ApiResponse<READRoleDto>> Update(int id, UPDATERoleDto role)
         {
             try
             {
-                var updateRole = role.ToEntity();
+                var existing = await _repo.FindAsync(id);
 
+                if (existing == null) return new ApiResponse<READRoleDto>(null, "No Such Data.");
+
+                var property = await _propertyRepo.FindAsync(role.PropertyId);
+
+                if (property == null) return new ApiResponse<READRoleDto>(null, "Property Does Not Exist.");
+
+                var updateRole = role.ToEntity(id);
                 var saved = await _repo.UpdateAsync(updateRole);
 
                 if (saved == null)
-                    return new ApiResponse<READRoleDto>(null, "Role Not Found.");
+                    return new ApiResponse<READRoleDto>(null, "Data Not Found.");
 
-                var savedDto = saved.ToReadDto();
-                return new ApiResponse<READRoleDto>(savedDto, "Updated Successfully");
+                return new ApiResponse<READRoleDto>(saved.ToReadDto(), "Updated Successfully");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READRoleDto>("Error Occurred");
+                return new ApiResponse<READRoleDto>("Error Occurred: " + ex.InnerException.Message);
             }
         }
 
@@ -112,7 +119,8 @@ namespace RentalManager.Services.RoleService
                 {
                     return new ApiResponse<READRoleDto>(null, "Role Not Found.");
                 }
-                var roleDeleted = _repo.DeleteAsync(existing);
+
+                await _repo.DeleteAsync(existing);
                 return new ApiResponse<READRoleDto>(null, "Deleted Successfuly");
             }
             catch (Exception ex)

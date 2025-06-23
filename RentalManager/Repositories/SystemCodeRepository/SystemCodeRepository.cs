@@ -46,14 +46,11 @@ namespace RentalManager.Repositories.SystemCodeRepository
             return updatedEntity;
         }
 
-
         public async Task DeleteAsync(SystemCode code)
         {
             _context.SystemCodes.Remove(code);
             await _context.SaveChangesAsync();
         }
-
-
 
         public async Task<SystemCode?> FindAsync(int id)
         {

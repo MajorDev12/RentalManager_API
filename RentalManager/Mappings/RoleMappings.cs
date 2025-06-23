@@ -16,10 +16,11 @@ namespace RentalManager.Mappings
             };
         }
 
-        public static Role ToEntity(this UPDATERoleDto dto)
+        public static Role ToEntity(this UPDATERoleDto dto, int id)
         {
             return new Role
             {
+                Id = id,
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
                 PropertyId = dto.PropertyId
@@ -34,6 +35,7 @@ namespace RentalManager.Mappings
                 Id = dto.Id,
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
+                PropertyId = dto.PropertyId,
                 PropertyName = dto.Property.Name
             };
         }

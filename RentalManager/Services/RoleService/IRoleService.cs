@@ -8,7 +8,7 @@ namespace RentalManager.Services.RoleService
         Task<ApiResponse<List<READRoleDto>>> GetAll();
         Task<ApiResponse<READRoleDto>> GetById(int id);
         Task<ApiResponse<READRoleDto>> Create(CREATERoleDto role);
-        Task<ApiResponse<READRoleDto>> Update(UPDATERoleDto role);
+        Task<ApiResponse<READRoleDto>> Update(int id, UPDATERoleDto role);
         Task<ApiResponse<READRoleDto>> Delete(int id);
     }
 }
