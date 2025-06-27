@@ -5,6 +5,8 @@ using RentalManager.Data;
 using RentalManager.DTOs.SystemCodeItem;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Services.SystemCodeItemService;
+using RentalManager.Services.SystemCodeService;
 
 namespace RentalManager.Controllers
 {
@@ -12,11 +14,11 @@ namespace RentalManager.Controllers
     [ApiController]
     public class SystemCodeItemController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ISystemCodeItemService _service;
 
-        public SystemCodeItemController(ApplicationDbContext context)
+        public SystemCodeItemController(ISystemCodeItemService service)
         {
-            _context = context;
+            _service = service;
         }
 
 
@@ -24,16 +26,16 @@ namespace RentalManager.Controllers
         [HttpGet]
         public async Task<IActionResult> GetSystemCodeItems()
         {
-            var systemCodeItems = await _context.SystemCodeItems.ToListAsync();
-
-            if (!systemCodeItems.Any())
+            try
             {
-                return NotFound("There are no SystemCodeItems available.");
+                var items = await _service.GetAll();
+                return Ok(items);
+
             }
-
-            var systemCodeItemDtos = systemCodeItems.Select(it => it.ToReadDto()).ToList();
-
-            return Ok(systemCodeItemDtos);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -41,52 +43,49 @@ namespace RentalManager.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSystemCodeItemById(int id)
         {
-            var item = await _context.SystemCodes.FirstOrDefaultAsync(e => e.Id == id);
-
-            if (item == null)
+            try
             {
-                return NotFound();
-            }
+                var item = await _service.GetById(id);
+                return Ok(item);
 
-            return Ok(item.ToReadDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         [HttpPost]
         public async Task<IActionResult> AddSystemCodeItem([FromBody] CREATESystemCodeItemDto AddedItem)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            try
+            {
+                var item = await _service.Add(AddedItem);
+                return Ok(item);
 
-            var item = AddedItem.ToEntity();
-
-            _context.SystemCodeItems.Add(item);
-            await _context.SaveChangesAsync();
-
-            var allItems = await _context.SystemCodeItems.ToListAsync();
-
-            var itemDtos = allItems.Select(i => i.ToReadDto()).ToList();
-
-            return Ok(itemDtos);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
-        [HttpPut]
+        [HttpPut("{id}")]
         public async Task<IActionResult> EditSystemCodeItem(int id, [FromBody] UPDATESystemCodeItemDto UpdatedItem)
         {
 
-            var existingItem= await _context.SystemCodeItems.FindAsync(id);
-            if (existingItem == null)
-                return NotFound("SystemCode not found.");
+            try
+            {
+                var item = await _service.Update(id, UpdatedItem);
+                return Ok(item);
 
-
-            existingItem.Item = UpdatedItem.Item;
-            existingItem.Notes = UpdatedItem.Notes;
-            existingItem.UpdatedOn = UpdatedItem.UpdatedOn;
-
-            await _context.SaveChangesAsync();
-
-            return Ok(existingItem.ToReadDto());
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -94,41 +93,36 @@ namespace RentalManager.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteSystemCodeItem(int id)
         {
-            var item = await _context.SystemCodeItems.FindAsync(id);
-
-            if (item == null)
+            try
             {
-                return NotFound($"SystemCode with ID {id} was not found.");
+                var item = await _service.Delete(id);
+                return Ok(item);
+
             }
-
-            _context.SystemCodeItems.Remove(item);
-            await _context.SaveChangesAsync();
-
-            var allItems = await _context.SystemCodeItems.ToListAsync();
-
-            var allItemsDto = allItems.Select(p => p.ToReadDto()).ToList();
-
-            return Ok(allItemsDto);
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
 
 
-        [HttpGet("BY-NAME/{codeName}")]
-        public async Task<IActionResult> GetSystemCodeItemsByCode(string codeName)
-        {
-            var systemCode = await _context.SystemCodes
-                .Include(c => c.SystemCodeItems)
-                .FirstOrDefaultAsync(c => c.Code == codeName);
+        //[HttpGet("BY-NAME/{codeName}")]
+        //public async Task<IActionResult> GetSystemCodeItemsByCode(string codeName)
+        //{
+        //    var systemCode = await _context.SystemCodes
+        //        .Include(c => c.SystemCodeItems)
+        //        .FirstOrDefaultAsync(c => c.Code == codeName);
 
-            if (systemCode == null || !systemCode.SystemCodeItems.Any())
-            {
-                return NotFound(new ApiResponse<object>($"No items found for SystemCode '{codeName}'."));
-            }
+        //    if (systemCode == null || !systemCode.SystemCodeItems.Any())
+        //    {
+        //        return NotFound(new ApiResponse<object>($"No items found for SystemCode '{codeName}'."));
+        //    }
 
-            var result = systemCode.SystemCodeItems.Select(i => i.ToReadDto()); // use your mapping
-            return Ok(new ApiResponse<IEnumerable<READSystemCodeItemDto>>(result, "Items fetched successfully."));
-        }
+        //    var result = systemCode.SystemCodeItems.Select(i => i.ToReadDto()); // use your mapping
+        //    return Ok(new ApiResponse<IEnumerable<READSystemCodeItemDto>>(result, "Items fetched successfully."));
+        //}
 
 
 

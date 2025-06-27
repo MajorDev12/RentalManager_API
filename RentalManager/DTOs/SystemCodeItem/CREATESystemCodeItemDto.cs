@@ -10,5 +10,8 @@ namespace RentalManager.DTOs.SystemCodeItem
 
         [MaxLength(100)]
         public string? Notes { get; set; }
+
+        [Required]
+        public int SystemCodeId { get; set; }
     }
 }

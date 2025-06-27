@@ -10,6 +10,14 @@ namespace RentalManager.Mappings
         {
             Item = dto.Item,
             Notes = dto.Notes,
+            SystemCodeId = dto.SystemCodeId
+        };
+
+        public static SystemCodeItem ToEntity(this UPDATESystemCodeItemDto dto, int id) => new SystemCodeItem
+        {
+            Id = id,
+            Item = dto.Item,
+            Notes = dto.Notes,
         };
 
         public static READSystemCodeItemDto ToReadDto(this SystemCodeItem dto) => new READSystemCodeItemDto
@@ -24,6 +32,15 @@ namespace RentalManager.Mappings
             Item = dto.Item,
             Notes = dto.Notes,
         };
+
+        public static SystemCodeItem ToUpdateEntity(this SystemCodeItem UpdatedItem, SystemCodeItem existingItem)
+        {
+            existingItem.Item = UpdatedItem.Item;
+            existingItem.Notes = UpdatedItem.Notes;
+            existingItem.UpdatedOn = UpdatedItem.UpdatedOn;
+
+            return existingItem;
+        }
 
     }
 }
