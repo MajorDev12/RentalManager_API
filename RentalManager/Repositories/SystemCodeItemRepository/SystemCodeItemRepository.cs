@@ -17,7 +17,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         }
 
 
-        public async Task<List<SystemCodeItem>> GetAllAsync()
+        public async Task<List<SystemCodeItem>?> GetAllAsync()
         {
             return await _context.SystemCodeItems
                 .Include(sc => sc.SystemCode)
@@ -25,9 +25,11 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         }
 
 
-        public async Task<SystemCodeItem> GetByIdAsync(int id)
+        public async Task<SystemCodeItem?> GetByIdAsync(int id)
         {
-            return await _context.SystemCodeItems.FirstOrDefaultAsync(e => e.Id == id);
+            return await _context.SystemCodeItems
+                .Include(sc => sc.SystemCode)
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
 
 
@@ -66,11 +68,13 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
             return await _context.SystemCodeItems.FindAsync(id);
         }
 
-        public async Task<SystemCode?> GetByCodeAsync(string codeName)
+        public async Task<List<SystemCodeItem>?> GetByCodeAsync(string codeName)
         {
-            return await _context.SystemCodes
-                .Include(it => it.SystemCodeItems)
-                .FirstOrDefaultAsync(co => co.Code == codeName);
+            return await _context.SystemCodeItems
+                        .Include(cs => cs.SystemCode)
+                        .Where(sc => sc.SystemCode.Code == codeName)
+                        .ToListAsync();
         }
+
     }
 }

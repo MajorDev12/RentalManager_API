@@ -25,6 +25,8 @@ namespace RentalManager.Mappings
             Id = dto.Id,
             Item = dto.Item,
             Notes = dto.Notes,
+            SystemCodeId = dto.SystemCodeId,
+            SystemCodeName = dto.SystemCode.Code,
         };
 
         public static UPDATESystemCodeItemDto ToUpdateDto(this SystemCodeItem dto) => new UPDATESystemCodeItemDto

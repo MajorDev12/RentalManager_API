@@ -132,6 +132,25 @@ namespace RentalManager.Services.SystemCodeItemService
             }
         }
 
+        public async Task<ApiResponse<List<READSystemCodeItemDto>>> GetByCode(string codeName)
+        {
+            try
+            {
+                var items = await _repo.GetByCodeAsync(codeName);
 
+                if (items == null)
+                {
+                    return new ApiResponse<List<READSystemCodeItemDto>>(null, "Data Not Found.");
+                }
+
+                var itemsDto = items.Select(it => it.ToReadDto()).ToList();
+
+                return new ApiResponse<List<READSystemCodeItemDto>>(itemsDto, "");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<List<READSystemCodeItemDto>>("Error Occurred");
+            }
+        }
     }
 }

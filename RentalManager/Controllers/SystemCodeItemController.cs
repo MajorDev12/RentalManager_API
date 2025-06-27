@@ -108,21 +108,20 @@ namespace RentalManager.Controllers
 
 
 
-        //[HttpGet("BY-NAME/{codeName}")]
-        //public async Task<IActionResult> GetSystemCodeItemsByCode(string codeName)
-        //{
-        //    var systemCode = await _context.SystemCodes
-        //        .Include(c => c.SystemCodeItems)
-        //        .FirstOrDefaultAsync(c => c.Code == codeName);
+        [HttpGet("BY-NAME/{codeName}")]
+        public async Task<IActionResult> GetSystemCodeItemsByCode(string codeName)
+        {
+            try
+            {
+                var items = await _service.GetByCode(codeName);
+                return Ok(items);
 
-        //    if (systemCode == null || !systemCode.SystemCodeItems.Any())
-        //    {
-        //        return NotFound(new ApiResponse<object>($"No items found for SystemCode '{codeName}'."));
-        //    }
-
-        //    var result = systemCode.SystemCodeItems.Select(i => i.ToReadDto()); // use your mapping
-        //    return Ok(new ApiResponse<IEnumerable<READSystemCodeItemDto>>(result, "Items fetched successfully."));
-        //}
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
 
 

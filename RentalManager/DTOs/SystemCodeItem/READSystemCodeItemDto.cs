@@ -8,5 +8,9 @@ namespace RentalManager.DTOs.SystemCodeItem
         public string Item { get; set; } = string.Empty;
 
         public string? Notes { get; set; }
+
+        public int SystemCodeId { get; set; }
+
+        public string SystemCodeName { get; set; } = string.Empty;
     }
 }
