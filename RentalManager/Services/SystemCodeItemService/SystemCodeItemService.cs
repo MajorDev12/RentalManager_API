@@ -138,7 +138,7 @@ namespace RentalManager.Services.SystemCodeItemService
             {
                 var items = await _repo.GetByCodeAsync(codeName);
 
-                if (items == null)
+                if (items == null || items.Count == 0)
                 {
                     return new ApiResponse<List<READSystemCodeItemDto>>(null, "Data Not Found.");
                 }

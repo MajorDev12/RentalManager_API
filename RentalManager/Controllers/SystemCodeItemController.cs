@@ -1,12 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RentalManager.Data;
 using RentalManager.DTOs.SystemCodeItem;
-using RentalManager.Mappings;
-using RentalManager.Models;
 using RentalManager.Services.SystemCodeItemService;
-using RentalManager.Services.SystemCodeService;
 
 namespace RentalManager.Controllers
 {
@@ -122,8 +117,6 @@ namespace RentalManager.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
-
 
 
     }

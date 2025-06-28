@@ -1,5 +1,4 @@
-﻿using RentalManager.DTOs.SystemCode;
-using RentalManager.DTOs.SystemCodeItem;
+﻿using RentalManager.DTOs.SystemCodeItem;
 using RentalManager.Models;
 
 namespace RentalManager.Mappings

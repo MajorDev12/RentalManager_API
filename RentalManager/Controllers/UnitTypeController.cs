@@ -6,6 +6,7 @@ using RentalManager.DTOs.UnitType;
 using RentalManager.DTOs.UtilityBill;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Services.UnitTypeService;
 
 namespace RentalManager.Controllers
 {
@@ -13,44 +14,43 @@ namespace RentalManager.Controllers
     [ApiController]
     public class UnitTypeController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUnitTypeService _service;
 
-        public UnitTypeController(ApplicationDbContext context)
+        public UnitTypeController(IUnitTypeService service)
         {
-            _context = context;
+            _service = service;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> GetUnitType()
         {
-            var types = await _context.UnitTypes
-                .Include(p => p.Property)
-                .ToListAsync();
-
-            if (!types.Any())
+            try
             {
-                return NotFound(new ApiResponse<object>("There are no Unit Types available."));
+                var types = await _service.GetAll();
+                return Ok(types);
+
             }
-
-            var typeDtos = types.Select(it => it.ToReadDto()).ToList();
-
-            return Ok(new ApiResponse<List<READUnitTypeDto>>(typeDtos, ""));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUnitTypeById(int id)
         {
-            var types = await _context.UnitTypes
-                .FirstOrDefaultAsync(pr => pr.Id == id);
-
-            if (types == null)
+            try
             {
-                return NotFound(new ApiResponse<object>("There is no such data"));
-            }
+                var type = await _service.GetById(id);
+                return Ok(type);
 
-            return Ok(new ApiResponse<READUnitTypeDto>(types.ToReadDto(), ""));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -59,49 +59,34 @@ namespace RentalManager.Controllers
         [HttpPost]
         public async Task<IActionResult> AddUnitType([FromBody] CREATEUnitTypeDto AddedUnitType)
         {
-            if (!ModelState.IsValid)
+
+            try
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
+                var type = await _service.Add(AddedUnitType);
+                return Ok(type);
 
-                return BadRequest(new ApiResponse<object>("Validation failed.", errors));
             }
-
-            var type = AddedUnitType.ToEntity();
-
-            _context.UnitTypes.Add(type);
-            await _context.SaveChangesAsync();
-
-            var createdUnitType = await _context.UnitTypes
-                .Include(p => p.Property)
-                .FirstOrDefaultAsync(u => u.Id == type.Id);
-
-            var unitTypeDto = createdUnitType?.ToReadDto();
-            return Ok(new ApiResponse<READUnitTypeDto>(unitTypeDto!, "Unit Type added successfully."));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditUnitType(int id, [FromBody] UPDATEUnitTypeDto dto)
+        public async Task<IActionResult> EditUnitType(int id, [FromBody] UPDATEUnitTypeDto UpdatedType)
         {
+            try
+            {
+                var type = await _service.Update(id, UpdatedType);
+                return Ok(type);
 
-            var types = await _context.UnitTypes
-                .Include(item => item.Property)
-                .FirstOrDefaultAsync(u => u.Id == id);
-
-            if (types == null)
-                return NotFound(new ApiResponse<object>("Unit Type not found."));
-
-            var updatedDto = dto.UpdateEntity(types);
-            await _context.SaveChangesAsync();
-
-            var updatedtype = await _context.UnitTypes
-                .FirstOrDefaultAsync(u => u.Id == types.Id);
-
-            return Ok(new ApiResponse<READUnitTypeDto>(updatedtype!.ToReadDto(), ""));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
 
@@ -109,17 +94,16 @@ namespace RentalManager.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUnitType(int id)
         {
-            var types = await _context.UnitTypes.FindAsync(id);
-
-            if (types == null)
+            try
             {
-                return NotFound($"Unit Type with ID {id} was not found.");
+                var type = await _service.Delete(id);
+                return Ok(type);
+
             }
-
-            _context.UnitTypes.Remove(types);
-            await _context.SaveChangesAsync();
-
-            return Ok(new ApiResponse<object>(null, "Data Deleted Successfully"));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -127,19 +111,16 @@ namespace RentalManager.Controllers
         [HttpGet("By-Property/{PropertyId}")]
         public async Task<IActionResult> GetUnitTypesByProperty(int PropertyId)
         {
-            var types = await _context.UnitTypes
-                .Include(u => u.Property)
-                .Where(u => u.PropertyId == PropertyId)
-                .ToListAsync();
-
-            if (types == null || !types.Any())
+            try
             {
-                return NotFound(new ApiResponse<object>(null!, "There are no Unit Type for the specified property."));
+                var type = await _service.GetByPropertyId(PropertyId);
+                return Ok(type);
+
             }
-
-            var typeDtos = types.Select(u => u.ToReadDto()).ToList();
-
-            return Ok(new ApiResponse<List<READUnitTypeDto>>(typeDtos, "Unit Type fetched successfully."));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
