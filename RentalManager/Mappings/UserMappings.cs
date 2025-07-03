@@ -25,6 +25,24 @@ namespace RentalManager.Mappings
             };
         }
 
+        public static User ToEntity(this UPDATEUserDto dto, int id)
+        {
+            return new User
+            {
+                Id = id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                EmailAddress = dto.EmailAddress,
+                MobileNumber = dto.MobileNumber,
+                AlternativeNumber = dto.AlternativeNumber,
+                NationalId = dto.NationalId,
+                ProfilePhotoUrl = dto.ProfilePhotoUrl,
+                IsActive = dto.IsActive,
+                GenderId = dto.GenderId,
+                UserStatusId = dto.UserStatusId
+            };
+        }
+
 
         public static User ToEntity(this CREATEUserDto dto, int roleId, int UserStatus)
         {
@@ -49,7 +67,7 @@ namespace RentalManager.Mappings
 
 
 
-        public static User UpdateEntity(this UPDATEUserDto dto, User existingUser)
+        public static User UpdateEntity(this User dto, User existingUser)
         {
             existingUser.FirstName = dto.FirstName;
             existingUser.LastName = dto.LastName;
@@ -60,7 +78,6 @@ namespace RentalManager.Mappings
             existingUser.ProfilePhotoUrl = dto.ProfilePhotoUrl;
             existingUser.IsActive = dto.IsActive;
             existingUser.GenderId = dto.GenderId;
-            existingUser.PropertyId = dto.PropertyId;
 
             return existingUser;
         }
@@ -71,6 +88,7 @@ namespace RentalManager.Mappings
         {
             return new READUserDto
             {
+                Id = dto.Id,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 EmailAddress = dto.EmailAddress,
@@ -101,8 +119,7 @@ namespace RentalManager.Mappings
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
                 GenderId = dto.GenderId,
-                UserStatusId = dto.UserStatusId,
-                PropertyId = dto.PropertyId
+                UserStatusId = dto.UserStatusId
             };
         }
     }

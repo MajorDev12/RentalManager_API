@@ -22,8 +22,6 @@
 
         public int UserStatusId { get; set; }
 
-        public int PropertyId { get; set; }
-
         public DateTime UpdatedOn { get; set; } = DateTime.UtcNow;
     }
 }

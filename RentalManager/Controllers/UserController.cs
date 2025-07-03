@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RentalManager.Data;
-using RentalManager.DTOs.Unit;
 using RentalManager.DTOs.User;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Services.UserService;
 
 namespace RentalManager.Controllers
 {
@@ -13,50 +12,42 @@ namespace RentalManager.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUserService _service;
 
-        public UserController(ApplicationDbContext context)
+        public UserController(IUserService service)
         {
-            _context = context;
+            _service = service;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetUsers()
         {
-            var users = await _context.Users
-                .Include(ub => ub.Property)
-                .Include(ub => ub.UserStatus)
-                .Include(ub => ub.Gender)
-                .Include(ub => ub.Role)
-                .ToListAsync();
-
-            if (!users.Any())
+            try
             {
-                return NotFound(new ApiResponse<object>("There are no Users available."));
+                var result = await _service.GetAll();
+                return Ok(result);
+
             }
-
-            var userDtos = users.Select(it => it.ToReadDto()).ToList();
-
-            return Ok(new ApiResponse<List<READUserDto>>(userDtos, ""));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
-            var user = await _context.Users
-                .Include(c => c.Property)
-                .Include(ub => ub.Gender)
-                .Include(ub => ub.UserStatus)
-                .Include(ub => ub.Role)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
-
-            if (user == null)
+            try
             {
-                return NotFound(new ApiResponse<object>("There is no such data"));
-            }
+                var result = await _service.GetById(id);
+                return Ok(result);
 
-            return Ok(new ApiResponse<READUserDto>(user.ToReadDto(), ""));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -64,82 +55,54 @@ namespace RentalManager.Controllers
         [HttpPost]
         public async Task<IActionResult> AddUser([FromBody] CREATEUserDto AddedUser)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                var errors = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .ToList();
+                var result = await _service.Add(AddedUser);
+                return Ok(result);
 
-                return BadRequest(new ApiResponse<object>("Validation failed.", errors));
             }
-
-            var user = AddedUser.ToEntity();
-
-            var status = await _context.SystemCodeItems.FindAsync(AddedUser.UserStatusId);
-            var role = await _context.Roles.FindAsync(AddedUser.RoleId);
-            var gender = await _context.SystemCodeItems.FindAsync(AddedUser.GenderId);
-            var property = await _context.Properties.FindAsync(AddedUser.PropertyId);
-
-            if (status == null || property == null || role == null || gender == null)
+            catch (Exception ex)
             {
-                return BadRequest(new ApiResponse<object>("One of the items provided does not exist: status, property, role, gender."));
+                return BadRequest(ex.Message);
             }
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            var createdUser = await _context.Users
-                .Include(c => c.Property)
-                .Include(ub => ub.Gender)
-                .Include(ub => ub.UserStatus)
-                .Include(ub => ub.Role)
-                .FirstOrDefaultAsync(u => u.Id == user.Id);
-
-            var userDto = createdUser?.ToReadDto();
-            return Ok(new ApiResponse<READUserDto>(userDto!, "User added successfully."));
         }
 
 
 
 
         [HttpPut]
-        public async Task<IActionResult> EditUser(int id, [FromBody] UPDATEUserDto dto)
+        public async Task<IActionResult> EditUser(int id, [FromBody] UPDATEUserDto updatedUser)
         {
 
-            var user = await _context.Users
-                .Include(c => c.Property)
-                .Include(ub => ub.Gender)
-                .Include(ub => ub.UserStatus)
-                .Include(ub => ub.Role)
-                .FirstOrDefaultAsync(u => u.Id == id);
+            try
+            {
+                var result = await _service.Update(id, updatedUser);
+                return Ok(result);
 
-            if (user == null)
-                return NotFound(new ApiResponse<object>("User not found."));
-
-            var userDto = dto.UpdateEntity(user);
-
-            await _context.SaveChangesAsync();
-
-            return Ok(new ApiResponse<READUserDto>(userDto.ToReadDto(), ""));
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
 
         }
+
+
 
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
+            try
             {
-                return NotFound($"User with ID {id} was not found.");
+                var result = await _service.Delete(id);
+                return Ok(result);
+
             }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return Ok(new ApiResponse<object>(null, "Data Deleted Successfully"));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
