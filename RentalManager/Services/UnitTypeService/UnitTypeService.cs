@@ -1,8 +1,10 @@
 ﻿using RentalManager.DTOs.SystemCode;
 using RentalManager.DTOs.SystemCodeItem;
+using RentalManager.DTOs.Unit;
 using RentalManager.DTOs.UnitType;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.UnitTypeRepository;
 
 namespace RentalManager.Services.UnitTypeService
@@ -10,10 +12,12 @@ namespace RentalManager.Services.UnitTypeService
     public class UnitTypeService : IUnitTypeService
     {
         private readonly IUnitTypeRepository _repo;
+        private readonly IPropertyRepository _propertyrepo;
 
-        public UnitTypeService(IUnitTypeRepository repo)
+        public UnitTypeService(IUnitTypeRepository repo, IPropertyRepository propertyrepo)
         {
             _repo = repo;
+            _propertyrepo = propertyrepo;
         }
 
         public async Task<ApiResponse<List<READUnitTypeDto>>> GetAll()
@@ -58,11 +62,36 @@ namespace RentalManager.Services.UnitTypeService
             }
         }
 
+        public async Task<ApiResponse<List<READUnitTypeDto>>> GetByPropertyId(int id)
+        {
+            try
+            {
+                var types = await _repo.GetByPropertyIdAsync(id);
+
+                if (types == null || types.Count == 0)
+                {
+                    return new ApiResponse<List<READUnitTypeDto>>(null, "Data Not Found.");
+                }
+
+                var typeDto = types.Select(it => it.ToReadDto()).ToList();
+
+                return new ApiResponse<List<READUnitTypeDto>>(typeDto, "");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<List<READUnitTypeDto>>("Error Occurred");
+            }
+        }
 
         public async Task<ApiResponse<READUnitTypeDto>> Add(CREATEUnitTypeDto type)
         {
             try
             {
+                var property = await _propertyrepo.FindAsync(type.PropertyId);
+
+                if (property == null) return new ApiResponse<READUnitTypeDto>(null, "Property Does Not Exist.");
+
+
                 var entity = type.ToEntity();
                 var types = await _repo.AddAsync(entity);
 
@@ -89,6 +118,10 @@ namespace RentalManager.Services.UnitTypeService
                 var existing = await _repo.FindAsync(id);
 
                 if (existing == null) return new ApiResponse<READUnitTypeDto>(null, "No Such Data.");
+
+                var property = await _propertyrepo.FindAsync(type.PropertyId);
+
+                if (property == null) return new ApiResponse<READUnitTypeDto>(null, "Property Does Not Exist.");
 
 
                 var entity = type.ToEntity(id);
@@ -125,25 +158,5 @@ namespace RentalManager.Services.UnitTypeService
             }
         }
 
-        public async Task<ApiResponse<List<READUnitTypeDto>>> GetByPropertyId(int id)
-        {
-            try
-            {
-                var types = await _repo.GetByPropertyIdAsync(id);
-
-                if (types == null || types.Count == 0)
-                {
-                    return new ApiResponse<List<READUnitTypeDto>>(null, "Data Not Found.");
-                }
-
-                var typeDto = types.Select(it => it.ToReadDto()).ToList();
-
-                return new ApiResponse<List<READUnitTypeDto>>(typeDto, "");
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<List<READUnitTypeDto>>("Error Occurred");
-            }
-        }
     }
 }

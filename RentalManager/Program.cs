@@ -12,6 +12,15 @@ using RentalManager.Services.SystemCodeItemService;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Services.UnitTypeService;
 using RentalManager.Repositories.UnitTypeRepository;
+using RentalManager.Repositories.UnitRepository;
+using RentalManager.Services.UnitService;
+using RentalManager.Repositories.UtilityBillRepository;
+using RentalManager.Services.UtilityBillService;
+using RentalManager.Services.UserService;
+using RentalManager.Repositories.UserRepository;
+using RentalManager.Services.TenantService;
+using RentalManager.Services;
+using RentalManager.Repositories.TenantRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +52,10 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<ISystemCodeRepository, SystemCodeRepository>();
 builder.Services.AddScoped<ISystemCodeItemRepository, SystemCodeItemRepository>();
 builder.Services.AddScoped<IUnitTypeRepository, UnitTypeRepository>();
+builder.Services.AddScoped<IUnitRepository, UnitRepository>();
+builder.Services.AddScoped<IUtilityBillRepository, UtilityBillRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -50,6 +63,10 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<ISystemCodeService, SystemCodeService>();
 builder.Services.AddScoped<ISystemCodeItemService, SystemCodeItemService>();
 builder.Services.AddScoped<IUnitTypeService, UnitTypeService>();
+builder.Services.AddScoped<IUnitService, UnitService>();
+builder.Services.AddScoped<IUtilityBillService, UtilityBillService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

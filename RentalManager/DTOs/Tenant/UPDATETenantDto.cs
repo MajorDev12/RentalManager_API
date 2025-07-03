@@ -13,5 +13,7 @@ namespace RentalManager.DTOs.Tenant
 
         public UPDATEUserDto User { get; set; } = null!;
 
+        public int Status { get; set; }
+
     }
 }

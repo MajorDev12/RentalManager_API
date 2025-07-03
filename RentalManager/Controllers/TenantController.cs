@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using RentalManager.Data;
+﻿using Microsoft.AspNetCore.Mvc;
 using RentalManager.DTOs.Tenant;
-using RentalManager.Mappings;
-using RentalManager.Models;
+using RentalManager.Services;
 
 namespace RentalManager.Controllers
 {
@@ -12,55 +8,49 @@ namespace RentalManager.Controllers
     [ApiController]
     public class TenantController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ITenantService _service;
 
-        public TenantController(ApplicationDbContext context)
+        public TenantController(ITenantService service)
         {
-            _context = context;
+            _service = service;
         }
 
 
         [HttpGet]
         public async Task<IActionResult> GetTenants()
         {
-            var tenants = await _context.Tenants
-                .Include(t => t.User).ThenInclude(u => u.Role)
-                .Include(t => t.User).ThenInclude(u => u.Gender)
-                .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                .Include(t => t.User).ThenInclude(u => u.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.TenantStatus)
-                .ToListAsync();
-
-            if (!tenants.Any())
+            try
             {
-                return NotFound(new ApiResponse<object>("There are no Tenants available."));
+                var result = await _service.GetAll();
+
+                if(result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
             }
-
-            var tenantDtos = tenants.Select(it => it.ToReadDto()).ToList();
-
-            return Ok(new ApiResponse<List<READTenantDto>>(tenantDtos, ""));
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTenantById(int id)
         {
-            var tenant = await _context.Tenants
-                .Include(t => t.User).ThenInclude(u => u.Role)
-                .Include(t => t.User).ThenInclude(u => u.Gender)
-                .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                .Include(t => t.User).ThenInclude(u => u.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.TenantStatus)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
-
-            if (tenant == null)
+            try
             {
-                return NotFound(new ApiResponse<object>("There is no such data"));
-            }
+                var result = await _service.GetById(id);
 
-            return Ok(new ApiResponse<READTenantDto>(tenant.ToReadDto(), ""));
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
@@ -69,59 +59,18 @@ namespace RentalManager.Controllers
         [HttpPost]
         public async Task<IActionResult> AddTenant([FromBody] CREATETenantDto AddedTenant)
         {
-
-            // Validate referenced Unit and Status
-            var property = await _context.Properties.FindAsync(AddedTenant.User.PropertyId);
-
-            if (property == null)
-            {
-                return BadRequest(new ApiResponse<object>("Invalid property provided."));
-            }
-            var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Tenant");
-            var defaultStatus = await _context.SystemCodeItems.FirstOrDefaultAsync(r => r.Item == "Pending");
-            var defaultUserStatus = await _context.SystemCodeItems.FirstOrDefaultAsync(r => r.Item == "Active");
-
-
-            if (defaultRole == null || defaultStatus == null || defaultUserStatus == null)
-            {
-                return BadRequest(new ApiResponse<object>("Missing default role, TenantStatus or UserStatus"));
-            }
-
-            // Begin Transaction
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
-                // Create user
-                var user = AddedTenant.User.ToEntity(defaultRole.Id, defaultUserStatus.Id);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+                var result = await _service.Add(AddedTenant);
 
-                // Create tenant
-                var tenant = AddedTenant.ToEntity(user, defaultStatus.Id);
-                _context.Tenants.Add(tenant);
-                await _context.SaveChangesAsync();
+                if (result.Success == false) return BadRequest(result);
 
-                // Commit transaction
-                await transaction.CommitAsync();
+                return Ok(result);
 
-                // Fetch the fully created tenant with all includes
-                var createdTenant = await _context.Tenants
-                    .Include(t => t.User).ThenInclude(u => u.Role)
-                    .Include(t => t.User).ThenInclude(u => u.Gender)
-                    .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                    .Include(t => t.User).ThenInclude(u => u.Property)
-                    .Include(t => t.Unit)
-                    .Include(t => t.TenantStatus)
-                    .FirstOrDefaultAsync(t => t.Id == tenant.Id);
-
-                var tenantDto = createdTenant?.ToReadDto();
-                return Ok(new ApiResponse<READTenantDto>(tenantDto!, "Tenant created successfully."));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new ApiResponse<object>("An error occurred while creating tenant."));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -133,54 +82,18 @@ namespace RentalManager.Controllers
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
 
-            // Validate referenced Unit and Status
-            var property = await _context.Properties.FindAsync(updatedTenant.User.PropertyId);
-
-            if (property == null)
-            {
-                return BadRequest(new ApiResponse<object>("Invalid property provided."));
-            }
-
-
-            // Begin Transaction
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
+                var result = await _service.Update(id, updatedTenant);
 
-                // Fetch existing Tenant and related User
-                var existintTenant = await _context.Tenants.Include(t => t.User)
-                                                   .FirstOrDefaultAsync(t => t.Id == id);
+                if (result.Success == false) return BadRequest(result);   
 
-                if (existintTenant == null || existintTenant.User == null)
-                {
-                    return NotFound(new ApiResponse<object>("Tenant not found."));
-                }
+                return Ok(result);
 
-                var user = updatedTenant.User.UpdateEntity(existintTenant.User);
-                var tenant = updatedTenant.UpdateEntity(existintTenant, existintTenant.User);
-                await _context.SaveChangesAsync();
-
-                // Commit transaction
-                await transaction.CommitAsync();
-
-                // Fetch the fully created tenant with all includes
-                var createdTenant = await _context.Tenants
-                    .Include(t => t.User).ThenInclude(u => u.Role)
-                    .Include(t => t.User).ThenInclude(u => u.Gender)
-                    .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                    .Include(t => t.User).ThenInclude(u => u.Property)
-                    .Include(t => t.Unit)
-                    .Include(t => t.TenantStatus)
-                    .FirstOrDefaultAsync(t => t.Id == tenant.Id);
-
-                var tenantDto = createdTenant?.ToReadDto();
-                return Ok(new ApiResponse<READTenantDto>(tenantDto!, "Tenant updated successfully."));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new ApiResponse<object>(ex.Message));
+                return BadRequest(ex.Message);
             }
         }
 
@@ -190,38 +103,20 @@ namespace RentalManager.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTenant(int id)
         {
-            // Begin transaction
-            using var transaction = await _context.Database.BeginTransactionAsync();
-
             try
             {
-                // Fetch Tenant with related User
-                var tenant = await _context.Tenants
-                    .Include(t => t.User)
-                    .FirstOrDefaultAsync(t => t.Id == id);
+                var result = await _service.Delete(id);
 
-                if (tenant == null || tenant.User == null)
-                {
-                    return NotFound(new ApiResponse<object>(null, $"Tenant with ID {id} was not found."));
-                }
+                if (result.Success == false) return BadRequest(result);
 
-                // Remove Tenant first to avoid FK constraint issues
-                _context.Tenants.Remove(tenant);
-                _context.Users.Remove(tenant.User);
+                return Ok(result);
 
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return Ok(new ApiResponse<object>(null, "Tenant and associated User deleted successfully."));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, new ApiResponse<object>(null, $"An error occurred: {ex.Message}"));
+                return BadRequest(ex.Message);
             }
         }
-
-
 
 
 

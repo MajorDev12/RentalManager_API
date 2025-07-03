@@ -29,6 +29,13 @@ namespace RentalManager.Repositories.UnitTypeRepository
                 .FirstOrDefaultAsync(pr => pr.Id == id);
         }
 
+        public async Task<List<UnitType>?> GetByPropertyIdAsync(int id)
+        {
+           return await _context.UnitTypes
+                .Include(u => u.Property)
+                .Where(u => u.PropertyId == id)
+                .ToListAsync();
+        }
 
         public async Task<UnitType> AddAsync(UnitType type)
         {
@@ -37,6 +44,7 @@ namespace RentalManager.Repositories.UnitTypeRepository
 
             return type;
         }
+
 
         public async Task<UnitType> UpdateAsync(UnitType type)
         {
@@ -64,12 +72,5 @@ namespace RentalManager.Repositories.UnitTypeRepository
             return await _context.UnitTypes.FindAsync(id);
         }
 
-        public async Task<List<UnitType>?> GetByPropertyIdAsync(int id)
-        {
-           return await _context.UnitTypes
-                .Include(u => u.Property)
-                .Where(u => u.PropertyId == id)
-                .ToListAsync();
-        }
     }
 }

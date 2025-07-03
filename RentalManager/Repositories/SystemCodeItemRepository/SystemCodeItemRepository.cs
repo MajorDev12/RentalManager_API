@@ -33,6 +33,14 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         }
 
 
+        public async Task<SystemCodeItem?> GetByItemAsync(string item)
+        {
+            return await _context.SystemCodeItems
+                .Include(sc => sc.SystemCode)
+                .FirstOrDefaultAsync(e => e.Item == item);
+        }
+
+
         public async Task<SystemCodeItem> AddAsync(SystemCodeItem item)
         {
             _context.SystemCodeItems.Add(item);
@@ -67,6 +75,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         {
             return await _context.SystemCodeItems.FindAsync(id);
         }
+
 
         public async Task<List<SystemCodeItem>?> GetByCodeAsync(string codeName)
         {

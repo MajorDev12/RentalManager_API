@@ -22,7 +22,7 @@ namespace RentalManager.Repositories.RoleRepository
         }
 
 
-        public async Task<List<Role>> GetAllAsync()
+        public async Task<List<Role>?> GetAllAsync()
         {
             var roles = await _context.Roles
                 .Include(ub => ub.Property)
@@ -31,7 +31,8 @@ namespace RentalManager.Repositories.RoleRepository
             return roles;
         }
 
-        public async Task<Role> GetByIdAsync(int id)
+
+        public async Task<Role?> GetByIdAsync(int id)
         {
             var role = await _context.Roles
                 .Include(c => c.Property)
@@ -39,6 +40,17 @@ namespace RentalManager.Repositories.RoleRepository
 
             return role;
         }
+
+
+        public async Task<Role?> GetByNameAsync(string name)
+        {
+            var role = await _context.Roles
+                .Include(c => c.Property)
+                .FirstOrDefaultAsync(pr => pr.Name == name);
+
+            return role;
+        }
+
 
         public async Task<Role> UpdateAsync(Role role)
         {
@@ -53,11 +65,13 @@ namespace RentalManager.Repositories.RoleRepository
             return updated;
         }
 
+
         public async Task DeleteAsync(Role role)
         {
             _context.Roles.Remove(role);
             await _context.SaveChangesAsync();
         }
+
 
         public async Task<Role> FindAsync(int id)
         {

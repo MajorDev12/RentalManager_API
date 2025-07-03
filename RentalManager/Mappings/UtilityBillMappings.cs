@@ -15,6 +15,17 @@ namespace RentalManager.Mappings
             };
         }
 
+        public static UtilityBill ToEntity(this UPDATEUtilityBillDto dto, int id)
+        {
+            return new UtilityBill
+            {
+                Id = id,
+                Name = dto.Name,
+                Amount = dto.Amount,
+                PropertyId = dto.PropertyId
+            };
+        }
+
 
         public static READUtilityBillDto ToReadDto(this UtilityBill bill)
         {
@@ -37,6 +48,15 @@ namespace RentalManager.Mappings
                 Amount = bill.Amount,
                 PropertyId = bill.PropertyId
             };
+        }
+
+        public static UtilityBill UpdateEntity(this UtilityBill updatedData, UtilityBill existingData)
+        {
+            existingData.PropertyId = updatedData.PropertyId;
+            existingData.Name = updatedData.Name;
+            existingData.Amount = updatedData.Amount;
+
+            return existingData;
         }
 
     }

@@ -11,8 +11,20 @@ namespace RentalManager.Mappings
             Status = dto.Status,
         };
 
+
         public static Tenant ToEntity(this CREATETenantDto dto, User savedUser, int statusId) => new Tenant
         {
+            UserId = savedUser.Id,
+            FullName = $"{savedUser.FirstName}  {savedUser.LastName}",
+            EmailAddress = savedUser.EmailAddress,
+            MobileNumber = savedUser.MobileNumber,
+            Status = statusId,
+        };
+
+
+        public static Tenant ToEntity(this UPDATETenantDto dto, User savedUser, int statusId, int id) => new Tenant
+        {
+            Id = id,
             UserId = savedUser.Id,
             FullName = $"{savedUser.FirstName}  {savedUser.LastName}",
             EmailAddress = savedUser.EmailAddress,
@@ -45,7 +57,7 @@ namespace RentalManager.Mappings
         };
 
 
-        public static Tenant UpdateEntity(this UPDATETenantDto dto, Tenant tenant, User user)
+        public static Tenant UpdateEntity(this Tenant dto, Tenant tenant, User user)
         {
             tenant.UserId = user.Id;
             tenant.FullName = $"{user.FirstName} {user.LastName}";

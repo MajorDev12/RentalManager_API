@@ -113,8 +113,8 @@ namespace RentalManager.Controllers
         {
             try
             {
-                var type = await _service.GetByPropertyId(PropertyId);
-                return Ok(type);
+                var types = await _service.GetByPropertyId(PropertyId);
+                return Ok(types);
 
             }
             catch (Exception ex)
