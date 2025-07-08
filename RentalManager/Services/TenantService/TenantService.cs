@@ -6,6 +6,7 @@ using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.RoleRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.TenantRepository;
+using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UserRepository;
 
 namespace RentalManager.Services.TenantService
@@ -17,6 +18,7 @@ namespace RentalManager.Services.TenantService
         private readonly IUserRepository _userrepo;
         private readonly IPropertyRepository _propertyrepo;
         private readonly IRoleRepository _rolerepo;
+        private readonly IUnitRepository _unitrepo;
         private readonly ISystemCodeItemRepository _systemcoderepo;
 
         public TenantService(
@@ -25,6 +27,7 @@ namespace RentalManager.Services.TenantService
             IUserRepository userrepo,
             IRoleRepository rolerepo,
             IPropertyRepository propertyrepo,
+            IUnitRepository unitrepo,
             ISystemCodeItemRepository systemcoderepo)
         {
             _context = context;
@@ -32,6 +35,7 @@ namespace RentalManager.Services.TenantService
             _userrepo = userrepo;
             _rolerepo = rolerepo;
             _propertyrepo = propertyrepo;
+            _unitrepo = unitrepo;
             _systemcoderepo = systemcoderepo;
         }
 
@@ -209,5 +213,48 @@ namespace RentalManager.Services.TenantService
             }
         }
 
+
+        public async Task<ApiResponse<READTenantDto>> AssignUnit(ASSIGNUnitDto unitAssigned)
+        {
+            try
+            {
+                var assignedTenant = await _repo.GetByIdAsync(unitAssigned.tenantId);
+                var assignedUnit = await _unitrepo.GetByIdAsync(unitAssigned.unitId);
+
+
+                if (assignedTenant == null || assignedUnit == null)
+                {
+                    return new ApiResponse<READTenantDto>(null, "One of the items provided does not exist");
+                }
+
+                var property = await _propertyrepo.FindAsync(assignedTenant.User.PropertyId);
+
+                if (property == null)
+                {
+                    return new ApiResponse<READTenantDto>(null, "Tenant Property not found.");
+                }
+
+                if (property.Id != assignedUnit.PropertyId)
+                {
+                    return new ApiResponse<READTenantDto>(null, "Unit doesn't match tenant property.");
+                }
+
+
+                var entity = unitAssigned.ToEntity();
+                var assigned = await _repo.AssignUnitAsync(entity);
+
+
+                if (assigned == null)
+                {
+                    return new ApiResponse<READTenantDto>(null, "Data Not Found.");
+                }
+
+                return new ApiResponse<READTenantDto>(null, "Tenant Assigned Unit Successfully");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<READTenantDto>($"Error Occurred: {ex}");
+            }
+        }
     }
 }

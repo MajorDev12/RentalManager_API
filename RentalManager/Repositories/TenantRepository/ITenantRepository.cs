@@ -10,5 +10,6 @@ namespace RentalManager.Repositories.TenantRepository
         Task<Tenant> UpdateAsync(Tenant tenant, User user);
         Task DeleteAsync(Tenant tenant);
         Task<Tenant?> FindAsync(int id);
+        Task<Tenant?> AssignUnitAsync(Tenant tenant);
     }
 }

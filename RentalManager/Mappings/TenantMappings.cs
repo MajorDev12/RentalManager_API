@@ -33,6 +33,13 @@ namespace RentalManager.Mappings
         };
 
 
+        public static Tenant ToEntity(this ASSIGNUnitDto dto) => new Tenant
+        {
+            Id = dto.tenantId,
+            UnitId = dto.unitId,
+        };
+
+
         public static READTenantDto ToReadDto(this Tenant dto) => new READTenantDto
         {
             Id = dto.Id,
@@ -67,7 +74,13 @@ namespace RentalManager.Mappings
             return tenant;
         }
 
+        public static Tenant UpdateEntity(this Tenant updated, Tenant existing)
+        {
+            existing.Id = updated.Id;
+            existing.UnitId = updated.UnitId;
 
+            return existing;
+        }
 
     }
 }

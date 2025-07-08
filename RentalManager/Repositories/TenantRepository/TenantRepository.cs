@@ -76,5 +76,18 @@ namespace RentalManager.Repositories.TenantRepository
             return await _context.Tenants.FindAsync(id);
         }
 
+
+        public async Task<Tenant?> AssignUnitAsync(Tenant tenant)
+        {
+            var existingTenant = await FindAsync(tenant.Id);
+
+            if (existingTenant == null) return null;
+
+            var updatedEntity = tenant.UpdateEntity(existingTenant);
+
+            await _context.SaveChangesAsync();
+
+            return updatedEntity;
+        }
     }
 }
