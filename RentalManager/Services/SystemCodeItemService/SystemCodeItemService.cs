@@ -78,9 +78,7 @@ namespace RentalManager.Services.SystemCodeItemService
                     return new ApiResponse<READSystemCodeItemDto>(null, "Data Not Found.");
                 }
 
-                var itemDto = items.ToReadDto();
-
-                return new ApiResponse<READSystemCodeItemDto>(itemDto, "SystemCodeItem Created Successfully");
+                return new ApiResponse<READSystemCodeItemDto>(null, "SystemCodeItem Created Successfully");
             }
             catch (Exception ex)
             {
@@ -104,7 +102,7 @@ namespace RentalManager.Services.SystemCodeItemService
                 if (updated == null)
                     return new ApiResponse<READSystemCodeItemDto>(null, "Data Not Found.");
 
-                return new ApiResponse<READSystemCodeItemDto>(updated.ToReadDto(), "Updated successfully.");
+                return new ApiResponse<READSystemCodeItemDto>(null, "Updated successfully.");
             }
             catch (Exception ex)
             {
