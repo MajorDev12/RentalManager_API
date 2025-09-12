@@ -12,7 +12,6 @@ namespace RentalManager.Mappings
             return new UnitType
             {
                 Name = dto.Name,
-                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId
             };
@@ -24,7 +23,6 @@ namespace RentalManager.Mappings
             {
                 Id = id,
                 Name = dto.Name,
-                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId
             };
@@ -37,7 +35,6 @@ namespace RentalManager.Mappings
             {
                 Id = dto.Id,
                 Name = dto.Name,
-                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
                 PropertyName = dto.Property.Name
@@ -50,7 +47,6 @@ namespace RentalManager.Mappings
             return new UPDATEUnitTypeDto
             {
                 Name = dto.Name,
-                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId
             };
@@ -61,7 +57,6 @@ namespace RentalManager.Mappings
         {
             existingData.PropertyId = updatedData.PropertyId;
             existingData.Name = updatedData.Name;
-            existingData.Amount = updatedData.Amount;
             existingData.Notes = updatedData.Notes;
 
             return existingData;

@@ -15,9 +15,5 @@ namespace RentalManager.Models
         //Navigation Property
         public ICollection<SystemCodeItem> SystemCodeItems { get; set; } = new List<SystemCodeItem>();
 
-        internal bool Any()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

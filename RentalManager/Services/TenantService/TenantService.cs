@@ -1,11 +1,13 @@
 ﻿using RentalManager.Data;
 using RentalManager.DTOs.Tenant;
+using RentalManager.DTOs.Transaction;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.RoleRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.TenantRepository;
+using RentalManager.Repositories.TransactionRepository;
 using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UserRepository;
 
@@ -19,7 +21,8 @@ namespace RentalManager.Services.TenantService
         private readonly IPropertyRepository _propertyrepo;
         private readonly IRoleRepository _rolerepo;
         private readonly IUnitRepository _unitrepo;
-        private readonly ISystemCodeItemRepository _systemcoderepo;
+        private readonly ISystemCodeItemRepository _systemcodeitemrepo;
+        private readonly ITransactionRepository _transactionrepo;
 
         public TenantService(
             ApplicationDbContext context,
@@ -28,7 +31,8 @@ namespace RentalManager.Services.TenantService
             IRoleRepository rolerepo,
             IPropertyRepository propertyrepo,
             IUnitRepository unitrepo,
-            ISystemCodeItemRepository systemcoderepo)
+            ISystemCodeItemRepository systemcodeitemrepo,
+            ITransactionRepository transactionRepository)
         {
             _context = context;
             _repo = repo;
@@ -36,7 +40,8 @@ namespace RentalManager.Services.TenantService
             _rolerepo = rolerepo;
             _propertyrepo = propertyrepo;
             _unitrepo = unitrepo;
-            _systemcoderepo = systemcoderepo;
+            _systemcodeitemrepo = systemcodeitemrepo;
+            _transactionrepo = transactionRepository;
         }
 
 
@@ -90,7 +95,7 @@ namespace RentalManager.Services.TenantService
             try
             {
                 var property = await _propertyrepo.FindAsync(tenant.User.PropertyId);
-                var gender = await _systemcoderepo.FindAsync(tenant.User.GenderId);
+                var gender = await _systemcodeitemrepo.FindAsync(tenant.User.GenderId);
 
 
                 if (property == null || gender == null)
@@ -100,8 +105,8 @@ namespace RentalManager.Services.TenantService
 
 
                 var defaultRole = await _rolerepo.GetByNameAsync("Tenant");
-                var defaultUserStatus = await _systemcoderepo.GetByItemAsync("Active");
-                var defaultStatus = await _systemcoderepo.GetByItemAsync("Pending");
+                var defaultUserStatus = await _systemcodeitemrepo.GetByItemAsync("Active");
+                var defaultStatus = await _systemcodeitemrepo.GetByItemAsync("Pending");
 
                 if (defaultRole == null || defaultStatus == null || defaultUserStatus == null)
                 {
@@ -150,9 +155,9 @@ namespace RentalManager.Services.TenantService
                 if (existing == null) return new ApiResponse<READTenantDto>(null, "No Such Data.");
 
 
-                var gender = await _systemcoderepo.FindAsync(tenant.User.GenderId);
-                var userStatus= await _systemcoderepo.FindAsync(tenant.User.UserStatusId);
-                var status = await _systemcoderepo.FindAsync(tenant.Status);
+                var gender = await _systemcodeitemrepo.FindAsync(tenant.User.GenderId);
+                var userStatus= await _systemcodeitemrepo.FindAsync(tenant.User.UserStatusId);
+                var status = await _systemcodeitemrepo.FindAsync(tenant.Status);
 
 
                 if (status == null || gender == null)
@@ -220,11 +225,18 @@ namespace RentalManager.Services.TenantService
             {
                 var assignedTenant = await _repo.GetByIdAsync(unitAssigned.tenantId);
                 var assignedUnit = await _unitrepo.GetByIdAsync(unitAssigned.unitId);
+                var tenantStatus = await _systemcodeitemrepo.GetByIdAsync(unitAssigned.status);
+                
 
-
-                if (assignedTenant == null || assignedUnit == null)
+                if (assignedTenant == null || assignedUnit == null || tenantStatus == null)
                 {
                     return new ApiResponse<READTenantDto>(null, "One of the items provided does not exist");
+                }
+
+                    // check if already occupied
+                if (assignedUnit.Status != null && String.Equals(assignedUnit.Status.Item, "occupied", StringComparison.OrdinalIgnoreCase))
+                {
+                    return new ApiResponse<READTenantDto>(null, "unit assigned is already occupied");
                 }
 
                 var property = await _propertyrepo.FindAsync(assignedTenant.User.PropertyId);
@@ -242,6 +254,97 @@ namespace RentalManager.Services.TenantService
 
                 var entity = unitAssigned.ToEntity();
                 var assigned = await _repo.AssignUnitAsync(entity);
+
+                if (tenantStatus.Item?.ToLower() == "active")
+                {
+
+                    var deposit = await _systemcodeitemrepo.GetByItemAsync("deposit");
+                    var rent = await _systemcodeitemrepo.GetByItemAsync("rent");
+                    var charge = await _systemcodeitemrepo.GetByItemAsync("charge");
+                    var payment = await _systemcodeitemrepo.GetByItemAsync("payment");
+
+                    if (deposit == null || charge == null || rent == null || payment == null) 
+                        return new ApiResponse<READTenantDto>(null, "Something went wrong with payments.");
+
+
+
+                    // Rent charge
+                    var rentCharge = new CREATETransactionDto
+                    {
+                        UserId = assignedTenant.UserId,
+                        UnitId = assignedUnit.Id,
+                        TransactionTypeId = charge.Id,
+                        TransactionCategoryId = rent.Id,
+                        Amount = assignedUnit.Amount,
+                        TransactionDate = unitAssigned.PaymentDate,
+                        MonthFor = DateTime.UtcNow.Month,
+                        YearFor = DateTime.UtcNow.Year,
+                        Notes = "Initial rent charge"
+                    };
+
+                    var rentChargeEntity = rentCharge.ToEntity();
+                    var addedChargeRent = await _transactionrepo.AddAsync(rentChargeEntity);
+
+
+                    // Deposit payment
+                    var depositTransaction = new CREATETransactionDto
+                    {
+                        UserId = assignedTenant.UserId,
+                        UnitId = assignedUnit.Id,
+                        TransactionTypeId = payment.Id,
+                        TransactionCategoryId = deposit.Id,
+                        Amount = unitAssigned.DepositAmount,
+                        TransactionDate = unitAssigned.PaymentDate,
+                        MonthFor = DateTime.UtcNow.Month,
+                        YearFor = DateTime.UtcNow.Year,
+                        Notes = "Initial deposit charge"
+                    };
+
+                    var depositEntity = depositTransaction.ToEntity();
+                    await _transactionrepo.AddAsync(depositEntity);
+
+
+
+                    //rent payment
+                    var rentPayment = new CREATETransactionDto
+                    {
+                        UserId = assignedTenant.UserId,
+                        UnitId = assignedUnit.Id,
+                        TransactionTypeId = payment.Id,
+                        TransactionCategoryId = rent.Id,
+                        Amount = unitAssigned.AmountPaid,
+                        TransactionDate = unitAssigned.PaymentDate,
+                        MonthFor = DateTime.UtcNow.Month,
+                        YearFor = DateTime.UtcNow.Year,
+                        Notes = "Initial rent charge"
+                    };
+
+                    if (addedChargeRent != null)
+                    {
+                        var rentPaymentEntity = rentPayment.ToEntity();
+                        await _transactionrepo.AddAsync(rentPaymentEntity);
+
+                        //update house status to occupied
+                        var status = await _systemcodeitemrepo.GetByItemAsync("occupied");
+
+                        if (status != null && status.SystemCode.Code.ToLower() == "unitstatus")
+                        {
+                            var statusUpdated = assignedUnit.UpdateStatusEntity(status.Id);
+                            var statusSaved = await _unitrepo.UpdateStatus();
+
+                            if(statusSaved <= 0){
+                                return new ApiResponse<READTenantDto>(null, "failed to change Unit Status");
+                            }
+                        }
+                        else
+                        {
+                            return new ApiResponse<READTenantDto>(null, "failed to change Unit Status");
+                        }
+                    }
+
+
+                }
+
 
 
                 if (assigned == null)

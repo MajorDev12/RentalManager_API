@@ -20,7 +20,7 @@ namespace RentalManager.Data
         public DbSet<UserLogin> UserLogins { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<Landlord> Landlords { get; set; }
-        public DbSet<Payment> Payments { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
 
 
@@ -32,7 +32,7 @@ namespace RentalManager.Data
 
             ConfigureAuditFields<Property>(modelBuilder);
             ConfigureAuditFields<User>(modelBuilder);
-            ConfigureAuditFields<Payment>(modelBuilder);
+            ConfigureAuditFields<Transaction>(modelBuilder);
             ConfigureAuditFields<Unit>(modelBuilder);
             ConfigureAuditFields<UnitType>(modelBuilder);
             ConfigureAuditFields<UtilityBill>(modelBuilder);
@@ -144,17 +144,29 @@ namespace RentalManager.Data
 
 
 
-            // PAYMENT
-            modelBuilder.Entity<Payment>(entity => {
+
+            // TRANSACTION
+            modelBuilder.Entity<Transaction>(entity =>
+            {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.AmountPaid).HasColumnType("decimal(18,4)").IsRequired();
-                entity.Property(u => u.PaymentDate).IsRequired();
-                entity.Property(u => u.TransactionCode).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.Amount).IsRequired();
+                entity.Property(u => u.TransactionDate).IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
-                entity.HasOne(u => u.Tenant).WithMany().HasForeignKey(u => u.TenantId).OnDelete(DeleteBehavior.Restrict);
+                entity.Property(u => u.MonthFor).HasMaxLength(10);
+                entity.Property(u => u.MonthFor).HasMaxLength(4);
+
+
+                // Relationships
+                entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Unit).WithMany().HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.PaymentMethodItem).WithMany().HasForeignKey(u => u.PaymentMethod).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.TransactionType).WithMany().HasForeignKey(u => u.TransactionTypeId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.TransactionCategory).WithMany().HasForeignKey(u => u.TransactionCategoryId).OnDelete(DeleteBehavior.Restrict);
             });
+
+
+
 
 
 
@@ -162,8 +174,9 @@ namespace RentalManager.Data
             modelBuilder.Entity<Unit>(entity => {
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
-                entity.Property(u => u.Status).HasMaxLength(50);
+                entity.Property(u => u.Amount).IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
+                entity.HasOne(u => u.Status).WithMany().HasForeignKey(u => u.StatusId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.UnitType).WithMany().HasForeignKey(u => u.UnitTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Property).WithMany(u => u.Units).HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
@@ -174,7 +187,6 @@ namespace RentalManager.Data
             modelBuilder.Entity<UnitType>(entity => {
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
-                entity.Property(u => u.Amount).HasColumnType("decimal(18,4)").IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });

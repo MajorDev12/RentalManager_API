@@ -37,6 +37,7 @@ namespace RentalManager.Mappings
         {
             Id = dto.tenantId,
             UnitId = dto.unitId,
+            Status = dto.status
         };
 
 
@@ -76,8 +77,8 @@ namespace RentalManager.Mappings
 
         public static Tenant UpdateEntity(this Tenant updated, Tenant existing)
         {
-            existing.Id = updated.Id;
             existing.UnitId = updated.UnitId;
+            existing.Status = updated.Status;
 
             return existing;
         }

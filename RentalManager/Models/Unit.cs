@@ -9,7 +9,7 @@ namespace RentalManager.Models
 
         public string Name { get; set; } = string.Empty;
 
-        public string? Status { get; set; }
+        public int Amount { get; set; }
 
         public string? Notes { get; set; }
 
@@ -17,6 +17,10 @@ namespace RentalManager.Models
 
         public int UnitTypeId { get; set; }
         public UnitType UnitType { get; set; } = null!;
+
+        public int StatusId { get; set; }
+
+        public SystemCodeItem Status { get; set; } = null!;
 
         public int PropertyId { get; set; }
         public Property Property { get; set; } = null!;

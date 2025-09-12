@@ -128,6 +128,7 @@ namespace RentalManager.Controllers
             {
                 var result = await _service.AssignUnit(unitAssigned);
 
+
                 if (result.Success == false) return BadRequest(result);
 
                 return Ok(result);

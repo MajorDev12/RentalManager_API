@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalManager.Data;
 
@@ -11,9 +12,11 @@ using RentalManager.Data;
 namespace RentalManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250902164549_addTransactionTable")]
+    partial class addTransactionTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -358,8 +361,8 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -367,27 +370,36 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("MonthFor")
+                    b.Property<string>("ItemCategory")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("MonthFor")
                         .HasMaxLength(4)
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
+                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("PaymentMethodId")
+                    b.Property<int>("PaymentMethodId")
                         .HasColumnType("int");
 
-                    b.Property<int>("TransactionCategoryId")
+                    b.Property<int>("TenantId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("TransactionDate")
-                        .HasColumnType("datetime2");
+                    b.Property<string>("TransactionDate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("TransactionTypeId")
-                        .HasColumnType("int");
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("UnitId")
+                    b.Property<int>("UnitId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
@@ -396,13 +408,10 @@ namespace RentalManager.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
+                    b.Property<int>("UtilityBillId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UtilityBillId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("YearFor")
+                    b.Property<int>("YearFor")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -411,15 +420,11 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.HasIndex("TransactionCategoryId");
-
-                    b.HasIndex("TransactionTypeId");
+                    b.HasIndex("TenantId");
 
                     b.HasIndex("UnitId");
 
                     b.HasIndex("UpdatedBy");
-
-                    b.HasIndex("UserId");
 
                     b.HasIndex("UtilityBillId");
 
@@ -433,9 +438,6 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -455,8 +457,9 @@ namespace RentalManager.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("UnitTypeId")
                         .HasColumnType("int");
@@ -473,8 +476,6 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("StatusId");
-
                     b.HasIndex("UnitTypeId");
 
                     b.HasIndex("UpdatedBy");
@@ -489,6 +490,9 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -867,54 +871,41 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.SystemCodeItem", "PaymentMethod")
                         .WithMany()
                         .HasForeignKey("PaymentMethodId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RentalManager.Models.SystemCodeItem", "TransactionCategory")
-                        .WithMany()
-                        .HasForeignKey("TransactionCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.SystemCodeItem", "TransactionType")
+                    b.HasOne("RentalManager.Models.Tenant", "Tenant")
                         .WithMany()
-                        .HasForeignKey("TransactionTypeId")
+                        .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("RentalManager.Models.Unit", "Unit")
                         .WithMany()
                         .HasForeignKey("UnitId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("RentalManager.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("RentalManager.Models.UtilityBill", "UtilityBill")
                         .WithMany()
                         .HasForeignKey("UtilityBillId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("PaymentMethod");
 
-                    b.Navigation("TransactionCategory");
-
-                    b.Navigation("TransactionType");
+                    b.Navigation("Tenant");
 
                     b.Navigation("Unit");
 
                     b.Navigation("UpdatedByUser");
-
-                    b.Navigation("User");
 
                     b.Navigation("UtilityBill");
                 });
@@ -932,12 +923,6 @@ namespace RentalManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.SystemCodeItem", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("RentalManager.Models.UnitType", "UnitType")
                         .WithMany()
                         .HasForeignKey("UnitTypeId")
@@ -952,8 +937,6 @@ namespace RentalManager.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Property");
-
-                    b.Navigation("Status");
 
                     b.Navigation("UnitType");
 

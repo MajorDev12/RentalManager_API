@@ -1,8 +1,8 @@
 ﻿using RentalManager.DTOs.Unit;
-using RentalManager.DTOs.UnitType;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
+using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UnitTypeRepository;
 using System.Data;
@@ -14,12 +14,19 @@ namespace RentalManager.Services.UnitService
         private readonly IUnitRepository _repo;
         private readonly IPropertyRepository _propertyrepo;
         private readonly IUnitTypeRepository _unittyperepo;
+        private readonly ISystemCodeItemRepository _systemcodeitemrepo;
 
-        public UnitService(IUnitRepository repo, IPropertyRepository propertyrepo, IUnitTypeRepository unittyperepo)
+        public UnitService(
+            IUnitRepository repo, 
+            IPropertyRepository propertyrepo, 
+            IUnitTypeRepository unittyperepo,
+            ISystemCodeItemRepository systemcodeitemrepo
+            )
         {
             _repo = repo;
             _propertyrepo = propertyrepo;
             _unittyperepo = unittyperepo;
+            _systemcodeitemrepo = systemcodeitemrepo;
         }
 
         public async Task<ApiResponse<List<READUnitDto>>> GetAll()
@@ -94,12 +101,14 @@ namespace RentalManager.Services.UnitService
             {
                 var property = await _propertyrepo.FindAsync(unit.PropertyId);
                 var unitType = await _unittyperepo.FindAsync(unit.UnitTypeId);
+                var unitStatus = await _systemcodeitemrepo.GetByItemAsync("vacant");
 
-                if (property == null || unitType == null) return new ApiResponse<READUnitDto>(null, "Property or UnitType Provided Does Not Exist.");
+                if (property == null || unitType == null) return new ApiResponse<READUnitDto>(null, "One Of The Items Provided Does Not Exist.");
+
+                if (unitStatus == null) return new ApiResponse<READUnitDto>(null, "unit status does not exist");
 
 
-
-                var entity = unit.ToEntity();
+                var entity = unit.ToEntity(unitStatus.Id);
                 var types = await _repo.AddAsync(entity);
 
                 if (types == null)
@@ -112,7 +121,7 @@ namespace RentalManager.Services.UnitService
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READUnitDto>($"Error Occurred: {ex.InnerException.Message} ");
+                return new ApiResponse<READUnitDto>($"Error Occurred: {ex.InnerException?.Message} ");
             }
         }
 
@@ -128,8 +137,9 @@ namespace RentalManager.Services.UnitService
 
                 var property = await _propertyrepo.FindAsync(unit.PropertyId);
                 var unitType = await _unittyperepo.FindAsync(unit.UnitTypeId);
+                var unitStatus = await _unittyperepo.FindAsync(unit.StatusId);
 
-                if (property == null || unitType == null) return new ApiResponse<READUnitDto>(null, "Property or UnitType Does Not Exist.");
+                if (property == null || unitType == null || unitStatus == null) return new ApiResponse<READUnitDto>(null, "One Of The Items Provided Does Not Exist.");
 
                 var entity = unit.ToEntity(id);
                 var updated = await _repo.UpdateAsync(entity);

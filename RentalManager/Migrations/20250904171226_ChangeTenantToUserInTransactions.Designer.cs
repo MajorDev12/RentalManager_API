@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalManager.Data;
 
@@ -11,9 +12,11 @@ using RentalManager.Data;
 namespace RentalManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250904171226_ChangeTenantToUserInTransactions")]
+    partial class ChangeTenantToUserInTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -358,8 +361,8 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -434,9 +437,6 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Amount")
-                        .HasColumnType("int");
-
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
@@ -455,8 +455,9 @@ namespace RentalManager.Migrations
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("UnitTypeId")
                         .HasColumnType("int");
@@ -473,8 +474,6 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("PropertyId");
 
-                    b.HasIndex("StatusId");
-
                     b.HasIndex("UnitTypeId");
 
                     b.HasIndex("UpdatedBy");
@@ -489,6 +488,9 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,4)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -932,12 +934,6 @@ namespace RentalManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.SystemCodeItem", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("RentalManager.Models.UnitType", "UnitType")
                         .WithMany()
                         .HasForeignKey("UnitTypeId")
@@ -952,8 +948,6 @@ namespace RentalManager.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Property");
-
-                    b.Navigation("Status");
 
                     b.Navigation("UnitType");
 

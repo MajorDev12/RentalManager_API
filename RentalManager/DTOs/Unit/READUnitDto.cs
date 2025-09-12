@@ -6,7 +6,11 @@
 
         public string Name { get; set; } = string.Empty;
 
-        public string? Status { get; set; }
+        public int StatusId { get; set; }
+
+        public string Status { get; set; } = string.Empty;
+
+        public int Amount { get; set; }
 
         public string? Notes { get; set; }
 

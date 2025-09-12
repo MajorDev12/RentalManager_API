@@ -15,5 +15,9 @@ namespace RentalManager.Models
         public int SystemCodeId { get; set; }
         public SystemCode SystemCode { get; set; } = null!;
 
+        public static implicit operator SystemCodeItem(string v)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

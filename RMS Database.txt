@@ -203,26 +203,48 @@ CREATE TABLE Landlord (
 
 
 
-CREATE TABLE Payment (
-    Id INT PRIMARY KEY IDENTITY(1,1),
-    TenantId INT NOT NULL,
-    UtilityBillId INT,
-    AmountPaid DECIMAL(10,2) NOT NULL,
-    PaymentDate DATETIME NOT NULL,
-    PaymentMethod INT,
-    TransactionCode VARCHAR(100),
-    Notes TEXT NULL,
+
+
+
+
+
+CREATE TABLE Transactions (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+
+    TenantId INT NULL,   -- null if expense not tied to tenant
+    UnitId INT NULL,     -- null if expense/general payment
+
+    TransactionType VARCHAR(20) NOT NULL, 
+    -- 'Income' or 'Expense'
+
+    ItemCategory VARCHAR(50) NOT NULL, 
+    -- 'Rent', 'Deposit', 'Water', 'Electricity', 'Maintenance', 'Penalty', 'Refund', 'Other'
+
+    Amount DECIMAL(18,2) NOT NULL,
+
+    PaymentMethod INT NULL, 
+    -- 'Cash', 'Mpesa', 'BankTransfer', 'Token', etc.
+
+    TransactionDate DATETIME NOT NULL DEFAULT GETDATE(),
+
+    MonthFor INT NULL,  -- applicable for rent/utilities (1-12)
+    YearFor INT NULL,   -- applicable for rent/utilities (e.g., 2025)
+
+    Notes NVARCHAR(MAX) NULL,
+
     CreatedBy INT,
     CreatedOn DATETIME NOT NULL DEFAULT GETDATE(),
     UpdatedOn DATETIME,
     UpdatedBy INT,
 
-    CONSTRAINT FK_Payment_Tenant FOREIGN KEY (TenantId) REFERENCES Tenant(Id),
-    CONSTRAINT FK_Payment_UtilityBill FOREIGN KEY (UtilityBillId) REFERENCES UtilityBill(Id),
+    CONSTRAINT FK_Transactions_Tenant FOREIGN KEY (TenantId) REFERENCES Tenants(Id),
+    CONSTRAINT FK_Transactions_Unit FOREIGN KEY (UnitId) REFERENCES Units(Id),
     CONSTRAINT FK_Payment_PaymentMethod FOREIGN KEY (PaymentMethod) REFERENCES SystemCodeItem(Id),
     CONSTRAINT FK_Payment_CreatedBy FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
     CONSTRAINT FK_Payment_UpdatedBy FOREIGN KEY (UpdatedBy) REFERENCES [User](Id)
 );
+
+
 
 
 
@@ -262,6 +284,7 @@ INSERT INTO SystemCode (Id, Code, Notes) VALUES (4, 'PAYMENTMETHOD', 'Types of p
 INSERT INTO SystemCode (Id, Code, Notes) VALUES (5, 'TENANTSTATUS', 'status types for tenants');
 INSERT INTO SystemCode (Id, Code, Notes) VALUES (6, 'USERSTATUS', 'status types for all users');
 INSERT INTO SystemCode (Id, Code, Notes) VALUES (7, 'LOGLEVEL', 'log status');
+INSERT INTO SystemCode (Id, Code, Notes) VALUES (8, 'TRANSACTIONCATEGORY', 'payment or charge type');
 
 
 
@@ -271,9 +294,13 @@ INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (1, 1, 'Admin'
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (2, 1, 'Landlord', 'Property Owner');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (3, 1, 'Tenant', 'Property Tenant');
 
+
+
 -- GENDER (SystemCodeId = 2)
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (4, 2, 'Male', 'Male gender');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (5, 2, 'Female', 'Female gender');
+
+
 
 -- UTILITYBILL (SystemCodeId = 3)
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (6, 3, 'House Rent', 'Monthly house rent payment');
@@ -281,10 +308,14 @@ INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (7, 3, 'Water 
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (8, 3, 'Electricity Bill', 'Monthly electricity bill');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (9, 3, 'Garbage Collection', 'Garbage disposal fees');
 
+
+
 -- PAYMENTMETHOD (SystemCodeId = 4)
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (10, 4, 'Cash', 'Pay directly to the landlord');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (11, 4, 'Mpesa', 'Pay Using paybill number');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (12, 4, 'Bank', 'Pay using property bank account');
+
+
 
 -- TENANTSTATUS (SystemCodeId = 5)
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (13, 5, 'Pending', 'Aspiring tenant');
@@ -293,15 +324,28 @@ INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (15, 5, 'Activ
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (16, 5, 'Evicted', 'Tenant was evicted');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (17, 5, 'Vacated', 'Tenant left voluntarily');
 
--- LOGLEVEL (SystemCodeId = 7)
-INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (18, 7, 'Info', 'doesnt affect anything');
-INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (19, 7, 'Warning', 'may cause unussual behaviour');
-INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (20, 7, 'Error', 'Fatal error');
+
 
 -- USERSTATUS (SystemCodeId = 6)
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (21, 6, 'Active', 'Active user');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (22, 6, 'Inactive', 'Nolonger active');
 INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (23, 6, 'Suspended', 'Temporarily disabled');
+
+
+
+-- LOGLEVEL (SystemCodeId = 7)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (18, 7, 'Info', 'doesnt affect anything');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (19, 7, 'Warning', 'may cause unussual behaviour');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (20, 7, 'Error', 'Fatal error');
+
+
+
+-- USERSTATUS (SystemCodeId = 8)
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (24, 8, 'Rent', 'unit amount');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (25, 8, 'Deposit', 'refundable amount');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (26, 8, 'Water', 'billed per month');
+INSERT INTO SystemCodeItem (Id, SystemCodeId, Item, Notes) VALUES (26, 8, 'Electricity', 'billed per month');
+
 
 
 INSERT INTO Property (
@@ -324,6 +368,7 @@ VALUES
     36.948276, -1.123487, 2, 'Affordable gated community', 
     'green@meadows.co.ke', '+254701234567', 1, GETDATE(), 1
 );
+
 
 
 -- Insert Unit Types
@@ -382,6 +427,9 @@ VALUES
 INSERT INTO Landlord (UserId, RoleId, FullName, MobileNumber, Email)
 VALUES 
 (3, 3, 'Charles Landlord', '0711000003', 'charles@rent.com');
+
+
+
 
 
 

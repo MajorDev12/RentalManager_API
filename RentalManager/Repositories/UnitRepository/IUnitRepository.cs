@@ -9,6 +9,7 @@ namespace RentalManager.Repositories.UnitRepository
         Task<List<Unit>?> GetByPropertyIdAsync(int id);
         Task<Unit> AddAsync(Unit unit);
         Task<Unit> UpdateAsync(Unit unit);
+        Task<int> UpdateStatus();
         Task DeleteAsync(Unit unit);
         Task<Unit?> FindAsync(int id);
     }

@@ -21,6 +21,8 @@ using RentalManager.Repositories.UserRepository;
 using RentalManager.Services.TenantService;
 using RentalManager.Services;
 using RentalManager.Repositories.TenantRepository;
+using RentalManager.Repositories.TransactionRepository;
+using RentalManager.Services.TransactionService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +58,7 @@ builder.Services.AddScoped<IUnitRepository, UnitRepository>();
 builder.Services.AddScoped<IUtilityBillRepository, UtilityBillRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -67,6 +70,7 @@ builder.Services.AddScoped<IUnitService, UnitService>();
 builder.Services.AddScoped<IUtilityBillService, UtilityBillService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<ITransactionService, TransactionService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

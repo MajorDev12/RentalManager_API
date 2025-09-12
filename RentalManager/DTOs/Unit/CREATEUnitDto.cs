@@ -8,8 +8,8 @@ namespace RentalManager.DTOs.Unit
         [MaxLength(50)]
         public string Name { get; set; } = string.Empty;
 
-        [MaxLength(50)]
-        public string? Status { get; set; }
+        [Required]
+        public int Amount { get; set; }
 
         [MaxLength(100)]
         public string? Notes { get; set; }

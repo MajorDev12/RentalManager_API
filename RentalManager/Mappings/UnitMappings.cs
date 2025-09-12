@@ -6,12 +6,13 @@ namespace RentalManager.Mappings
 {
     public static class UnitMappings
     {
-        public static Unit ToEntity(this CREATEUnitDto dto)
+        public static Unit ToEntity(this CREATEUnitDto dto, int statusId)
         {
             return new Unit
             {
                 Name = dto.Name,
-                Status = dto.Status,
+                StatusId = statusId,
+                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
                 UnitTypeId = dto.UnitTypeId
@@ -24,7 +25,8 @@ namespace RentalManager.Mappings
             {
                 Id = id,
                 Name = dto.Name,
-                Status = dto.Status,
+                StatusId = dto.StatusId,
+                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
                 UnitTypeId = dto.UnitTypeId
@@ -38,7 +40,9 @@ namespace RentalManager.Mappings
             {
                 Id = dto.Id,
                 Name = dto.Name,
-                Status = dto.Status,
+                StatusId = dto.StatusId,
+                Status = dto.Status.Item,
+                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyName = dto.Property.Name,
                 PropertyId = dto.Property.Id,
@@ -53,7 +57,8 @@ namespace RentalManager.Mappings
             return new UPDATEUnitDto
             {
                 Name = dto.Name,
-                Status = dto.Status,
+                StatusId = dto.StatusId,
+                Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
                 UnitTypeId = dto.UnitTypeId,
@@ -63,10 +68,19 @@ namespace RentalManager.Mappings
         public static Unit UpdateEntity(this Unit updatedData, Unit existingData)
         {
             existingData.Name = updatedData.Name;
-            existingData.Status = updatedData.Status;
+            existingData.StatusId = updatedData.StatusId;
+            existingData.Amount = updatedData.Amount;
             existingData.Notes = updatedData.Notes;
             existingData.PropertyId = updatedData.PropertyId;
             existingData.UnitTypeId = updatedData.UnitTypeId;
+
+            return existingData;
+        }
+
+
+        public static Unit UpdateStatusEntity(this Unit existingData, int statusId)
+        {
+            existingData.StatusId = statusId;
 
             return existingData;
         }

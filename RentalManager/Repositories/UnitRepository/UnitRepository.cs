@@ -20,6 +20,7 @@ namespace RentalManager.Repositories.UnitRepository
             return await _context.Units
                 .Include(ub => ub.Property)
                 .Include(ub => ub.UnitType)
+                .Include(ub => ub.Status)
                 .ToListAsync();
         }
 
@@ -28,6 +29,7 @@ namespace RentalManager.Repositories.UnitRepository
             return await _context.Units
                 .Include(c => c.Property)
                 .Include(ub => ub.UnitType)
+                .Include(s => s.Status)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
         }
 
@@ -36,6 +38,7 @@ namespace RentalManager.Repositories.UnitRepository
             return await _context.Units
                 .Include(u => u.Property)
                 .Include(u => u.UnitType)
+                .Include(u => u.Status)
                 .Where(u => u.PropertyId == id)
                 .ToListAsync();
         }
@@ -59,6 +62,13 @@ namespace RentalManager.Repositories.UnitRepository
             await _context.SaveChangesAsync();
 
             return updatedEntity;
+        }
+
+        public async Task<int> UpdateStatus()
+        {
+            var changes = await _context.SaveChangesAsync();
+
+            return changes;
         }
 
         public async Task DeleteAsync(Unit unit)
