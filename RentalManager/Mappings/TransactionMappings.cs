@@ -10,6 +10,7 @@ namespace RentalManager.Mappings
         {
             Id = dto.Id,
             UserId = dto.UserId,
+            PropertyId = dto.PropertyId,
             UnitId = dto.UnitId,
             UtilityBillId = dto.UtilityBillId,
             TransactionTypeId = dto.TransactionTypeId,
@@ -39,7 +40,9 @@ namespace RentalManager.Mappings
         {
             Id = dto.Id,
             UserId = dto.UserId,
-            UserName = $"{dto.User.FirstName + dto.User.LastName}",
+            UserName = $"{dto.User?.FirstName}  {dto.User?.LastName}",
+            PropertyId = dto.PropertyId,
+            PropertyName = dto.Property.Name,
             UnitId = dto.Unit?.Id,
             Unit = dto.Unit?.Name,
             UtilityBillId = dto.UtilityBillId,
@@ -56,6 +59,23 @@ namespace RentalManager.Mappings
             YearFor = dto.YearFor,
             Notes = dto?.Notes
         };
+
+
+        public static Transaction UpdateEntity(this UPDATETransactionDto updated, Transaction existing)
+        {
+            existing.UserId = updated.UserId;
+            existing.PropertyId = updated.PropertyId;
+            existing.UnitId = updated.UnitId;
+            existing.Amount = updated.Amount;
+            existing.TransactionTypeId = updated.TransactionTypeId;
+            existing.TransactionCategoryId = updated.TransactionCategoryId;
+            existing.MonthFor = updated.MonthFor;
+            existing.YearFor = updated.YearFor;
+            existing.PaymentMethodId = updated.PaymentMethodId;
+            existing.Notes = updated.Notes;
+
+            return existing;
+        }
 
 
 

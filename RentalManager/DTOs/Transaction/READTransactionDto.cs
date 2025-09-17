@@ -6,9 +6,13 @@ namespace RentalManager.DTOs.Transaction
     {
         public int Id { get; set; }
 
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
 
-        public string UserName { get; set; } = string.Empty;
+        public string? UserName { get; set; }
+
+        public int PropertyId { get; set; }
+
+        public string PropertyName { get; set; } = string.Empty;
 
         public int? UnitId { get; set; }
 
@@ -32,9 +36,9 @@ namespace RentalManager.DTOs.Transaction
 
         public DateTime TransactionDate { get; set; }
 
-        public int? MonthFor { get; set; }
+        public int MonthFor { get; set; }
 
-        public int? YearFor { get; set; }
+        public int YearFor { get; set; }
 
         public string? Notes { get; set; }
     }

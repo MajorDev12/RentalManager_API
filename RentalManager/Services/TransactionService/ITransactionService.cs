@@ -7,5 +7,13 @@ namespace RentalManager.Services.TransactionService
     {
         Task<ApiResponse<List<READTransactionDto>>> GetAll();
 
+        Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction);
+
+        Task<ApiResponse<READTransactionDto>> Update(int id, UPDATETransactionDto transaction);
+
+        Task<ApiResponse<READTransactionDto>> Delete(int id);
+
+        Task<ApiResponse<List<TenantBalanceDto>>> GetRentBalances();
+
     }
 }

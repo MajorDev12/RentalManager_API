@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
+using RentalManager.DTOs.Transaction;
 using RentalManager.Models;
 
 namespace RentalManager.Repositories.TransactionRepository
@@ -23,20 +24,25 @@ namespace RentalManager.Repositories.TransactionRepository
             return transaction;
         }
 
-        public Task DeleteAsync(Transaction transaction)
+
+        public async Task DeleteAsync(Transaction transaction)
         {
-            throw new NotImplementedException();
+            _context.Transactions.Remove(transaction);
+            await _context.SaveChangesAsync();
         }
 
-        public Task<Transaction?> FindAsync(int id)
+
+        public async Task<Transaction?> FindAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.Transactions.FindAsync(id);
         }
+
 
         public async Task<List<Transaction>?> GetAllAsync()
         {
             return await _context.Transactions
                 .Include(t => t.User)
+                .Include(p => p.Property)
                 .Include(t => t.Unit)
                 .Include(t => t.UtilityBill)
                 .Include(t => t.TransactionCategory)
@@ -51,9 +57,36 @@ namespace RentalManager.Repositories.TransactionRepository
             throw new NotImplementedException();
         }
 
-        public Task<Transaction> UpdateAsync(Transaction transaction)
+
+        public async Task<int> UpdateAsync()
         {
-            throw new NotImplementedException();
+            var changes = await _context.SaveChangesAsync();
+
+            return changes;
         }
+
+
+        public async Task<List<TenantBalanceDto>> GetBalancesAsync()
+        {
+            return await _context.Transactions
+                .Where(t => t.UserId != null) // ✅ only tenant transactions
+                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
+                .Select(g => new TenantBalanceDto
+                {
+                    UserId = g.Key.UserId.Value,
+                    Month = g.Key.MonthFor,
+                    Year = g.Key.YearFor,
+                    TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
+                    TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
+                    Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
+                             - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
+                })
+                .Where(b => b.Balance > 0) // ✅ unpaid only
+                .OrderBy(b => b.Year).ThenBy(b => b.Month)
+                .ToListAsync();
+        }
+
+
+
     }
 }

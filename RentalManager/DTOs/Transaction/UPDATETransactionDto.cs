@@ -1,11 +1,7 @@
-﻿using RentalManager.Models;
-
-namespace RentalManager.DTOs.Transaction
+﻿namespace RentalManager.DTOs.Transaction
 {
-    public class CREATETransactionDto : AuditableEntity
+    public class UPDATETransactionDto
     {
-        public int Id { get; set; }
-
         public int? UserId { get; set; }
 
         public int PropertyId { get; set; }
@@ -22,12 +18,13 @@ namespace RentalManager.DTOs.Transaction
 
         public int? PaymentMethodId { get; set; }
 
-        public DateTime TransactionDate { get; set; } 
+        public DateTime TransactionDate { get; set; }
 
         public int MonthFor { get; set; }
 
         public int YearFor { get; set; }
 
         public string Notes { get; set; } = string.Empty;
+
     }
 }

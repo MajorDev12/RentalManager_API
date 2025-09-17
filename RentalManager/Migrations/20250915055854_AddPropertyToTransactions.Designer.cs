@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalManager.Data;
 
@@ -11,9 +12,11 @@ using RentalManager.Data;
 namespace RentalManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250915055854_AddPropertyToTransactions")]
+    partial class AddPropertyToTransactions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -367,7 +370,7 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("MonthFor")
+                    b.Property<int?>("MonthFor")
                         .HasMaxLength(4)
                         .HasColumnType("int");
 
@@ -399,13 +402,13 @@ namespace RentalManager.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UtilityBillId")
                         .HasColumnType("int");
 
-                    b.Property<int>("YearFor")
+                    b.Property<int?>("YearFor")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -905,7 +908,8 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("RentalManager.Models.UtilityBill", "UtilityBill")
                         .WithMany()

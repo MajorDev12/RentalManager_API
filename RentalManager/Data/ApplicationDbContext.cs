@@ -158,6 +158,7 @@ namespace RentalManager.Data
 
                 // Relationships
                 entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Unit).WithMany().HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);

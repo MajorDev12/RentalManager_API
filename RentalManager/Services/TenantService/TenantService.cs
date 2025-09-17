@@ -272,6 +272,7 @@ namespace RentalManager.Services.TenantService
                     var rentCharge = new CREATETransactionDto
                     {
                         UserId = assignedTenant.UserId,
+                        PropertyId = assignedUnit.PropertyId,
                         UnitId = assignedUnit.Id,
                         TransactionTypeId = charge.Id,
                         TransactionCategoryId = rent.Id,
@@ -290,6 +291,7 @@ namespace RentalManager.Services.TenantService
                     var depositTransaction = new CREATETransactionDto
                     {
                         UserId = assignedTenant.UserId,
+                        PropertyId = assignedUnit.PropertyId,
                         UnitId = assignedUnit.Id,
                         TransactionTypeId = payment.Id,
                         TransactionCategoryId = deposit.Id,
@@ -309,6 +311,7 @@ namespace RentalManager.Services.TenantService
                     var rentPayment = new CREATETransactionDto
                     {
                         UserId = assignedTenant.UserId,
+                        PropertyId = assignedUnit.PropertyId,
                         UnitId = assignedUnit.Id,
                         TransactionTypeId = payment.Id,
                         TransactionCategoryId = rent.Id,
@@ -356,7 +359,7 @@ namespace RentalManager.Services.TenantService
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READTenantDto>($"Error Occurred: {ex}");
+                return new ApiResponse<READTenantDto>($"Error Occurred: {ex.InnerException?.Message}");
             }
         }
     }
