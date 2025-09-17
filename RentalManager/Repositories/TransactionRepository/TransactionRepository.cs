@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.DTOs.Transaction;
+using RentalManager.DTOs.User;
 using RentalManager.Models;
 
 namespace RentalManager.Repositories.TransactionRepository
@@ -69,21 +70,30 @@ namespace RentalManager.Repositories.TransactionRepository
         public async Task<List<TenantBalanceDto>> GetBalancesAsync()
         {
             return await _context.Transactions
-                .Where(t => t.UserId != null) // ✅ only tenant transactions
+                .Where(t => t.UserId != null && t.TransactionCategory.Item == "Rent")
                 .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
                 .Select(g => new TenantBalanceDto
                 {
                     UserId = g.Key.UserId.Value,
+
+                    // ✅ project scalar properties instead of returning nav objects
+                    FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
+                    UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
+                    PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
+
                     Month = g.Key.MonthFor,
                     Year = g.Key.YearFor,
+
                     TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
                     TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
                     Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
                              - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
                 })
-                .Where(b => b.Balance > 0) // ✅ unpaid only
+                .Where(b => b.Balance > 0)
                 .OrderBy(b => b.Year).ThenBy(b => b.Month)
                 .ToListAsync();
+
+
         }
 
 

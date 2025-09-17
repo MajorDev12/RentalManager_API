@@ -94,7 +94,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpGet("/UnpaidTenants")]
+        [HttpGet("UnpaidTenants")]
         public async Task<IActionResult> UnpaidTenants()
         {
             try

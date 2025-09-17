@@ -182,6 +182,7 @@ namespace RentalManager.Services.TransactionService
                 if (!balances.Any())
                     return new ApiResponse<List<TenantBalanceDto>>(null, "No unpaid tenants found.");
 
+
                 return new ApiResponse<List<TenantBalanceDto>>(balances, "Unpaid tenants retrieved successfully.");
             }
             catch (Exception ex)
