@@ -327,6 +327,10 @@ namespace RentalManager.Services.TenantService
                         var rentPaymentEntity = rentPayment.ToEntity();
                         await _transactionrepo.AddAsync(rentPaymentEntity);
 
+
+                        //add Invoice
+
+
                         //update house status to occupied
                         var status = await _systemcodeitemrepo.GetByItemAsync("occupied");
 
