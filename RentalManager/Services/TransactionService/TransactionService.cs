@@ -1,8 +1,11 @@
-﻿using RentalManager.DTOs.Property;
+﻿using RentalManager.DTOs.Invoice;
+using RentalManager.DTOs.InvoiceLine;
+using RentalManager.DTOs.Property;
 using RentalManager.DTOs.Tenant;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.TransactionRepository;
@@ -16,16 +19,19 @@ namespace RentalManager.Services.TransactionService
         private readonly ISystemCodeItemRepository _systemcodeitemrepo;
         private readonly IPropertyRepository _propertyrepo;
         private readonly IUnitRepository _unitrepo;
+        private readonly IInvoiceRepository _invoicerepo;
 
         public TransactionService(
             ITransactionRepository repo,
             ISystemCodeItemRepository systemcodeitemrepo,
             IPropertyRepository propertyrepo,
-            IUnitRepository unitrepo) {
+            IUnitRepository unitrepo,
+            IInvoiceRepository invoiceRepo) {
             _repo = repo;
             _systemcodeitemrepo = systemcodeitemrepo;
             _propertyrepo = propertyrepo;
             _unitrepo = unitrepo;
+            _invoicerepo = invoiceRepo;
         }
 
 
@@ -63,7 +69,7 @@ namespace RentalManager.Services.TransactionService
                 if (property == null)
                     return new ApiResponse<READTransactionDto>(null, "Property does not exist");
 
-                // check if there is unit then confirm its fom the property above
+                // check if there is unit then confirm its from the property above
                 if (transaction.UnitId is int unitId)
                 {
                     var unit = await _unitrepo.GetByIdAsync(unitId);
@@ -82,6 +88,40 @@ namespace RentalManager.Services.TransactionService
                 if (type == null || category == null)
                     return new ApiResponse<READTransactionDto>(null, "Transaction type or category is not available");
 
+                // check when category is -rent- confirm unit is selected
+                if (category.Item.ToLower() == "rent")
+                {
+                    if (transaction.UnitId is int id)
+                    {
+                        // check if unitAmount - totalAmount is 0 for whole monthFor
+                        var unit = await _unitrepo.FindAsync(id);
+                        var transactions = await _repo.GetAllAsync();
+                        var transactionForMonth = transactions?
+                            .Where(u => u.MonthFor == transaction.MonthFor && u.TransactionCategory.Item.ToLower() == "rent")
+                            .ToList();
+
+                        if(transactionForMonth.Any())
+                        {
+                            int initialAmount = 0;
+                            foreach(var monthFor in transactionForMonth)
+                            {
+                                monthFor.Amount += initialAmount;
+                            }
+
+                            if(unit.Amount - initialAmount <= 0)
+                            {
+                                return new ApiResponse<READTransactionDto>(null, $"Seems the Tenant has cleared Rent for this month {transaction.MonthFor} of this year {transaction.YearFor}");
+                            }
+                        }
+
+
+                    }
+                    else 
+                    { 
+                        return new ApiResponse<READTransactionDto>(null, "Please Add Unit For rent youre paying for");
+                    }
+
+                }
 
                 if (transaction.PaymentMethodId is int paymentMethodId)
                 {

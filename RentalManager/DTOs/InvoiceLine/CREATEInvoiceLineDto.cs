@@ -1,10 +1,8 @@
-﻿namespace RentalManager.Models
+﻿namespace RentalManager.DTOs.InvoiceLine
 {
-    public class InvoiceLine : AuditableEntity
+    public class CREATEInvoiceLineDto
     {
-        public int Id { get; set; }
         public int InvoiceId { get; set; }
-        public Invoice Invoices { get; set; } = null!;
 
         public string TransactionCategory { get; set; } = string.Empty;
 

@@ -10,9 +10,13 @@
 
         public decimal AmountPaid { get; set; }
 
-        public decimal Balance => TotalAmount - AmountPaid;
+        public decimal Balance { get; set; }
 
         public string Status { get; set; } = string.Empty; // Draft, Sent, Paid, PartiallyPaid, Overdue
+
+        public int TransactionId { get; set; }
+
+        public Transaction Transactions { get; set; } = null!;
 
     }
 }

@@ -1,4 +1,5 @@
-﻿using RentalManager.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using RentalManager.Data;
 using RentalManager.Models;
 
 namespace RentalManager.Repositories.InvoiceRepository
@@ -14,31 +15,48 @@ namespace RentalManager.Repositories.InvoiceRepository
 
 
 
-        public Task<Invoice> AddAsync(Invoice transaction)
+        public async Task<Invoice> AddAsync(Invoice invoice)
         {
-            throw new NotImplementedException();
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync();
+            return invoice;
         }
+
+
 
         public Task DeleteAsync(Invoice transaction)
         {
             throw new NotImplementedException();
         }
 
+
+
         public Task<Invoice?> FindAsync(int id)
         {
             throw new NotImplementedException();
         }
 
+
+
         public async Task<List<Invoice>?> GetAllAsync()
         {
-            var invoices = await _context.Invoices.ToListAsync();
-            return invoices;
+            return await _context.Invoices
+                .Include(u => u.Transactions)
+                .Include(u => u.Transactions.Property)
+                .Include(u => u.Transactions.User)
+                .Include(u => u.Transactions.TransactionCategory)
+                .Include(u => u.Transactions.TransactionType)
+                .ToListAsync();
         }
+
+
 
         public Task<Invoice?> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
         }
+
+
 
         public Task<int> UpdateAsync()
         {

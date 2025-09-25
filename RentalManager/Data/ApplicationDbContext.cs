@@ -21,6 +21,8 @@ namespace RentalManager.Data
         public DbSet<Tenant> Tenants { get; set; }
         public DbSet<Landlord> Landlords { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<InvoiceLine> InvoiceLines { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
 
 
@@ -40,6 +42,8 @@ namespace RentalManager.Data
             ConfigureAuditFields<SystemCodeItem>(modelBuilder);
             ConfigureAuditFields<SystemLog>(modelBuilder);
             ConfigureAuditFields<Role>(modelBuilder);
+            ConfigureAuditFields<Invoice>(modelBuilder);
+            ConfigureAuditFields<InvoiceLine>(modelBuilder);
 
 
 
@@ -166,6 +170,34 @@ namespace RentalManager.Data
                 entity.HasOne(u => u.TransactionCategory).WithMany().HasForeignKey(u => u.TransactionCategoryId).OnDelete(DeleteBehavior.Restrict);
             });
 
+
+
+
+            //INVOICE
+            modelBuilder.Entity<Invoice>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.Property(u => u.InvoiceNumber).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(u => u.AmountPaid).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(u => u.Balance).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(u => u.Status).HasMaxLength(100).IsRequired();
+
+                entity.HasOne(u => u.Transactions).WithMany().HasForeignKey(u => u.TransactionId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+
+
+            //INVOICE LINE
+            modelBuilder.Entity<InvoiceLine>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.Property(u => u.TransactionCategory).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.Amount).HasColumnType("decimal(18,2)").IsRequired();
+
+                entity.HasOne(u => u.Invoices).WithMany().HasForeignKey(u => u.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+            });
 
 
 

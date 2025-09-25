@@ -1,14 +1,15 @@
-﻿using RentalManager.DTOs.SystemCode;
+﻿using RentalManager.DTOs.Invoice;
+using RentalManager.DTOs.InvoiceLine;
 using RentalManager.Models;
 
 namespace RentalManager.Services.InvoiceService
 {
     public interface IInvoiceService
     {
-        Task<ApiResponse<List<READSystemCodeDto>>> GetAll();
-        Task<ApiResponse<READSystemCodeDto>> GetById(int id);
-        Task<ApiResponse<READSystemCodeDto>> Add(CREATESystemCodeDto code);
-        Task<ApiResponse<READSystemCodeDto>> Update(int id, UPDATESystemCodeDto code);
-        Task<ApiResponse<READSystemCodeDto>> Delete(int id);
+        Task<ApiResponse<List<READInvoiceDto>>> GetAll();
+        Task<ApiResponse<READInvoiceDto>> GetById(int id);
+        Task<ApiResponse<READInvoiceDto>> Add(CREATEInvoiceDto invoice, List<CREATEInvoiceLineDto> lineDto);
+        Task<ApiResponse<READInvoiceDto>> Update(int id, READInvoiceDto code);
+        Task<ApiResponse<READInvoiceDto>> Delete(int id);
     }
 }

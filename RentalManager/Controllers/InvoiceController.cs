@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.DTOs.Invoice;
+using RentalManager.DTOs.InvoiceLine;
 using RentalManager.DTOs.Tenant;
 using RentalManager.Services.InvoiceService;
 
@@ -58,11 +60,11 @@ namespace RentalManager.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> AddInvoice([FromBody] CREATETenantDto AddedTenant)
+        public async Task<IActionResult> AddInvoice([FromBody] CREATEInvoiceDto addedInvoice)
         {
             try
             {
-                var result = await _service.Add(AddedTenant);
+                var result = await _service.Add(addedInvoice, new List<CREATEInvoiceLineDto>());
 
                 if (result.Success == false) return BadRequest(result);
 
@@ -78,7 +80,7 @@ namespace RentalManager.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditInvoice(int id, [FromBody] UPDATETenantDto updatedTenant)
+        public async Task<IActionResult> EditInvoice(int id, [FromBody] READInvoiceDto updatedTenant)
         {
 
             try

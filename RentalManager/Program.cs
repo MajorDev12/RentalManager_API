@@ -1,28 +1,30 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.Helpers.Validations;
+using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
-using RentalManager.Services.PropertyService;
 using RentalManager.Repositories.RoleRepository;
-using RentalManager.Services.RoleService;
-using RentalManager.Repositories.SystemCodeRepository;
-using RentalManager.Services.SystemCodeService;
-using RentalManager.Services.SystemCodeItemService;
 using RentalManager.Repositories.SystemCodeItemRepository;
-using RentalManager.Services.UnitTypeService;
-using RentalManager.Repositories.UnitTypeRepository;
-using RentalManager.Repositories.UnitRepository;
-using RentalManager.Services.UnitService;
-using RentalManager.Repositories.UtilityBillRepository;
-using RentalManager.Services.UtilityBillService;
-using RentalManager.Services.UserService;
-using RentalManager.Repositories.UserRepository;
-using RentalManager.Services.TenantService;
-using RentalManager.Services;
+using RentalManager.Repositories.SystemCodeRepository;
 using RentalManager.Repositories.TenantRepository;
 using RentalManager.Repositories.TransactionRepository;
+using RentalManager.Repositories.UnitRepository;
+using RentalManager.Repositories.UnitTypeRepository;
+using RentalManager.Repositories.UserRepository;
+using RentalManager.Repositories.UtilityBillRepository;
+using RentalManager.Services;
+using RentalManager.Services.InvoiceService;
+using RentalManager.Services.PropertyService;
+using RentalManager.Services.RoleService;
+using RentalManager.Services.SystemCodeItemService;
+using RentalManager.Services.SystemCodeService;
+using RentalManager.Services.TenantService;
 using RentalManager.Services.TransactionService;
+using RentalManager.Services.UnitService;
+using RentalManager.Services.UnitTypeService;
+using RentalManager.Services.UserService;
+using RentalManager.Services.UtilityBillService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,6 +61,7 @@ builder.Services.AddScoped<IUtilityBillRepository, UtilityBillRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -71,6 +74,7 @@ builder.Services.AddScoped<IUtilityBillService, UtilityBillService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
