@@ -38,6 +38,13 @@ namespace RentalManager.Repositories.TransactionRepository
             return await _context.Transactions.FindAsync(id);
         }
 
+        public async Task<List<Transaction>?> FindByMonthAsync(int month, int year)
+        {
+            return await _context.Transactions
+                .Where(u => u.MonthFor == month && u.YearFor == year)
+                .ToListAsync();
+        }
+
 
         public async Task<List<Transaction>?> GetAllAsync()
         {

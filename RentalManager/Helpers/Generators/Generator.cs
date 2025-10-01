@@ -4,9 +4,9 @@ namespace RentalManager.Helpers.Generators
 {
     public class Generator
     {
-        private readonly Random _random = new Random();
+        private static readonly Random _random = new Random();
 
-        public string InvoiceNumberGenerator()
+        public static string InvoiceNumberGenerator()
         {
             string prefix = "INV";
             string datePart = DateTime.Now.ToString("yyyyMMdd");

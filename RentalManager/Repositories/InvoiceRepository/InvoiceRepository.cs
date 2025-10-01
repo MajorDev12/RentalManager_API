@@ -37,6 +37,13 @@ namespace RentalManager.Repositories.InvoiceRepository
         }
 
 
+        public async Task<Invoice?> FindByMonthAsync(int month, int year)
+        {
+            return await _context.Invoices
+                .Where(u => u.Transactions.MonthFor == month && u.Transactions.YearFor == year)
+                .FirstOrDefaultAsync();
+        }
+
 
         public async Task<List<Invoice>?> GetAllAsync()
         {

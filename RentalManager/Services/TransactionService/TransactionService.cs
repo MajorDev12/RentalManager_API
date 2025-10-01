@@ -10,6 +10,7 @@ using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.TransactionRepository;
 using RentalManager.Repositories.UnitRepository;
+using RentalManager.Services.InvoiceService;
 
 namespace RentalManager.Services.TransactionService
 {
@@ -20,18 +21,22 @@ namespace RentalManager.Services.TransactionService
         private readonly IPropertyRepository _propertyrepo;
         private readonly IUnitRepository _unitrepo;
         private readonly IInvoiceRepository _invoicerepo;
+        private readonly IInvoiceService _invoiceservice;
 
         public TransactionService(
             ITransactionRepository repo,
             ISystemCodeItemRepository systemcodeitemrepo,
             IPropertyRepository propertyrepo,
             IUnitRepository unitrepo,
-            IInvoiceRepository invoiceRepo) {
+            IInvoiceRepository invoiceRepo,
+            IInvoiceService invoiceservice)
+        {
             _repo = repo;
             _systemcodeitemrepo = systemcodeitemrepo;
             _propertyrepo = propertyrepo;
             _unitrepo = unitrepo;
             _invoicerepo = invoiceRepo;
+            _invoiceservice = invoiceservice;
         }
 
 
@@ -143,6 +148,8 @@ namespace RentalManager.Services.TransactionService
 
                 if (addedTransaction != null)
                 {
+                    var createInvoiceDto = addedTransaction.ToInvoice();
+                    var addedInvoice = await _invoiceservice.Add(createInvoiceDto, new List<CREATEInvoiceLineDto>());
                     return new ApiResponse<READTransactionDto>(null, "Transaction added Successfully");
                 }
                 else
@@ -155,7 +162,6 @@ namespace RentalManager.Services.TransactionService
                 return new ApiResponse<READTransactionDto>($"Error Occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
-
 
 
         public async Task<ApiResponse<READTransactionDto>> Update(int id, UPDATETransactionDto updatedTransaction)
@@ -229,6 +235,11 @@ namespace RentalManager.Services.TransactionService
             {
                 return new ApiResponse<List<TenantBalanceDto>>($"Error Occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
+        }
+
+        public Task<ApiResponse<READTransactionDto>> AddPayment(CREATEPaymentDto payment)
+        {
+            throw new NotImplementedException();
         }
     }
 }

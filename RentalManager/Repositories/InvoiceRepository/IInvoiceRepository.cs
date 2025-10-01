@@ -17,5 +17,7 @@ namespace RentalManager.Repositories.InvoiceRepository
 
         Task<Invoice?> FindAsync(int id);
 
+        Task<Invoice?> FindByMonthAsync(int month, int year);
+
     }
 }

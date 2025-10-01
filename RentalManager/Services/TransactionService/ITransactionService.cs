@@ -9,6 +9,8 @@ namespace RentalManager.Services.TransactionService
 
         Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction);
 
+        Task<ApiResponse<READTransactionDto>> AddPayment(CREATEPaymentDto payment);
+
         Task<ApiResponse<READTransactionDto>> Update(int id, UPDATETransactionDto transaction);
 
         Task<ApiResponse<READTransactionDto>> Delete(int id);

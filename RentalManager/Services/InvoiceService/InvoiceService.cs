@@ -58,26 +58,34 @@ namespace RentalManager.Services.InvoiceService
             {
                 // check if transactionId Exists
                 var transactionExists = await _transactionrepo.FindAsync(invoiceAdded.TransactionId);
+                var lineEntity = new List<InvoiceLine>();
+                var invoiceAddedEntity = new Invoice();
 
                 if (transactionExists == null)
                     return new ApiResponse<READInvoiceDto>(null, "Transaction Assigned Does Not Exist");
-                // create InvoiceNumber
-                var generator = new Generator();
-                string invoiceNumber = generator.InvoiceNumberGenerator();
-                // change toEntity - calc balance
-                var invoiceEntity = invoiceAdded.ToEntity(invoiceNumber);
-                // save it
-                var addedInvoice = await _repo.AddAsync(invoiceEntity);
 
-                // add InvoiceLines
-                var lineEnity = lineDto.Select(u => u.ToEntityLineDto(addedInvoice)).ToList();
+                if (invoiceAdded.Combine)
+                {
+                    
+                    invoiceAddedEntity = await _repo.FindByMonthAsync(transactionExists.MonthFor, transactionExists.YearFor);
 
-                var lines = await _invoicelinerepo.AddRangeAsync(lineEnity);
+                    if (invoiceAddedEntity == null)
+                        invoiceAddedEntity = await CreateInvoice(invoiceAdded);
+
+                    lineEntity = lineDto.Select(u => u.ToEntityLineDto(invoiceAddedEntity)).ToList();
+                }
+                else
+                {
+                    invoiceAddedEntity = await CreateInvoice(invoiceAdded);
+
+                    // add InvoiceLines
+                    lineEntity = lineDto.Select(u => u.ToEntityLineDto(invoiceAddedEntity)).ToList();
+                }
 
 
-                var invoiceDto = addedInvoice.ToReadDto();
+                var lines = await _invoicelinerepo.AddRangeAsync(lineEntity);
+                return new ApiResponse<READInvoiceDto>(invoiceAddedEntity.ToReadDto(), "Invoice Added Successfully");
 
-                return new ApiResponse<READInvoiceDto>(invoiceDto, "Invoice Added Successfully");
             }
             catch (Exception ex) 
             {
@@ -95,10 +103,33 @@ namespace RentalManager.Services.InvoiceService
 
 
 
+
         public Task<ApiResponse<READInvoiceDto>> Delete(int id)
         {
             throw new NotImplementedException();
         }
+
+
+
+
+        public async Task<Invoice> CreateInvoice(CREATEInvoiceDto invoiceAdded)
+        {
+            string invoiceNumber = Generator.InvoiceNumberGenerator();
+            var invoiceEntity = invoiceAdded.ToEntity(invoiceNumber);
+            return await _repo.AddAsync(invoiceEntity);
+        }
+
+
+
+
+        public async Task<Invoice?> CombineInvoice(int monthFor, int YearFor)
+        {
+            // get transaction for this month and year Then check where Invoice.Combine is false
+            return await _repo.FindByMonthAsync(monthFor, YearFor);
+
+        }
+
+
 
 
     }

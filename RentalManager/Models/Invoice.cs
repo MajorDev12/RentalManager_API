@@ -14,6 +14,8 @@
 
         public string Status { get; set; } = string.Empty; // Draft, Sent, Paid, PartiallyPaid, Overdue
 
+        public bool Combine { get; set; } = true;
+
         public int TransactionId { get; set; }
 
         public Transaction Transactions { get; set; } = null!;

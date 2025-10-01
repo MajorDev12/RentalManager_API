@@ -158,6 +158,8 @@ namespace RentalManager.Data
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.Property(u => u.MonthFor).HasMaxLength(10);
                 entity.Property(u => u.MonthFor).HasMaxLength(4);
+                entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
+                entity.Property(u => u.Status).HasMaxLength(100);
 
 
                 // Relationships
@@ -182,6 +184,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.AmountPaid).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(u => u.Balance).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(u => u.Status).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
 
                 entity.HasOne(u => u.Transactions).WithMany().HasForeignKey(u => u.TransactionId).OnDelete(DeleteBehavior.Restrict);
             });

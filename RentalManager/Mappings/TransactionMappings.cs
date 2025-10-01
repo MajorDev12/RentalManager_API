@@ -1,4 +1,5 @@
-﻿using RentalManager.DTOs.Tenant;
+﻿using RentalManager.DTOs.Invoice;
+using RentalManager.DTOs.Tenant;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Models;
 
@@ -76,6 +77,16 @@ namespace RentalManager.Mappings
 
             return existing;
         }
+
+
+        public static CREATEInvoiceDto ToInvoice(this Transaction transaction) => new CREATEInvoiceDto
+        {
+            TotalAmount = transaction.Amount,
+            AmountPaid = transaction.Amount,
+            Status = transaction.Status,
+            Combine = true,
+            TransactionId = transaction.Id,
+        };
 
 
 

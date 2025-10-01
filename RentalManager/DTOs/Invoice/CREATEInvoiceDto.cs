@@ -10,6 +10,8 @@
 
         public string Status { get; set; } = string.Empty;
 
+        public bool Combine { get; set; } = true;
+
         public int TransactionId { get; set; }
     }
 }

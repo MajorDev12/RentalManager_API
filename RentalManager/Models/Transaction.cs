@@ -40,6 +40,10 @@
 
         public string? Notes { get; set; }
 
+        public bool Combine { get; set; } = true;
+
+        public string? Status { get; set; }
+
 
     }
 }
