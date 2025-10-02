@@ -41,6 +41,7 @@ namespace RentalManager.Repositories.UtilityBillRepository
         }
 
 
+
         public async Task<UtilityBill> AddAsync(UtilityBill bill)
         {
             _context.UnitCharges.Add(bill);

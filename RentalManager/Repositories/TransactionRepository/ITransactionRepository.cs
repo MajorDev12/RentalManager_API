@@ -20,5 +20,7 @@ namespace RentalManager.Repositories.TransactionRepository
         Task<List<Transaction>?> FindByMonthAsync(int month, int year);
 
         Task<List<TenantBalanceDto>> GetBalancesAsync();
+
+        Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId);
     }
 }

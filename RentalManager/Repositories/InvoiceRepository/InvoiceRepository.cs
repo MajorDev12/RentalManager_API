@@ -51,7 +51,6 @@ namespace RentalManager.Repositories.InvoiceRepository
                 .Include(u => u.Transactions)
                 .Include(u => u.Transactions.Property)
                 .Include(u => u.Transactions.User)
-                .Include(u => u.Transactions.TransactionCategory)
                 .Include(u => u.Transactions.TransactionType)
                 .ToListAsync();
         }

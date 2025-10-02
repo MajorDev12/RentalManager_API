@@ -8,6 +8,8 @@ namespace RentalManager.DTOs.UtilityBill
 
         public decimal Amount { get; set; }
 
+        public bool isReccuring { get; set; }
+
         public int PropertyId { get; set; }
 
         public DateTime UpdatedOn { get; set; } = DateTime.UtcNow;

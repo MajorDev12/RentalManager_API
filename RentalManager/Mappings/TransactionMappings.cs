@@ -15,7 +15,23 @@ namespace RentalManager.Mappings
             UnitId = dto.UnitId,
             UtilityBillId = dto.UtilityBillId,
             TransactionTypeId = dto.TransactionTypeId,
-            TransactionCategoryId = dto.TransactionCategoryId,
+            Amount = dto.Amount,
+            PaymentMethodId = dto.PaymentMethodId,
+            TransactionDate = dto.TransactionDate,
+            MonthFor = dto.MonthFor,
+            YearFor = dto.YearFor,
+            Notes = dto.Notes
+        };
+
+
+
+        public static Transaction ToPaymentEntity(this CREATEPaymentDto dto, Tenant tenant) => new Transaction
+        {
+            UserId = tenant.UserId,
+            PropertyId = tenant.User.PropertyId,
+            UnitId = tenant.UnitId,
+            UtilityBillId = dto.UtilityBillId,
+            TransactionTypeId = dto.TransactionTypeId,
             Amount = dto.Amount,
             PaymentMethodId = dto.PaymentMethodId,
             TransactionDate = dto.TransactionDate,
@@ -50,8 +66,6 @@ namespace RentalManager.Mappings
             UtilityBill = dto.UtilityBill?.Name,
             TransactionTypeId = dto.TransactionTypeId,
             TransactionType = dto.TransactionType.Item,
-            TransactionCategoryId = dto.TransactionCategoryId,
-            TransactionCategory = dto.TransactionCategory.Item,
             Amount = dto.Amount,
             PaymentMethodId = dto.PaymentMethodId,
             PaymentMethod = dto.PaymentMethod?.Item,
@@ -69,7 +83,6 @@ namespace RentalManager.Mappings
             existing.UnitId = updated.UnitId;
             existing.Amount = updated.Amount;
             existing.TransactionTypeId = updated.TransactionTypeId;
-            existing.TransactionCategoryId = updated.TransactionCategoryId;
             existing.MonthFor = updated.MonthFor;
             existing.YearFor = updated.YearFor;
             existing.PaymentMethodId = updated.PaymentMethodId;

@@ -11,6 +11,8 @@ namespace RentalManager.Models
 
         public decimal Amount { get; set; }
 
+        public bool isReccuring { get; set; } = true;
+
         public int PropertyId { get; set; }
 
         public Property? Property { get; set; }

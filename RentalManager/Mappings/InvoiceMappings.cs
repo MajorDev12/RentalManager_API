@@ -34,7 +34,6 @@ namespace RentalManager.Mappings
         public static InvoiceLine ToEntityLineDto(this CREATEInvoiceLineDto dto, Invoice invoice) => new InvoiceLine
         {
             InvoiceId = invoice.Id,
-            TransactionCategory = invoice.Transactions.TransactionCategory.Item,
             Amount = invoice.AmountPaid,
         };
     }

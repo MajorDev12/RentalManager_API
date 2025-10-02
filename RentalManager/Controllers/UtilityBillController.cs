@@ -121,5 +121,22 @@ namespace RentalManager.Controllers
         }
 
 
+
+        [HttpGet("By-TenantId/{TenantId}")]
+        public async Task<IActionResult> GetUtilityBillsByTenant(int TenantId)
+        {
+            try
+            {
+                var bills = await _service.GetByTenantId(TenantId);
+                return Ok(bills);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
     }
 }

@@ -11,6 +11,7 @@ namespace RentalManager.Mappings
             {
                 Name = dto.Name,
                 Amount = dto.Amount,
+                isReccuring = dto.isReccuring,
                 PropertyId = dto.PropertyId
             };
         }
@@ -22,6 +23,7 @@ namespace RentalManager.Mappings
                 Id = id,
                 Name = dto.Name,
                 Amount = dto.Amount,
+                isReccuring = dto.isReccuring,
                 PropertyId = dto.PropertyId
             };
         }
@@ -34,6 +36,7 @@ namespace RentalManager.Mappings
                 Id = bill.Id,
                 Name = bill.Name,
                 Amount = bill.Amount,
+                isReccuring = bill.isReccuring,
                 PropertyId = bill.PropertyId,
                 PropertyName = bill.Property.Name
             };
@@ -46,6 +49,7 @@ namespace RentalManager.Mappings
             {
                 Name = bill.Name,
                 Amount = bill.Amount,
+                isReccuring = bill.isReccuring,
                 PropertyId = bill.PropertyId
             };
         }
@@ -55,6 +59,7 @@ namespace RentalManager.Mappings
             existingData.PropertyId = updatedData.PropertyId;
             existingData.Name = updatedData.Name;
             existingData.Amount = updatedData.Amount;
+            existingData.isReccuring = updatedData.isReccuring;
 
             return existingData;
         }

@@ -2,15 +2,13 @@
 {
     public class CREATEPaymentDto
     {
-        public int? UserId { get; set; }
+        public int TenantId { get; set; }
 
-        public int? UtilityBillId { get; set; }
+        public int UtilityBillId { get; set; }
 
         public int TransactionTypeId { get; set; }
 
-        public int TransactionCategoryId { get; set; }
-
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
 
         public int? PaymentMethodId { get; set; }
 

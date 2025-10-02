@@ -44,6 +44,7 @@ namespace RentalManager.Data
             ConfigureAuditFields<Role>(modelBuilder);
             ConfigureAuditFields<Invoice>(modelBuilder);
             ConfigureAuditFields<InvoiceLine>(modelBuilder);
+            ConfigureAuditFields<Expense>(modelBuilder);
 
 
 
@@ -161,7 +162,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
                 entity.Property(u => u.Status).HasMaxLength(100);
 
-
+                
                 // Relationships
                 entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
@@ -169,7 +170,7 @@ namespace RentalManager.Data
                 entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.TransactionType).WithMany().HasForeignKey(u => u.TransactionTypeId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.TransactionCategory).WithMany().HasForeignKey(u => u.TransactionCategoryId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Expenses).WithMany().HasForeignKey(u => u.ExpenseId).OnDelete(DeleteBehavior.Restrict);
             });
 
 
@@ -203,6 +204,15 @@ namespace RentalManager.Data
             });
 
 
+
+            //EXPENSE
+            modelBuilder.Entity<Expense>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
+                entity.Property(u => u.Amount).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(u => u.Notes).HasMaxLength(100);
+            });
 
 
 

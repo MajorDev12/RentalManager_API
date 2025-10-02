@@ -13,5 +13,8 @@ namespace RentalManager.DTOs.UtilityBill
 
         [Required]
         public int PropertyId { get; set; }
+
+
+        public bool isReccuring { get; set; }
     }
 }

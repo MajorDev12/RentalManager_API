@@ -4,6 +4,7 @@ using RentalManager.DTOs.UtilityBill;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
+using RentalManager.Repositories.TenantRepository;
 using RentalManager.Repositories.UtilityBillRepository;
 
 namespace RentalManager.Services.UtilityBillService
@@ -13,11 +14,13 @@ namespace RentalManager.Services.UtilityBillService
 
         private readonly IUtilityBillRepository _repo;
         private readonly IPropertyRepository _propertyrepo;
+        private readonly ITenantRepository _tenantrepo;
 
-        public UtilityBillService(IUtilityBillRepository repo, IPropertyRepository propertyrepo)
+        public UtilityBillService(IUtilityBillRepository repo, IPropertyRepository propertyrepo, ITenantRepository tenantrepo)
         {
             _repo = repo;
             _propertyrepo = propertyrepo;
+            _tenantrepo = tenantrepo;
         }
 
 
@@ -87,6 +90,33 @@ namespace RentalManager.Services.UtilityBillService
             }
         }
 
+        public async Task<ApiResponse<List<READUtilityBillDto>>> GetByTenantId(int id)
+        {
+            try
+            {
+                var tenant = await _tenantrepo.GetByIdAsync(id);
+
+                if(tenant == null)
+                    return new ApiResponse<List<READUtilityBillDto>>(null, "tenant was not found");
+
+
+                var bills = await _repo.GetByPropertyIdAsync(tenant.User.PropertyId);
+
+
+                if (bills == null || bills.Count == 0)
+                {
+                    return new ApiResponse<List<READUtilityBillDto>>(null, "Data Not Found.");
+                }
+
+                var billDtos = bills.Select(it => it.ToReadDto()).ToList();
+
+                return new ApiResponse<List<READUtilityBillDto>>(billDtos, "");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<List<READUtilityBillDto>>("Error Occurred");
+            }
+        }
 
         public async Task<ApiResponse<READUtilityBillDto>> Add(CREATEUtilityBillDto AddedBill)
         {
@@ -162,8 +192,6 @@ namespace RentalManager.Services.UtilityBillService
                 return new ApiResponse<READUtilityBillDto>($"Error Occurred: {ex.Message}");
             }
         }
-
-
 
     }
 }

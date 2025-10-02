@@ -11,6 +11,8 @@ namespace RentalManager.DTOs.UtilityBill
 
         public decimal Amount { get; set; }
 
+        public bool isReccuring { get; set; }
+
         public int PropertyId { get; set; }
 
         public string PropertyName { get; set; } = string.Empty;

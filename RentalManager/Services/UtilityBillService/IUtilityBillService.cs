@@ -9,6 +9,7 @@ namespace RentalManager.Services.UtilityBillService
         Task<ApiResponse<List<READUtilityBillDto>>> GetAll();
         Task<ApiResponse<READUtilityBillDto>> GetById(int id);
         Task<ApiResponse<List<READUtilityBillDto>>> GetByPropertyId(int id);
+        Task<ApiResponse<List<READUtilityBillDto>>> GetByTenantId(int id);
         Task<ApiResponse<READUtilityBillDto>> Add(CREATEUtilityBillDto bill);
         Task<ApiResponse<READUtilityBillDto>> Update(int id, UPDATEUtilityBillDto bill);
         Task<ApiResponse<READUtilityBillDto>> Delete(int id);
