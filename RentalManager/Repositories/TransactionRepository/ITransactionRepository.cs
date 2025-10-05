@@ -21,6 +21,6 @@ namespace RentalManager.Repositories.TransactionRepository
 
         Task<List<TenantBalanceDto>> GetBalancesAsync();
 
-        Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId);
+        Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId, BalanceFilter? filter = null);
     }
 }

@@ -243,6 +243,7 @@ namespace RentalManager.Data
             modelBuilder.Entity<UtilityBill>(entity => {
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
+                entity.Property(u => u.isReccuring).HasDefaultValue(true);
                 entity.Property(u => u.Amount).HasColumnType("decimal(18,4)").IsRequired();
                 entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
             });

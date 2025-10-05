@@ -17,5 +17,7 @@ namespace RentalManager.Services.TransactionService
 
         Task<ApiResponse<List<TenantBalanceDto>>> GetRentBalances();
 
+        Task<ApiResponse<Transaction>> AddReccuringPayment(Transaction payment);
+
     }
 }

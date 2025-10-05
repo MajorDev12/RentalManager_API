@@ -104,16 +104,29 @@ namespace RentalManager.Repositories.TransactionRepository
 
 
 
-        public async Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId)
+        public async Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId, BalanceFilter? filter = null)
         {
-            return await _context.Transactions
-                .Where(t => t.UserId != null && t.UtilityBillId == utilityBillId)
+            var query = _context.Transactions
+                .Where(t => t.UserId != null && t.UtilityBillId == utilityBillId);
+
+            // ✅ Apply filters conditionally
+            if (filter != null)
+            {
+                if (filter.MonthFor.HasValue)
+                    query = query.Where(t => t.MonthFor == filter.MonthFor.Value);
+
+                if (filter.YearFor.HasValue)
+                    query = query.Where(t => t.YearFor == filter.YearFor.Value);
+
+                if (filter.UserId.HasValue)
+                    query = query.Where(t => t.UserId == filter.UserId.Value);
+            }
+
+            return await query
                 .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
                 .Select(g => new TenantBalanceDto
                 {
                     UserId = g.Key.UserId.Value,
-
-                    // ✅ project scalar properties instead of returning nav objects
                     FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
                     UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
                     PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
@@ -127,11 +140,11 @@ namespace RentalManager.Repositories.TransactionRepository
                              - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
                 })
                 .Where(b => b.Balance > 0)
-                .OrderBy(b => b.Year).ThenBy(b => b.Month)
+                .OrderBy(b => b.Year)
+                .ThenBy(b => b.Month)
                 .ToListAsync();
-
-
         }
+
 
     }
 }

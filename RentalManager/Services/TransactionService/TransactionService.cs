@@ -1,7 +1,5 @@
 ﻿using RentalManager.DTOs.Invoice;
 using RentalManager.DTOs.InvoiceLine;
-using RentalManager.DTOs.Property;
-using RentalManager.DTOs.Tenant;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Mappings;
 using RentalManager.Models;
@@ -12,6 +10,7 @@ using RentalManager.Repositories.TenantRepository;
 using RentalManager.Repositories.TransactionRepository;
 using RentalManager.Repositories.UnitRepository;
 using RentalManager.Services.InvoiceService;
+using System.Diagnostics;
 
 namespace RentalManager.Services.TransactionService
 {
@@ -260,16 +259,28 @@ namespace RentalManager.Services.TransactionService
 
                 // change to Entity
                 var paymentEntity = payment.ToPaymentEntity(tenantPaid);
+                var transaction = new ApiResponse<Transaction>();
 
-                // if utilityBill paidfor is reccurring, check if there is balance then minus amount from the balance else return alreadyPaid
-                // if utilityBill paidFor is not reccurring, add payment
 
-                var addedTransaction = await _repo.AddAsync(paymentEntity);
+                if (paymentEntity.UtilityBill.isReccuring)
+                {
+                    transaction = await AddReccuringPayment(paymentEntity);
 
-                var createInvoiceDto = addedTransaction.ToInvoice();
-                var addedInvoice = await _invoiceservice.Add(createInvoiceDto, new List<CREATEInvoiceLineDto>());
+                    if (transaction.Data == null)
+                        return new ApiResponse<READTransactionDto>(null, $"{transaction.Message}");
 
-                return new ApiResponse<READTransactionDto>(addedTransaction.ToReadDto(), "");
+                    // Create Invoice
+                    var createInvoiceDto = transaction.Data.ToInvoice();
+                    var addedInvoice = await _invoiceservice.Add(createInvoiceDto, new List<CREATEInvoiceLineDto>());
+                }
+                else
+                {
+                    transaction.Data = await _repo.AddAsync(paymentEntity);
+                    var createInvoiceDto = transaction.Data.ToInvoice();
+                    await _invoiceservice.Add(createInvoiceDto, new List<CREATEInvoiceLineDto>());
+                }
+
+                return new ApiResponse<READTransactionDto>(transaction.Data.ToReadDto(), "");
 
 
             }
@@ -279,19 +290,31 @@ namespace RentalManager.Services.TransactionService
             }
         }
 
-
-        public async Task<READTransactionDto> AddReccuringPayment(Transaction payemnt)
+            
+        public async Task<ApiResponse<Transaction>> AddReccuringPayment(Transaction payment)
         {
             try
             {
                 // check if utility paidFor has balance, calc amount - balance, add transaction and update invoice
-                if (payemnt.UtilityBill.isRecurring && payment.UtilityBillId)
+                if (payment.UtilityBillId is int utilityBillId)
                 {
-                    var balance = await _repo.GetBalanceByUtillityAsync(payemnt.UtilityBillId);
+                    var balance = await _repo.GetBalanceByUtillityAsync(utilityBillId, new BalanceFilter { MonthFor = payment.MonthFor, YearFor = payment.YearFor});
+                    if (!balance.Any())
+                        return new ApiResponse<Transaction>(null, "Tenant Already Completed For This Month.");
+
+                    // if balance, add payment
+                    var addedTransaction = await _repo.AddAsync(payment);
+                    return new ApiResponse<Transaction>(addedTransaction, "");
                 }
+                else
+                {
+                    return new ApiResponse<Transaction>(null, "UtilityBill Not Found.");
+                }
+
+                
             }catch (Exception ex)
             {
-
+                return new ApiResponse<Transaction>(null, $"Error Occur: {ex.InnerException?.Message ?? ex.Message}");
             }
 
 
