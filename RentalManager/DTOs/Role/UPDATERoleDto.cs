@@ -11,9 +11,6 @@ namespace RentalManager.DTOs.Role
 
         public bool IsEnabled { get; set; } = true;
 
-        [Required]
-        public int PropertyId { get; set; }
-
         public DateTime UpdatedOn { get; set; } = DateTime.UtcNow;
     }
 }

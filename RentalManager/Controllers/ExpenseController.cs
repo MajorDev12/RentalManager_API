@@ -1,23 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using RentalManager.DTOs.Transaction;
-using RentalManager.Services.TransactionService;
+﻿using Microsoft.AspNetCore.Mvc;
+using RentalManager.DTOs.Expense;
+using RentalManager.Services.ExpenseService;
 
 namespace RentalManager.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TransactionController : ControllerBase
+    public class ExpenseController : ControllerBase
     {
-        private readonly ITransactionService _service;
-        public TransactionController(ITransactionService service)
+        private readonly IExpenseService _service;
+        public ExpenseController(IExpenseService service)
         {
             _service = service;
         }
 
 
         [HttpGet]
-        public async Task<IActionResult> GetTransactions()
+        public async Task<IActionResult> GetExpenses()
         {
             try
             {
@@ -35,12 +34,31 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpPost]
-        public async Task<IActionResult> AddTransaction([FromBody] CREATETransactionDto transaction)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetExpenseById(int id)
         {
             try
             {
-                var result = await _service.Add(transaction);
+                var result = await _service.GetById(id);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost]
+        public async Task<IActionResult> AddExpense([FromBody] CREATEExpenseDto expense)
+        {
+            try
+            {
+                var result = await _service.Add(expense);
 
                 if (result.Success == false) return BadRequest(result);
 
@@ -56,12 +74,12 @@ namespace RentalManager.Controllers
 
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditTransaction(int id, [FromBody] UPDATETransactionDto updatedTransaction)
+        public async Task<IActionResult> EditExpense(int id, [FromBody] UPDATEExpenseDto updatedExpense)
         {
 
             try
             {
-                var result = await _service.Update(id, updatedTransaction);
+                var result = await _service.Update(id, updatedExpense);
 
                 if (result.Success == false) return BadRequest(result);
 
@@ -75,31 +93,14 @@ namespace RentalManager.Controllers
         }
 
 
+
+
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTransaction(int id) 
+        public async Task<IActionResult> DeleteExpense(int id)
         {
             try
             {
                 var result = await _service.Delete(id);
-
-                if (result.Success == false) return BadRequest(result);
-
-                return Ok(result);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
-
-        [HttpGet("UnpaidTenants")]
-        public async Task<IActionResult> UnpaidTenants()
-        {
-            try
-            {
-                var result = await _service.GetRentBalances();
 
                 if (result.Success == false) return BadRequest(result);
 

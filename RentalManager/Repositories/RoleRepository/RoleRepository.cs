@@ -25,7 +25,6 @@ namespace RentalManager.Repositories.RoleRepository
         public async Task<List<Role>?> GetAllAsync()
         {
             var roles = await _context.Roles
-                .Include(ub => ub.Property)
                 .ToListAsync();
 
             return roles;
@@ -35,7 +34,6 @@ namespace RentalManager.Repositories.RoleRepository
         public async Task<Role?> GetByIdAsync(int id)
         {
             var role = await _context.Roles
-                .Include(c => c.Property)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
 
             return role;
@@ -45,7 +43,6 @@ namespace RentalManager.Repositories.RoleRepository
         public async Task<Role?> GetByNameAsync(string name)
         {
             var role = await _context.Roles
-                .Include(c => c.Property)
                 .FirstOrDefaultAsync(pr => pr.Name == name);
 
             return role;

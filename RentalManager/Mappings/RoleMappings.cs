@@ -12,7 +12,6 @@ namespace RentalManager.Mappings
             {
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
-                PropertyId = dto.PropertyId
             };
         }
 
@@ -23,7 +22,6 @@ namespace RentalManager.Mappings
                 Id = id,
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
-                PropertyId = dto.PropertyId
             };
         }
 
@@ -35,8 +33,6 @@ namespace RentalManager.Mappings
                 Id = dto.Id,
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
-                PropertyId = dto.PropertyId,
-                PropertyName = dto.Property.Name
             };
         }
 
@@ -47,7 +43,6 @@ namespace RentalManager.Mappings
             {
                 Name = dto.Name,
                 IsEnabled = dto.IsEnabled,
-                PropertyId = dto.PropertyId
             };
         }
 
@@ -55,7 +50,6 @@ namespace RentalManager.Mappings
         {
             existing.Name = updatedRole.Name;
             existing.IsEnabled = updatedRole.IsEnabled;
-            existing.PropertyId = updatedRole.PropertyId;
 
             return existing;
         }

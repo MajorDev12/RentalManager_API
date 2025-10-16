@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RentalManager.Data;
 
@@ -11,9 +12,11 @@ using RentalManager.Data;
 namespace RentalManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251005202245_ModifiedRelationships")]
+    partial class ModifiedRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,7 +63,7 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("UpdatedBy");
 
-                    b.ToTable("Expenses", (string)null);
+                    b.ToTable("Expense");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Invoice", b =>
@@ -296,7 +299,7 @@ namespace RentalManager.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int?>("PropertyId")
+                    b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
@@ -500,7 +503,7 @@ namespace RentalManager.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18, 2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("Combine")
                         .ValueGeneratedOnAdd()
@@ -965,9 +968,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("RentalManager.Models.Property", null)
+                    b.HasOne("RentalManager.Models.Property", "Property")
                         .WithMany("Roles")
-                        .HasForeignKey("PropertyId");
+                        .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
 
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
@@ -975,6 +980,8 @@ namespace RentalManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Property");
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -1042,7 +1049,7 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired();
 
                     b.Navigation("CreatedByUser");

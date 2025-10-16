@@ -65,13 +65,6 @@ namespace RentalManager.Services.RoleService
             try
             {
                 var role = AddedRole.ToEntity();
-
-                var property = await _propertyRepo.FindAsync(role.PropertyId);
-
-                if (property == null)
-                {
-                    return new ApiResponse<READRoleDto>("No such Property.");
-                }
                 var savedRole = await _repo.AddAsync(role);
                 var savedDto = savedRole.ToReadDto();
 
@@ -90,10 +83,6 @@ namespace RentalManager.Services.RoleService
                 var existing = await _repo.FindAsync(id);
 
                 if (existing == null) return new ApiResponse<READRoleDto>(null, "No Such Data.");
-
-                var property = await _propertyRepo.FindAsync(role.PropertyId);
-
-                if (property == null) return new ApiResponse<READRoleDto>(null, "Property Does Not Exist.");
 
                 var updateRole = role.ToEntity(id);
                 var saved = await _repo.UpdateAsync(updateRole);

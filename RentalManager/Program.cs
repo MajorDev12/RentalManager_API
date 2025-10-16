@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.Helpers.Validations;
+using RentalManager.Repositories.ExpenseRepository;
 using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.RoleRepository;
@@ -14,6 +15,7 @@ using RentalManager.Repositories.UnitTypeRepository;
 using RentalManager.Repositories.UserRepository;
 using RentalManager.Repositories.UtilityBillRepository;
 using RentalManager.Services;
+using RentalManager.Services.ExpenseService;
 using RentalManager.Services.InvoiceService;
 using RentalManager.Services.PropertyService;
 using RentalManager.Services.RoleService;
@@ -62,6 +64,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -75,6 +78,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

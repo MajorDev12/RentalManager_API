@@ -23,6 +23,7 @@ namespace RentalManager.Data
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceLine> InvoiceLines { get; set; }
+        public DbSet<Expense> Expenses { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
 
 
@@ -46,6 +47,7 @@ namespace RentalManager.Data
             ConfigureAuditFields<InvoiceLine>(modelBuilder);
             ConfigureAuditFields<Expense>(modelBuilder);
 
+            modelBuilder.Entity<Expense>().ToTable("Expenses");
 
 
             // SYSTEMCODE
@@ -119,7 +121,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.TokenExpiry);
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedOn);
-                entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).IsRequired().OnDelete(DeleteBehavior.Cascade);
             });
 
 
@@ -154,7 +156,7 @@ namespace RentalManager.Data
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Amount).IsRequired();
+                entity.Property(u => u.Amount).HasColumnType("decimal(18, 2)").IsRequired();
                 entity.Property(u => u.TransactionDate).IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.Property(u => u.MonthFor).HasMaxLength(10);
@@ -167,10 +169,10 @@ namespace RentalManager.Data
                 entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Unit).WithMany().HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.SetNull);
                 entity.HasOne(u => u.TransactionType).WithMany().HasForeignKey(u => u.TransactionTypeId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Expenses).WithMany().HasForeignKey(u => u.ExpenseId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Expenses).WithMany().HasForeignKey(u => u.ExpenseId).OnDelete(DeleteBehavior.SetNull);
             });
 
 
@@ -187,7 +189,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.Status).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
 
-                entity.HasOne(u => u.Transactions).WithMany().HasForeignKey(u => u.TransactionId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Transactions).WithMany().HasForeignKey(u => u.TransactionId).OnDelete(DeleteBehavior.Cascade);
             });
 
 
@@ -200,7 +202,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.TransactionCategory).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.Amount).HasColumnType("decimal(18,2)").IsRequired();
 
-                entity.HasOne(u => u.Invoices).WithMany().HasForeignKey(u => u.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Invoices).WithMany().HasForeignKey(u => u.InvoiceId).OnDelete(DeleteBehavior.Cascade);
             });
 
 
@@ -245,7 +247,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.isReccuring).HasDefaultValue(true);
                 entity.Property(u => u.Amount).HasColumnType("decimal(18,4)").IsRequired();
-                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Cascade);
             });
 
 
@@ -255,7 +257,6 @@ namespace RentalManager.Data
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Name).HasMaxLength(20).IsRequired();
                 entity.Property(u => u.IsEnabled).HasDefaultValue(true);
-                entity.HasOne(u => u.Property).WithMany(u => u.Roles).HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
             });
 
 
