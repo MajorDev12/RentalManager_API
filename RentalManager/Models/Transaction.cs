@@ -28,6 +28,10 @@
         public SystemCodeItem TransactionType { get; set; } = null!;
 
 
+        public int TransactionCategoryId { get; set; }
+        public SystemCodeItem TransactionCategory { get; set; } = null!;
+
+
         public decimal Amount { get; set; } 
 
 

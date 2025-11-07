@@ -209,6 +209,17 @@ namespace RentalManager.Services.TenantService
 
                 await transaction.CommitAsync();
 
+                //change unit to vacant
+                if (entity.UnitId.HasValue)
+                {
+                    var unitStatus = await _systemcodeitemrepo.GetByItemAsync("vacant");
+
+                    if (unitStatus == null)
+                        return new ApiResponse<READTenantDto>($"Unit Status {unitStatus} Does Not exist but Tenant is deleted");
+
+                    await _unitrepo.UpdateStatus(entity.UnitId.Value, unitStatus.Id);
+                }
+
                 return new ApiResponse<READTenantDto>(null, "Deleted successfully.");
             }
             catch (Exception ex)
@@ -257,6 +268,10 @@ namespace RentalManager.Services.TenantService
 
                 if (tenantStatus.Item?.ToLower() == "active")
                 {
+                    //check if already active
+                    if (assignedTenant.TenantStatus.Item.ToLower() == "active")
+                        return new ApiResponse<READTenantDto>(null, "Tenant already assigned and active");
+                    
 
                     var deposit = await _systemcodeitemrepo.GetByItemAsync("deposit");
                     var rent = await _systemcodeitemrepo.GetByItemAsync("rent");
@@ -327,21 +342,16 @@ namespace RentalManager.Services.TenantService
                         var rentPaymentEntity = rentPayment.ToEntity();
                         await _transactionrepo.AddAsync(rentPaymentEntity);
 
-
-                        //add Invoice
-
-
                         //update house status to occupied
                         var status = await _systemcodeitemrepo.GetByItemAsync("occupied");
 
                         if (status != null && status.SystemCode.Code.ToLower() == "unitstatus")
                         {
-                            var statusUpdated = assignedUnit.UpdateStatusEntity(status.Id);
-                            var statusSaved = await _unitrepo.UpdateStatus();
+                            var statusSaved = await _unitrepo.UpdateStatus(assignedUnit.Id, status.Id);
 
-                            if(statusSaved <= 0){
-                                return new ApiResponse<READTenantDto>(null, "failed to change Unit Status");
-                            }
+                            if(statusSaved == null)
+                                return new ApiResponse<READTenantDto>(null, "failed: Unit does not exist");
+                            
                         }
                         else
                         {

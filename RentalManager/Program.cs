@@ -5,6 +5,7 @@ using RentalManager.Helpers.Validations;
 using RentalManager.Repositories.ExpenseRepository;
 using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
+using RentalManager.Repositories.ReportRepository;
 using RentalManager.Repositories.RoleRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.SystemCodeRepository;
@@ -18,6 +19,7 @@ using RentalManager.Services;
 using RentalManager.Services.ExpenseService;
 using RentalManager.Services.InvoiceService;
 using RentalManager.Services.PropertyService;
+using RentalManager.Services.ReportService;
 using RentalManager.Services.RoleService;
 using RentalManager.Services.SystemCodeItemService;
 using RentalManager.Services.SystemCodeService;
@@ -65,6 +67,7 @@ builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
+builder.Services.AddScoped<IReportRepository, ReportRepository>();
 
 // Register Services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
@@ -79,6 +82,7 @@ builder.Services.AddScoped<ITenantService, TenantService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IReportService, ReportService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

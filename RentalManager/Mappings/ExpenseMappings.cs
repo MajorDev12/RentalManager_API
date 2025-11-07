@@ -1,5 +1,4 @@
 ﻿using RentalManager.DTOs.Expense;
-using RentalManager.DTOs.Property;
 using RentalManager.Models;
 
 namespace RentalManager.Mappings
@@ -11,6 +10,7 @@ namespace RentalManager.Mappings
             Name = dto.Name,
             Amount = dto.Amount,
             Notes = dto.Notes,
+            PropertyId = dto.PropertyId
         };
 
 
@@ -21,6 +21,8 @@ namespace RentalManager.Mappings
             Name = dto.Name,
             Amount = dto.Amount,
             Notes = dto.Notes,
+            PropertyId = dto.PropertyId,
+            PropertyName = dto.Property.Name
         };
 
 
@@ -30,6 +32,7 @@ namespace RentalManager.Mappings
             Name = dto.Name,
             Amount = dto.Amount,
             Notes = dto.Notes,
+            PropertyId = dto.PropertyId
         };
 
 
@@ -38,6 +41,7 @@ namespace RentalManager.Mappings
             Name = dto.Name,
             Amount = dto.Amount,
             Notes = dto.Notes,
+            PropertyId = dto.PropertyId
         };
 
 
@@ -46,6 +50,7 @@ namespace RentalManager.Mappings
             existing.Name = dto.Name;
             existing.Amount = dto.Amount;
             existing.Notes = dto.Notes;
+            existing.PropertyId = dto.PropertyId; 
 
             return existing;
         }

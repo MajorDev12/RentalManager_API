@@ -12,7 +12,7 @@ namespace RentalManager.DTOs.Transaction
 
         public string PropertyName { get; set; } = string.Empty;
 
-        public int Month { get; set; }   // 1 = Jan, 2 = Feb, etc.
+        public int Month { get; set; }  
 
         public int Year { get; set; }
 

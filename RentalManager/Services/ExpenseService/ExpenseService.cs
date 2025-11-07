@@ -1,20 +1,20 @@
 ﻿using RentalManager.DTOs.Expense;
-using RentalManager.DTOs.Property;
-using RentalManager.DTOs.Transaction;
-using RentalManager.Helpers.Validations;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.ExpenseRepository;
+using RentalManager.Repositories.PropertyRepository;
 
 namespace RentalManager.Services.ExpenseService
 {
     public class ExpenseService : IExpenseService
     {
         private readonly IExpenseRepository _repo;
+        private readonly IPropertyRepository _propertyrepo;
 
-        public ExpenseService(IExpenseRepository repo)
+        public ExpenseService(IExpenseRepository repo, IPropertyRepository propertyrepo)
         {
             _repo = repo;
+            _propertyrepo = propertyrepo;
         }
 
         public async Task<ApiResponse<List<READExpenseDto>>> GetAll()
@@ -61,8 +61,9 @@ namespace RentalManager.Services.ExpenseService
         {
             try
             {
+                var property = _propertyrepo.GetByIdAsync(dto.PropertyId);
 
-                if (dto == null) return new ApiResponse<READExpenseDto>("Missing Data Added");
+                if (property == null) return new ApiResponse<READExpenseDto>("Property does not exist");
 
                 var expenseEntity = dto.ToEntity();
 

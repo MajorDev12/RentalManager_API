@@ -1,4 +1,5 @@
-﻿using RentalManager.DTOs.Unit;
+﻿using RentalManager.DTOs.Tenant;
+using RentalManager.DTOs.Unit;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
@@ -154,6 +155,7 @@ namespace RentalManager.Services.UnitService
                 return new ApiResponse<READUnitDto>("Error Occurred.");
             }
         }
+
 
 
         public async Task<ApiResponse<READUnitDto>> Delete(int id)

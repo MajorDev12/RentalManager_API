@@ -33,10 +33,13 @@ namespace RentalManager.Repositories.TransactionRepository
         }
 
 
+
         public async Task<Transaction?> FindAsync(int id)
         {
             return await _context.Transactions.FindAsync(id);
         }
+
+
 
         public async Task<List<Transaction>?> FindByMonthAsync(int month, int year)
         {
@@ -44,6 +47,7 @@ namespace RentalManager.Repositories.TransactionRepository
                 .Where(u => u.MonthFor == month && u.YearFor == year)
                 .ToListAsync();
         }
+
 
 
         public async Task<List<Transaction>?> GetAllAsync()
@@ -54,9 +58,11 @@ namespace RentalManager.Repositories.TransactionRepository
                 .Include(t => t.Unit)
                 .Include(t => t.UtilityBill)
                 .Include(t => t.TransactionType)
+                .Include(t => t.TransactionCategory)
                 .Include(t => t.PaymentMethod)
                 .ToListAsync();
         }
+
 
 
         public Task<Transaction?> GetByIdAsync(int id)
@@ -73,10 +79,11 @@ namespace RentalManager.Repositories.TransactionRepository
         }
 
 
+
         public async Task<List<TenantBalanceDto>> GetBalancesAsync()
         {
             return await _context.Transactions
-                .Where(t => t.UserId != null && t.UtilityBill.Name.ToLower() == "rent")
+                .Where(t => t.UserId != null && t.TransactionCategory.Item.ToLower() == "rent")
                 .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
                 .Select(g => new TenantBalanceDto
                 {

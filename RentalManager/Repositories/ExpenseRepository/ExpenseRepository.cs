@@ -17,7 +17,9 @@ namespace RentalManager.Repositories.ExpenseRepository
 
         public async Task<List<Expense>?> GetAllAsync()
         {
-            var expenses = await _context.Expenses.ToListAsync();
+            var expenses = await _context.Expenses
+                .Include(p => p.Property)
+                .ToListAsync();
             return expenses;
         }
 

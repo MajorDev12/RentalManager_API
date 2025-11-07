@@ -22,7 +22,7 @@ namespace RentalManager.DTOs.Transaction
 
         public int? PaymentMethodId { get; set; }
 
-        public DateTime TransactionDate { get; set; } 
+        public DateTime TransactionDate { get; set; } = DateTime.Now;
 
         public int MonthFor { get; set; }
 

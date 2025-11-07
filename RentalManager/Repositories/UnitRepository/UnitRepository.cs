@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
@@ -21,6 +20,7 @@ namespace RentalManager.Repositories.UnitRepository
                 .Include(ub => ub.Property)
                 .Include(ub => ub.UnitType)
                 .Include(ub => ub.Status)
+                .OrderBy(ub => ub.Property.Name).ThenBy(ub => ub.Name)
                 .ToListAsync();
         }
 
@@ -64,11 +64,16 @@ namespace RentalManager.Repositories.UnitRepository
             return updatedEntity;
         }
 
-        public async Task<int> UpdateStatus()
+        public async Task<Unit> UpdateStatus(int unitId, int statusId)
         {
-            var changes = await _context.SaveChangesAsync();
+            var existingUnit = await FindAsync(unitId);
 
-            return changes;
+            if (existingUnit == null) return null;
+
+            existingUnit.UpdateStatusEntity(statusId);
+            await _context.SaveChangesAsync();
+
+            return existingUnit;
         }
 
         public async Task DeleteAsync(Unit unit)

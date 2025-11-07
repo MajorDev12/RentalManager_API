@@ -25,6 +25,9 @@ namespace RentalManager.DTOs.Transaction
         public int TransactionTypeId { get; set; }
         public string TransactionType { get; set; } = string.Empty;
 
+        public int TransactionCategoryId { get; set; }
+        public string TransactionCategory { get; set; } = string.Empty;
+
         public decimal Amount { get; set; }
 
         public int? PaymentMethodId { get; set; }

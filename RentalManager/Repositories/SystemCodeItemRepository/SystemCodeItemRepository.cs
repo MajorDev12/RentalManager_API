@@ -37,7 +37,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         {
             return await _context.SystemCodeItems
                 .Include(sc => sc.SystemCode)
-                .FirstOrDefaultAsync(e => e.Item == item);
+                .FirstOrDefaultAsync(e => e.Item.ToLower() == item.ToLower());
         }
 
 

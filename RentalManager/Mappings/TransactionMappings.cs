@@ -15,6 +15,7 @@ namespace RentalManager.Mappings
             UnitId = dto.UnitId,
             UtilityBillId = dto.UtilityBillId,
             TransactionTypeId = dto.TransactionTypeId,
+            TransactionCategoryId = dto.TransactionCategoryId,
             Amount = dto.Amount,
             PaymentMethodId = dto.PaymentMethodId,
             TransactionDate = dto.TransactionDate,
@@ -66,6 +67,7 @@ namespace RentalManager.Mappings
             UtilityBill = dto.UtilityBill?.Name,
             TransactionTypeId = dto.TransactionTypeId,
             TransactionType = dto.TransactionType.Item,
+            TransactionCategory = dto.TransactionCategory.Item,
             Amount = dto.Amount,
             PaymentMethodId = dto.PaymentMethodId,
             PaymentMethod = dto.PaymentMethod?.Item,
@@ -95,7 +97,6 @@ namespace RentalManager.Mappings
         public static CREATEInvoiceDto ToInvoice(this Transaction transaction) => new CREATEInvoiceDto
         {
             TotalAmount = transaction.Amount,
-            AmountPaid = transaction.Amount,
             Status = transaction.Status,
             Combine = true,
             TransactionId = transaction.Id,
