@@ -9,6 +9,21 @@ namespace RentalManager.Services.TransactionService
 
         Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction);
 
+        Task<ApiResponse<READTransactionDto>> AddCharge(CREATEIncoiceTransactionDto transaction);
+
+        Task<ApiResponse<bool>> GenerateRentInvoices(int propertyId);
+
+        Task<ApiResponse<bool>> GenerateUtilityBillInvoices(int propertyId);
+
+        List<CREATEIncoiceTransactionDto> CreateRentBalanceInvoice(List<Tenant> tenants, List<Transaction> existingCharges);
+
+        List<CREATEIncoiceTransactionDto> CreateFullRentInvoice(List<Tenant> tenants);
+
+        List<CREATEIncoiceTransactionDto> CreateFullUtilityInvoices(List<Tenant> tenants, List<UtilityBill> utilities);
+
+        List<CREATEIncoiceTransactionDto> CreateUtilityBalanceInvoices(List<Tenant> tenants, List<UtilityBill> utilities, List<Transaction> existingCharges);
+
+
         Task<ApiResponse<READTransactionDto>> AddPayment(CREATEPaymentDto payment);
 
         Task<ApiResponse<READTransactionDto>> Update(int id, UPDATETransactionDto transaction);

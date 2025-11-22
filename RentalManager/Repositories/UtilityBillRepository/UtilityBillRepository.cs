@@ -32,12 +32,16 @@ namespace RentalManager.Repositories.UtilityBillRepository
         }
 
 
-        public async Task<List<UtilityBill>?> GetByPropertyIdAsync(int id)
+        public async Task<List<UtilityBill>?> GetByPropertyIdAsync(int id, bool? isReccurring)
         {
-            return await _context.UnitCharges
-            .Include(u => u.Property)
-                .Where(u => u.PropertyId == id)
-                .ToListAsync();
+            var query = _context.UnitCharges
+                        .Include(u => u.Property)
+                        .Where(u => u.PropertyId == id);
+
+            if (isReccurring == true)
+                query = query.Where(u => u.isReccuring == isReccurring);
+
+            return await query.ToListAsync();
         }
 
 

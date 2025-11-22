@@ -11,13 +11,15 @@ namespace RentalManager.Repositories.TransactionRepository
 
         Task<Transaction> AddAsync(Transaction transaction);
 
+        Task<int> AddRangeAsync(IEnumerable<Transaction> transactions);
+
         Task<int> UpdateAsync();
 
         Task DeleteAsync(Transaction transaction);
 
         Task<Transaction?> FindAsync(int id);
 
-        Task<List<Transaction>?> FindByMonthAsync(int month, int year);
+        Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, string? category = "", List<UtilityBill>? utilities = null);
 
         Task<List<TenantBalanceDto>> GetBalancesAsync();
 

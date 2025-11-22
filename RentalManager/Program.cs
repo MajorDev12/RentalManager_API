@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.Helpers.Validations;
 using RentalManager.Repositories.ExpenseRepository;
+using RentalManager.Repositories.InvoiceLineRepository;
 using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.ReportRepository;
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ITenantRepository, TenantRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+builder.Services.AddScoped<IInvoiceLineRepository, InvoiceLineRepository>();
 builder.Services.AddScoped<IExpenseRepository, ExpenseRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 

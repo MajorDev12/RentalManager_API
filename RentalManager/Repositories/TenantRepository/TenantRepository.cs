@@ -41,6 +41,29 @@ namespace RentalManager.Repositories.TenantRepository
         }
 
 
+        public async Task<Tenant?> GetByUserIdAsync(int userId)
+        {
+            return await _context.Tenants
+                .Include(t => t.Unit)
+                .FirstOrDefaultAsync(pr => pr.UserId == userId);
+        }
+
+
+        public async Task<List<Tenant>?> GetAllByPropertyId(int propertyId, bool? isActive)
+        {
+            var query = _context.Tenants
+                        .Where(t => t.User.PropertyId == propertyId);
+
+            if (isActive == true)
+                query = query.Where(t => t.TenantStatus.Item.ToLower() == "active");
+
+            return await query
+                .Include(t => t.Unit)
+                .Include(t => t.User)
+                .ToListAsync();
+        }
+
+
         public async Task<Tenant> AddAsync(Tenant tenant)
         {
             _context.Tenants.Add(tenant);
@@ -89,5 +112,6 @@ namespace RentalManager.Repositories.TenantRepository
 
             return updatedEntity;
         }
+
     }
 }

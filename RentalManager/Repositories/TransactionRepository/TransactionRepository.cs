@@ -3,6 +3,7 @@ using RentalManager.Data;
 using RentalManager.DTOs.Transaction;
 using RentalManager.DTOs.User;
 using RentalManager.Models;
+using System.Linq;
 
 namespace RentalManager.Repositories.TransactionRepository
 {
@@ -26,6 +27,14 @@ namespace RentalManager.Repositories.TransactionRepository
         }
 
 
+        public async Task<int> AddRangeAsync(IEnumerable<Transaction> transactions)
+        {
+            await _context.Transactions.AddRangeAsync(transactions);
+            var result = await _context.SaveChangesAsync();
+            return result;
+        }
+
+
         public async Task DeleteAsync(Transaction transaction)
         {
             _context.Transactions.Remove(transaction);
@@ -41,11 +50,33 @@ namespace RentalManager.Repositories.TransactionRepository
 
 
 
-        public async Task<List<Transaction>?> FindByMonthAsync(int month, int year)
+        public async Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, string? category, List<UtilityBill>? utilities)
         {
-            return await _context.Transactions
-                .Where(u => u.MonthFor == month && u.YearFor == year)
-                .ToListAsync();
+            var query = _context.Transactions
+                        .Include(t => t.TransactionCategory)
+                        .Include(t => t.UtilityBill)
+                        .Where(t => t.MonthFor == month && t.YearFor == year);
+
+
+            if (propertyId.HasValue)
+                query = query.Where(t => t.PropertyId == propertyId.Value);
+
+            if (!string.IsNullOrWhiteSpace(category))
+                query = query.Where(t => t.TransactionCategory.Item.ToLower() == category.ToLower());
+
+
+            // Filter by utility bills if any are provided
+            if (utilities != null && utilities.Count > 0)
+            {
+                var utilityIds = utilities
+                    .Where(u => u != null)
+                    .Select(u => u.Id)
+                    .ToList();
+
+                query = query.Where(t => t.UtilityBillId.HasValue && utilityIds.Contains(t.UtilityBillId.Value));
+            }
+
+            return await query.ToListAsync();
         }
 
 

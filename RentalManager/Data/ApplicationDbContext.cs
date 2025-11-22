@@ -183,9 +183,11 @@ namespace RentalManager.Data
             {
                 entity.HasKey(i => i.Id);
                 entity.Property(u => u.InvoiceNumber).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.InvoiceDate).IsRequired();
                 entity.Property(u => u.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
                 entity.Property(u => u.Status).HasMaxLength(100).IsRequired();
                 entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
+                entity.Property(u => u.isMain).HasDefaultValue(false).IsRequired();
 
                 entity.HasOne(u => u.Transactions).WithMany().HasForeignKey(u => u.TransactionId).OnDelete(DeleteBehavior.Cascade);
             });

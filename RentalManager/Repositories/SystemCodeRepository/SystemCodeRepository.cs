@@ -20,9 +20,14 @@ namespace RentalManager.Repositories.SystemCodeRepository
             return await _context.SystemCodes.ToListAsync();
         }
 
-        public async Task<SystemCode> GetByIdAsync(int id)
+        public async Task<SystemCode?> GetByIdAsync(int id)
         {
             return await _context.SystemCodes.FirstOrDefaultAsync(e => e.Id == id);
+        }
+
+        public async Task<SystemCode?> GetByCodeAsync(string code)
+        {
+            return await _context.SystemCodes.FirstOrDefaultAsync(e => e.Code == code);
         }
 
         public async Task<SystemCode> AddAsync(SystemCode code)

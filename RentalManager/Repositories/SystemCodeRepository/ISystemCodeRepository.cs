@@ -5,7 +5,8 @@ namespace RentalManager.Repositories.SystemCodeRepository
     public interface ISystemCodeRepository
     {
         Task<List<SystemCode>> GetAllAsync();
-        Task<SystemCode> GetByIdAsync(int id);
+        Task<SystemCode?> GetByIdAsync(int id);
+        Task<SystemCode?> GetByCodeAsync(string code);
         Task<SystemCode> AddAsync(SystemCode code);
         Task<SystemCode> UpdateAsync(SystemCode code);
         Task DeleteAsync(SystemCode code);

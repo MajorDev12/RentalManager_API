@@ -22,7 +22,6 @@ namespace RentalManager.Mappings
             TotalAmount = dto.TotalAmount,
             Status = dto.Status,
             TransactionId = dto.TransactionId,
-            Transactions = dto.Transactions.ToReadDto(),
         };
 
 
@@ -30,7 +29,8 @@ namespace RentalManager.Mappings
         public static InvoiceLine ToEntityLineDto(this CREATEInvoiceLineDto dto, Invoice invoice) => new InvoiceLine
         {
             InvoiceId = invoice.Id,
-            Amount = invoice.TotalAmount,
+            Amount = dto.Amount,
+            TransactionCategory = dto.TransactionCategory
         };
     }
 }

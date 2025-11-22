@@ -54,6 +54,25 @@ namespace RentalManager.Controllers
         }
 
 
+        [HttpPost("AddInvoice")]
+        public async Task<IActionResult> AddInvoiceCharge([FromBody] CREATEIncoiceTransactionDto transaction)
+        {
+            try
+            {
+                var result = await _service.AddCharge(transaction);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
 
         [HttpPut("{id}")]
         public async Task<IActionResult> EditTransaction(int id, [FromBody] UPDATETransactionDto updatedTransaction)
@@ -100,6 +119,45 @@ namespace RentalManager.Controllers
             try
             {
                 var result = await _service.GetRentBalances();
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpPost("GenerateRentInvoices")]
+        public async Task<IActionResult> GenerateRentInvoices(int propertyId)
+        {
+            try
+            {
+                var result = await _service.GenerateRentInvoices(propertyId);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+
+        [HttpPost("GenerateUtilityBillInvoices")]
+        public async Task<IActionResult> GenerateUtilityInvoices(int propertyId)
+        {
+            try
+            {
+                var result = await _service.GenerateUtilityBillInvoices(propertyId);
 
                 if (result.Success == false) return BadRequest(result);
 

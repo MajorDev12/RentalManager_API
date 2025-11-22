@@ -6,6 +6,8 @@ namespace RentalManager.Repositories.TenantRepository
     {
         Task<List<Tenant>?> GetAllAsync();
         Task<Tenant?> GetByIdAsync(int id);
+        Task<Tenant?> GetByUserIdAsync(int userId);
+        Task<List<Tenant>?> GetAllByPropertyId(int propertyId, bool? isActive);
         Task<Tenant> AddAsync(Tenant tenant);
         Task<Tenant> UpdateAsync(Tenant tenant, User user);
         Task DeleteAsync(Tenant tenant);

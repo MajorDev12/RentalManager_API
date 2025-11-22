@@ -16,10 +16,14 @@ namespace RentalManager.Services.InvoiceService
         private readonly IInvoiceLineRepository _invoicelinerepo;
 
 
-        public InvoiceService(IInvoiceRepository invoiceRepository, ITransactionRepository transactionRepository)
+        public InvoiceService(
+            IInvoiceRepository invoiceRepository,
+            ITransactionRepository transactionRepository,
+            IInvoiceLineRepository invoiceLineRepository)
         {
             _repo = invoiceRepository;
             _transactionrepo = transactionRepository;
+            _invoicelinerepo = invoiceLineRepository;
         }
 
 
@@ -67,7 +71,7 @@ namespace RentalManager.Services.InvoiceService
                 if (invoiceAdded.Combine)
                 {
                     
-                    invoiceAddedEntity = await _repo.FindByMonthAsync(transactionExists.MonthFor, transactionExists.YearFor);
+                    invoiceAddedEntity = await CombineInvoice(transactionExists.MonthFor, transactionExists.YearFor);
 
                     if (invoiceAddedEntity == null)
                         invoiceAddedEntity = await CreateInvoice(invoiceAdded);
