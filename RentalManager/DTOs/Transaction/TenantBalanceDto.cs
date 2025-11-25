@@ -12,6 +12,10 @@ namespace RentalManager.DTOs.Transaction
 
         public string PropertyName { get; set; } = string.Empty;
 
+        public string? CategoryName { get; set; }
+
+        public int CategoryId { get; set; }
+
         public int Month { get; set; }  
 
         public int Year { get; set; }

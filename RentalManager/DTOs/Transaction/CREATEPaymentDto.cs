@@ -4,19 +4,11 @@
     {
         public int TenantId { get; set; }
 
-        public int UtilityBillId { get; set; }
-
-        public int TransactionTypeId { get; set; }
-
         public decimal Amount { get; set; }
 
         public int? PaymentMethodId { get; set; }
 
-        public DateTime TransactionDate { get; set; }
-
-        public int MonthFor { get; set; }
-
-        public int YearFor { get; set; }
+        public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
         public string Notes { get; set; } = string.Empty;
     }

@@ -114,8 +114,8 @@ namespace RentalManager.Repositories.TransactionRepository
         public async Task<List<TenantBalanceDto>> GetBalancesAsync()
         {
             return await _context.Transactions
-                .Where(t => t.UserId != null && t.TransactionCategory.Item.ToLower() == "rent")
-                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
+                .Where(t => t.UserId != null)
+                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor, category = t.TransactionCategory.Item })
                 .Select(g => new TenantBalanceDto
                 {
                     UserId = g.Key.UserId.Value,
@@ -125,6 +125,7 @@ namespace RentalManager.Repositories.TransactionRepository
                     UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
                     PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
 
+                    CategoryName = g.Key.category,
                     Month = g.Key.MonthFor,
                     Year = g.Key.YearFor,
 
@@ -134,12 +135,44 @@ namespace RentalManager.Repositories.TransactionRepository
                              - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
                 })
                 .Where(b => b.Balance > 0)
-                .OrderBy(b => b.Year).ThenBy(b => b.Month)
+                .OrderBy(b => b.Year).ThenBy(b => b.Month).ThenBy(b => b.CategoryName)
                 .ToListAsync();
 
 
         }
 
+
+
+        public async Task<List<TenantBalanceDto>> GetBalanceByUserAsync(int userId)
+        {
+            return await _context.Transactions
+                .Include(t => t.TransactionCategory)
+                .Where(t => t.UserId != null && t.UserId == userId)
+                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor, Category = t.TransactionCategory.Item, categoryId = t.TransactionCategoryId })
+                .Select(g => new TenantBalanceDto
+                {
+                    UserId = g.Key.UserId.Value,
+
+                    // ✅ project scalar properties instead of returning nav objects
+                    FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
+                    UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
+                    PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
+
+                    CategoryName = g.Key.Category,
+                    CategoryId = g.Key.categoryId,
+                    Month = g.Key.MonthFor,
+                    Year = g.Key.YearFor,
+
+                    TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
+                    TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
+                    Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
+                             - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
+                })
+                .Where(b => b.Balance > 0)
+                .OrderBy(b => b.Year).ThenBy(b => b.Month).ThenBy(b => b.CategoryName)
+                .ToListAsync();
+
+        }
 
 
         public async Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId, BalanceFilter? filter = null)

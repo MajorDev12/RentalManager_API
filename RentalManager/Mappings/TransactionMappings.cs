@@ -89,13 +89,9 @@ namespace RentalManager.Mappings
             UserId = tenant.UserId,
             PropertyId = tenant.User.PropertyId,
             UnitId = tenant.UnitId,
-            UtilityBillId = dto.UtilityBillId,
-            TransactionTypeId = dto.TransactionTypeId,
             Amount = dto.Amount,
             PaymentMethodId = dto.PaymentMethodId,
             TransactionDate = dto.TransactionDate,
-            MonthFor = dto.MonthFor,
-            YearFor = dto.YearFor,
             Notes = dto.Notes
         };
 

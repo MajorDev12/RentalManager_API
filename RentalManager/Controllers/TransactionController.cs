@@ -54,6 +54,28 @@ namespace RentalManager.Controllers
         }
 
 
+
+        [HttpPost("AddPayment")]
+        public async Task<IActionResult> AddPayment([FromBody] CREATEPaymentDto payment)
+        {
+            try
+            {
+                var result = await _service.AddPayment(payment);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+
+
         [HttpPost("AddInvoice")]
         public async Task<IActionResult> AddInvoiceCharge([FromBody] CREATEIncoiceTransactionDto transaction)
         {
@@ -119,6 +141,25 @@ namespace RentalManager.Controllers
             try
             {
                 var result = await _service.GetRentBalances();
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [HttpGet("TenantBalances")]
+        public async Task<IActionResult> TenantBalances(int userId)
+        {
+            try
+            {
+                var result = await _service.GetUserBalances(userId);
 
                 if (result.Success == false) return BadRequest(result);
 
