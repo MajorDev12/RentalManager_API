@@ -35,6 +35,26 @@ namespace RentalManager.Controllers
         }
 
 
+
+        [HttpGet("By-Tenant/{userId}")]
+        public async Task<IActionResult> GetTransactionsByUser(int userId)
+        {
+            try
+            {
+                var result = await _service.GetByUser(userId);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> AddTransaction([FromBody] CREATETransactionDto transaction)
         {

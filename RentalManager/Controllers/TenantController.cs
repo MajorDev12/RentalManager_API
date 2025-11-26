@@ -4,7 +4,7 @@ using RentalManager.Services;
 
 namespace RentalManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class TenantController : ControllerBase
     {
@@ -16,7 +16,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpGet]
+        [HttpGet("Tenants")]
         public async Task<IActionResult> GetTenants()
         {
             try
@@ -35,7 +35,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpGet("{id}")]
+        [HttpGet("Tenants/{id}")]
         public async Task<IActionResult> GetTenantById(int id)
         {
             try
@@ -56,7 +56,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPost]
+        [HttpPost("Tenants")]
         public async Task<IActionResult> AddTenant([FromBody] CREATETenantDto AddedTenant)
         {
             try
@@ -78,7 +78,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPut("{id}")]
+        [HttpPut("Tenants/{id}")]
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
 
@@ -100,7 +100,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("Tenants/{id}")]
         public async Task<IActionResult> DeleteTenant(int id)
         {
             try
@@ -121,7 +121,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPost("AssignUnit")]
+        [HttpPost("Tenants/AssignUnit")]
         public async Task<IActionResult> AssignUnit([FromBody] ASSIGNUnitDto unitAssigned)
         {
             try

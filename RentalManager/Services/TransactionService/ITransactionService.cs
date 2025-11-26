@@ -7,6 +7,8 @@ namespace RentalManager.Services.TransactionService
     {
         Task<ApiResponse<List<READTransactionDto>>> GetAll();
 
+        Task<ApiResponse<List<READTransactionDto>>> GetByUser(int userId);
+
         Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction);
 
         Task<ApiResponse<READTransactionDto>> AddCharge(CREATEIncoiceTransactionDto transaction);

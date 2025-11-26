@@ -7,7 +7,7 @@ namespace RentalManager.Repositories.TransactionRepository
     {
         Task<List<Transaction>?> GetAllAsync();
 
-        Task<Transaction?> GetByIdAsync(int id);
+        Task<List<Transaction>?> GetByUserIdAsync(int userId);
 
         Task<Transaction> AddAsync(Transaction transaction);
 

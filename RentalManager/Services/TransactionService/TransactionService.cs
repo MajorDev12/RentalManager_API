@@ -77,6 +77,27 @@ namespace RentalManager.Services.TransactionService
         }
 
 
+        public async Task<ApiResponse<List<READTransactionDto>>> GetByUser(int userId)
+        {
+            try
+            {
+                var transactions = await _repo.GetByUserIdAsync(userId);
+
+                if (transactions == null || transactions.Count == 0)
+                {
+                    return new ApiResponse<List<READTransactionDto>>(null, "Data Not Found.");
+                }
+
+                var transactionDtos = transactions.Select(it => it.ToReadDto()).ToList();
+
+                return new ApiResponse<List<READTransactionDto>>(transactionDtos, "");
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<List<READTransactionDto>>($"Error Occurred: {ex.InnerException?.Message}");
+            }
+        }
+
 
         public async Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction)
         {
@@ -206,7 +227,7 @@ namespace RentalManager.Services.TransactionService
 
                 foreach (var item in createdCharge.Item)
                 {
-                    var category = await _systemcodeitemrepo.GetByIdAsync(item.TransactionCategory);
+                    var category = await _systemcodeitemrepo.GetByItemAsync(item.TransactionCategory);
                     if (category == null)
                         return new ApiResponse<READTransactionDto>(null, $"Category {item.TransactionCategory} not found");
 

@@ -96,9 +96,18 @@ namespace RentalManager.Repositories.TransactionRepository
 
 
 
-        public Task<Transaction?> GetByIdAsync(int id)
+        public async Task<List<Transaction>?> GetByUserIdAsync(int userId)
         {
-            throw new NotImplementedException();
+            return await _context.Transactions
+                .Where(u => u.UserId == userId)
+                .Include(t => t.User)
+                .Include(p => p.Property)
+                .Include(t => t.Unit)
+                .Include(t => t.UtilityBill)
+                .Include(t => t.TransactionType)
+                .Include(t => t.TransactionCategory)
+                .Include(t => t.PaymentMethod)
+                .ToListAsync();
         }
 
 
