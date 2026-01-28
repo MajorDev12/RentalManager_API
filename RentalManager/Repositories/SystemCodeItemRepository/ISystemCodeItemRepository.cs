@@ -6,7 +6,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
     {
         Task<List<SystemCodeItem>?> GetAllAsync();
         Task<SystemCodeItem?> GetByIdAsync(int id);
-        Task<SystemCodeItem?> GetByItemAsync(string item);
+        Task<SystemCodeItem?> GetByItemAsync(string item, string? code = "");
         Task<List<SystemCodeItem>?> GetByCodeAsync(string codeName);
         Task<SystemCodeItem> AddAsync(SystemCodeItem item);
         Task<SystemCodeItem> UpdateAsync(SystemCodeItem item);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
@@ -33,12 +34,22 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         }
 
 
-        public async Task<SystemCodeItem?> GetByItemAsync(string item)
+        public async Task<SystemCodeItem?> GetByItemAsync(string item, string? code)
         {
-            return await _context.SystemCodeItems
-                .Include(sc => sc.SystemCode)
-                .FirstOrDefaultAsync(e => e.Item.ToLower() == item.ToLower());
+            if (string.IsNullOrWhiteSpace(item))
+                return null;
+
+            IQueryable<SystemCodeItem> query = _context.SystemCodeItems
+                .Include(sc => sc.SystemCode);
+
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                query = query.Where(i => i.SystemCode.Code == code);
+            }
+
+            return await query.FirstOrDefaultAsync(i => i.Item == item);
         }
+
 
 
         public async Task<SystemCodeItem> AddAsync(SystemCodeItem item)
@@ -81,7 +92,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         {
             return await _context.SystemCodeItems
                         .Include(cs => cs.SystemCode)
-                        .Where(sc => sc.SystemCode.Code == codeName)
+                        .Where(sc => sc.SystemCode.Code.ToLower() == codeName.ToLower())
                         .ToListAsync();
         }
 

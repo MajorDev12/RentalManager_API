@@ -19,13 +19,11 @@ namespace RentalManager.Mappings
             };
         }
 
-        public static Unit ToEntity(this UPDATEUnitDto dto, int id)
+        public static Unit ToEntity(this UPDATEUnitDto dto)
         {
             return new Unit
             {
-                Id = id,
                 Name = dto.Name,
-                StatusId = dto.StatusId,
                 Amount = dto.Amount,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
@@ -52,23 +50,10 @@ namespace RentalManager.Mappings
         }
 
 
-        public static UPDATEUnitDto ToUpdateDto(this Unit dto)
-        {
-            return new UPDATEUnitDto
-            {
-                Name = dto.Name,
-                StatusId = dto.StatusId,
-                Amount = dto.Amount,
-                Notes = dto.Notes,
-                PropertyId = dto.PropertyId,
-                UnitTypeId = dto.UnitTypeId,
-            };
-        }
 
         public static Unit UpdateEntity(this Unit updatedData, Unit existingData)
         {
             existingData.Name = updatedData.Name;
-            existingData.StatusId = updatedData.StatusId;
             existingData.Amount = updatedData.Amount;
             existingData.Notes = updatedData.Notes;
             existingData.PropertyId = updatedData.PropertyId;

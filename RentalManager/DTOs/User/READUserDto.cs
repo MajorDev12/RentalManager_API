@@ -20,7 +20,7 @@
 
         public bool IsActive { get; set; } = false;
 
-        public int GenderId { get; set; }
+        public int? GenderId { get; set; }
 
         public string GenderName { get; set; } = string.Empty;
 
@@ -28,7 +28,7 @@
 
         public string UserStatus { get; set; } = string.Empty;
 
-        public int propertyId { get; set; }
+        public int? propertyId { get; set; }
 
         public string PropertyName { get; set; } = string.Empty;
     }

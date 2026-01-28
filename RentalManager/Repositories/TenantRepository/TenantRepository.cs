@@ -2,28 +2,28 @@
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.TenantRepository
 {
     public class TenantRepository : ITenantRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUser _currentuser;
 
-        public TenantRepository(ApplicationDbContext context)
+        public TenantRepository(ApplicationDbContext context, ICurrentUser currentuser)
         {
             _context = context;
+            _currentuser = currentuser;
         }
 
 
         public async Task<List<Tenant>?> GetAllAsync()
         {
             return await _context.Tenants
-                .Include(t => t.User).ThenInclude(u => u.Role)
-                .Include(t => t.User).ThenInclude(u => u.Gender)
-                .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                .Include(t => t.User).ThenInclude(u => u.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.TenantStatus)
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithDetails()
                 .ToListAsync();
         }
 
@@ -31,19 +31,18 @@ namespace RentalManager.Repositories.TenantRepository
         public async Task<Tenant?> GetByIdAsync(int id)
         {
             return await _context.Tenants
-                .Include(t => t.User).ThenInclude(u => u.Role)
-                .Include(t => t.User).ThenInclude(u => u.Gender)
-                .Include(t => t.User).ThenInclude(u => u.UserStatus)
-                .Include(t => t.User).ThenInclude(u => u.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.TenantStatus)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithDetails()
+                .FirstOrDefaultAsync();
         }
 
 
         public async Task<Tenant?> GetByUserIdAsync(int userId)
         {
             return await _context.Tenants
+                .Where(u => u.UserId ==  userId)
+                .ApplyRoleFilter(_currentuser, _context)
                 .Include(t => t.Unit)
                 .FirstOrDefaultAsync(pr => pr.UserId == userId);
         }
@@ -52,14 +51,14 @@ namespace RentalManager.Repositories.TenantRepository
         public async Task<List<Tenant>?> GetAllByPropertyId(int propertyId, bool? isActive)
         {
             var query = _context.Tenants
-                        .Where(t => t.User.PropertyId == propertyId);
+                        .ByProperty(propertyId)
+                        .ApplyRoleFilter(_currentuser, _context);
 
             if (isActive == true)
-                query = query.Where(t => t.TenantStatus.Item.ToLower() == "active");
+                query = query.IsActive();
 
             return await query
-                .Include(t => t.Unit)
-                .Include(t => t.User)
+                .WithDetails()
                 .ToListAsync();
         }
 
@@ -96,7 +95,10 @@ namespace RentalManager.Repositories.TenantRepository
 
         public async Task<Tenant?> FindAsync(int id)
         {
-            return await _context.Tenants.FindAsync(id);
+            return await _context.Tenants
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(_currentuser, _context)
+                .FirstOrDefaultAsync();
         }
 
 
@@ -111,6 +113,24 @@ namespace RentalManager.Repositories.TenantRepository
             await _context.SaveChangesAsync();
 
             return updatedEntity;
+        }
+
+
+        public async Task<Tenant?> UpdateTenantStatusAsync(int tenantId, int tenantStatusId)
+        {
+            var tenant = await _context.Tenants
+                .Include(t => t.TenantStatus)
+                .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+            if (tenant == null)
+                return null;
+
+            tenant.Status = tenantStatusId;
+
+            _context.Tenants.Update(tenant);
+            await _context.SaveChangesAsync();
+
+            return tenant;
         }
 
     }

@@ -8,7 +8,7 @@ namespace RentalManager.DTOs.Transaction
 
         public int? UserId { get; set; }
 
-        public int PropertyId { get; set; }
+        public int? PropertyId { get; set; }
 
         public int? UnitId { get; set; }
 

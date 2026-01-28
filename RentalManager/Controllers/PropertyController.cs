@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RentalManager.Authorization.Policies;
 using RentalManager.Data;
 using RentalManager.DTOs.Property;
 using RentalManager.DTOs.SystemCode;
+using RentalManager.Helpers.Authorization;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Services.PropertyService;
@@ -11,6 +14,7 @@ namespace RentalManager.Controllers
 {
     [Route("api/")]
     [ApiController]
+    [Authorize]
     public class PropertyController : Controller
     {
 
@@ -21,18 +25,22 @@ namespace RentalManager.Controllers
             _PropertyContext = context;
         }
 
+        [Authorize(Policy = PolicyNames.Property.Read)]
         [HttpGet("Properties")]
         public async Task<ActionResult<IEnumerable<READPropertyDto>>> GetProperties()
         {
             
             try
             {
-                var properties = await _PropertyContext.GetAll();
-                return Ok(properties);
+                var result = await _PropertyContext.GetAll();
+                
+                if(result.Success == false) return BadRequest();
+
+                return Ok(result);
             }
             catch(Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
         }
 
@@ -44,12 +52,15 @@ namespace RentalManager.Controllers
         {
             try
             {
-                var property = await _PropertyContext.GetById(id);
-                return Ok(property);
+                var result = await _PropertyContext.GetById(id);
+
+                if (result.Success == false) return BadRequest();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
             
         }
@@ -64,12 +75,16 @@ namespace RentalManager.Controllers
 
             try
             {
-                var property = await _PropertyContext.Create(AddedProperty);
-                return Ok(property);
+                var accountId = User.AccountId();
+                var result = await _PropertyContext.Create(AddedProperty, accountId);
+
+                if (result.Success == false) return BadRequest();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
         }
 
@@ -84,12 +99,15 @@ namespace RentalManager.Controllers
 
             try
             {
-                var property = await _PropertyContext.Update(dto);
-                return Ok(property);
+                var result = await _PropertyContext.Update(id, dto);
+
+                if (result.Success == false) return BadRequest();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
 
         }
@@ -101,12 +119,15 @@ namespace RentalManager.Controllers
         {
             try
             {
-                var property = await _PropertyContext.Delete(id);
-                return Ok(property);
+                var result = await _PropertyContext.Delete(id);
+
+                if (result.Success == false) return BadRequest();
+
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
         }
 

@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RentalManager.Authorization.Policies;
 using RentalManager.Data;
 using RentalManager.DTOs.Property;
 using RentalManager.DTOs.UtilityBill;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Services.UtilityBillService;
+using System.Security.Cryptography;
 
 namespace RentalManager.Controllers
 {
@@ -21,7 +24,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
         [HttpGet]
         public async Task<IActionResult> GetUtilityBills()
         {
@@ -38,7 +41,7 @@ namespace RentalManager.Controllers
         }
 
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUtilityBillById(int id)
         {
@@ -54,7 +57,7 @@ namespace RentalManager.Controllers
             }
         }
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Write)]
         [HttpPost]
         public async Task<IActionResult> AddUtilityBill([FromBody] CREATEUtilityBillDto AddedCharge)
         {
@@ -72,7 +75,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Update)]
         [HttpPut("{id}")]
         public async Task<IActionResult> EditUtilityBill(int id, [FromBody] UPDATEUtilityBillDto UpdatedBill)
         {
@@ -88,7 +91,7 @@ namespace RentalManager.Controllers
 
         }
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Delete)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUtilityBill(int id)
         {
@@ -104,7 +107,7 @@ namespace RentalManager.Controllers
         }
 
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
         [HttpGet("By-Property/{PropertyId}")]
         public async Task<IActionResult> GetUtilityBillsByProperty(int PropertyId)
         {
@@ -121,7 +124,7 @@ namespace RentalManager.Controllers
         }
 
 
-
+        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
         [HttpGet("By-TenantId/{TenantId}")]
         public async Task<IActionResult> GetUtilityBillsByTenant(int TenantId)
         {

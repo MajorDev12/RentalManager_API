@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Services.TransactionService;
 
 namespace RentalManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]s")]
     [ApiController]
     public class TransactionController : ControllerBase
     {
@@ -15,7 +16,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-
+        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
         [HttpGet]
         public async Task<IActionResult> GetTransactions()
         {
@@ -30,12 +31,12 @@ namespace RentalManager.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
         }
 
 
-
+        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
         [HttpGet("By-Tenant/{userId}")]
         public async Task<IActionResult> GetTransactionsByUser(int userId)
         {
@@ -55,6 +56,7 @@ namespace RentalManager.Controllers
         }
 
 
+        [Authorize(Policy = PolicyNames.Transaction.Create)]
         [HttpPost]
         public async Task<IActionResult> AddTransaction([FromBody] CREATETransactionDto transaction)
         {
@@ -75,6 +77,7 @@ namespace RentalManager.Controllers
 
 
 
+        [Authorize(Policy = PolicyNames.Transaction.Create)]
         [HttpPost("AddPayment")]
         public async Task<IActionResult> AddPayment([FromBody] CREATEPaymentDto payment)
         {
@@ -95,7 +98,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.Transaction.Create)]
         [HttpPost("AddInvoice")]
         public async Task<IActionResult> AddInvoiceCharge([FromBody] CREATEIncoiceTransactionDto transaction)
         {
@@ -115,7 +118,7 @@ namespace RentalManager.Controllers
         }
 
 
-
+        [Authorize(Policy = PolicyNames.Transaction.Update)]
         [HttpPut("{id}")]
         public async Task<IActionResult> EditTransaction(int id, [FromBody] UPDATETransactionDto updatedTransaction)
         {
@@ -136,6 +139,7 @@ namespace RentalManager.Controllers
         }
 
 
+        [Authorize(Policy = PolicyNames.Transaction.Delete)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransaction(int id) 
         {
@@ -155,6 +159,7 @@ namespace RentalManager.Controllers
         }
 
 
+        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
         [HttpGet("UnpaidTenants")]
         public async Task<IActionResult> UnpaidTenants()
         {
@@ -174,6 +179,7 @@ namespace RentalManager.Controllers
         }
 
 
+        [Authorize(Policy = PolicyNames.Transaction.ReadSelf)]
         [HttpGet("TenantBalances")]
         public async Task<IActionResult> TenantBalances(int userId)
         {
@@ -193,7 +199,8 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpPost("GenerateRentInvoices")]
+        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [HttpPost("GenerateRentInvoices/{propertyId}")]
         public async Task<IActionResult> GenerateRentInvoices(int propertyId)
         {
             try
@@ -212,8 +219,8 @@ namespace RentalManager.Controllers
         }
 
 
-
-        [HttpPost("GenerateUtilityBillInvoices")]
+        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [HttpPost("GenerateUtilityBillInvoices/{propertyId}")]
         public async Task<IActionResult> GenerateUtilityInvoices(int propertyId)
         {
             try
@@ -230,5 +237,8 @@ namespace RentalManager.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
+
     }
 }

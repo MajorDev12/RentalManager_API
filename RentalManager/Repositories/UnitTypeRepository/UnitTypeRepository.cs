@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.UnitTypeRepository
 {
@@ -15,25 +17,28 @@ namespace RentalManager.Repositories.UnitTypeRepository
         }
 
 
-        public async Task<List<UnitType>?> GetAllAsync()
+        public async Task<List<UnitType>?> GetAllAsync(ICurrentUser user)
         {
             return await _context.UnitTypes
+                .ApplyRoleFilter(user, _context)
                 .Include(p => p.Property)
                 .ToListAsync();
         }
 
-        public async Task<UnitType?> GetByIdAsync(int id)
+        public async Task<UnitType?> GetByIdAsync(ICurrentUser user, int id)
         {
             return await _context.UnitTypes
+                .ApplyRoleFilter(user, _context)
                 .Include(p => p.Property)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
         }
 
-        public async Task<List<UnitType>?> GetByPropertyIdAsync(int id)
+        public async Task<List<UnitType>?> GetByPropertyIdAsync(ICurrentUser user, int id)
         {
            return await _context.UnitTypes
-                .Include(u => u.Property)
                 .Where(u => u.PropertyId == id)
+                .ApplyRoleFilter(user, _context)
+                .Include(u => u.Property)
                 .ToListAsync();
         }
 
@@ -46,17 +51,9 @@ namespace RentalManager.Repositories.UnitTypeRepository
         }
 
 
-        public async Task<UnitType> UpdateAsync(UnitType type)
+        public async Task UpdateAsync(UnitType type)
         {
-            var existingType = await FindAsync(type.Id);
-
-            if (existingType == null) return null;
-
-            var updatedEntity = type.UpdateEntity(existingType);
-
             await _context.SaveChangesAsync();
-
-            return updatedEntity;
         }
 
 
@@ -67,9 +64,12 @@ namespace RentalManager.Repositories.UnitTypeRepository
         }
 
 
-        public async Task<UnitType?> FindAsync(int id)
+        public async Task<UnitType?> FindAsync(ICurrentUser user, int id)
         {
-            return await _context.UnitTypes.FindAsync(id);
+            return await _context.UnitTypes
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .FirstOrDefaultAsync();
         }
 
     }

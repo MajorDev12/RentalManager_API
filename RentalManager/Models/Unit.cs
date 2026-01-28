@@ -1,9 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Models
 {
-    public class Unit : AuditableEntity
+    public class Unit : AuditableEntity, IAccountContext
     {
         public int Id { get; set; }
 
@@ -24,6 +25,8 @@ namespace RentalManager.Models
 
         public int PropertyId { get; set; }
         public Property Property { get; set; } = null!;
+
+        public int AccountId {  get; set; }
     }
 
 }

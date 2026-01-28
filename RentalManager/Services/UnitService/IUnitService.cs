@@ -1,5 +1,4 @@
 ﻿using RentalManager.DTOs.Unit;
-using RentalManager.DTOs.UnitType;
 using RentalManager.Models;
 
 namespace RentalManager.Services.UnitService

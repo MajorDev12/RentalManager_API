@@ -1,4 +1,5 @@
 ﻿using RentalManager.DTOs.Tenant;
+using RentalManager.DTOs.User;
 using RentalManager.Models;
 
 namespace RentalManager.Mappings
@@ -12,7 +13,7 @@ namespace RentalManager.Mappings
         };
 
 
-        public static Tenant ToEntity(this CREATETenantDto dto, User savedUser, int statusId) => new Tenant
+        public static Tenant ToEntity(this CREATETenantDto dto, READUserDto savedUser, int statusId) => new Tenant
         {
             UserId = savedUser.Id,
             FullName = $"{savedUser.FirstName}  {savedUser.LastName}",
@@ -22,14 +23,11 @@ namespace RentalManager.Mappings
         };
 
 
-        public static Tenant ToEntity(this UPDATETenantDto dto, User savedUser, int statusId, int id) => new Tenant
+        public static Tenant ToEntity(this UPDATETenantDto dto, User savedUser) => new Tenant
         {
-            Id = id,
-            UserId = savedUser.Id,
             FullName = $"{savedUser.FirstName}  {savedUser.LastName}",
             EmailAddress = savedUser.EmailAddress,
             MobileNumber = savedUser.MobileNumber,
-            Status = statusId,
         };
 
 
@@ -38,6 +36,22 @@ namespace RentalManager.Mappings
             Id = dto.tenantId,
             UnitId = dto.unitId,
             Status = dto.status
+        };
+
+        public static CREATEUserDto ToUserDto(this CREATETenantDto dto) => new CREATEUserDto
+        {
+            FirstName = dto.User.FirstName,
+            LastName = dto.User.FirstName,
+            EmailAddress = dto.User.EmailAddress,
+            MobileNumber = dto.User.MobileNumber,
+            AlternativeNumber = dto.User.AlternativeNumber,
+            Password = "Tenant123",
+            NationalId = dto.User.NationalId,
+            IsActive = dto.User.IsActive,
+            GenderId = dto.User.GenderId,
+            RoleId = dto.User.RoleId,
+            UserStatusId = dto.User.UserStatusId,
+            PropertyId = dto.User.PropertyId
         };
 
 
@@ -67,7 +81,6 @@ namespace RentalManager.Mappings
 
         public static Tenant UpdateEntity(this Tenant dto, Tenant tenant, User user)
         {
-            tenant.UserId = user.Id;
             tenant.FullName = $"{user.FirstName} {user.LastName}";
             tenant.EmailAddress = user.EmailAddress;
             tenant.MobileNumber = user.MobileNumber;

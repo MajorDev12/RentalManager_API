@@ -1,4 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using RentalManager.Data;
+using RentalManager.DTOs.Authentication;
 using RentalManager.DTOs.UnitType;
 using RentalManager.DTOs.User;
 using RentalManager.Mappings;
@@ -7,29 +10,38 @@ using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.RoleRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.UserRepository;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Services.UserService
 {
     public class UserService : IUserService
     {
-
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IUserRepository _repo;
         private readonly IPropertyRepository _propertyrepo;
         private readonly IRoleRepository _rolerepo;
         private readonly ISystemCodeItemRepository _systemcoderepo;
+        private readonly ICurrentUser _currentuser;
 
         public UserService
             (
+            ApplicationDbContext context,
+            UserManager<ApplicationUser> userManager,
             IUserRepository repo,
             IPropertyRepository propertyrepo,
             IRoleRepository rolerepo,
-            ISystemCodeItemRepository systemcoderepo
+            ISystemCodeItemRepository systemcoderepo,
+            ICurrentUser currentuser
             )
         {
+            _context = context;
+            _userManager = userManager;
             _repo = repo;
             _propertyrepo = propertyrepo;
             _rolerepo = rolerepo;
             _systemcoderepo = systemcoderepo;
+            _currentuser = currentuser;
         }
 
         public async Task<ApiResponse<List<READUserDto>>> GetAll()
@@ -76,38 +88,61 @@ namespace RentalManager.Services.UserService
         }
 
 
-        public async Task<ApiResponse<READUserDto>> Add(CREATEUserDto user)
+        public async Task<ApiResponse<READUserDto>> Add(CREATEUserDto dto)
         {
+            ApplicationUser? appUser = null;
+
             try
             {
-                var property = await _propertyrepo.FindAsync(user.PropertyId);
-                var role = await _rolerepo.FindAsync(user.RoleId);
-                var gender = await _systemcoderepo.FindAsync(user.GenderId);
-                var status = await _systemcoderepo.FindAsync(user.UserStatusId);
+                // Validate related entities
+                var property = await _propertyrepo.FindAsync(_currentuser, dto.PropertyId);
+                var role = await _rolerepo.FindAsync(dto.RoleId);
+                var gender = await _systemcoderepo.FindAsync(dto.GenderId);
+                var status = await _systemcoderepo.FindAsync(dto.UserStatusId);
 
+                if (property == null || role == null || gender == null || status == null)
+                    return ApiResponse<READUserDto>.FailResponse("Invalid property, role, gender, or status.");
 
-                if (status == null || property == null || role == null || gender == null)
+                // Create Identity user
+                appUser = new ApplicationUser
                 {
-                    return new ApiResponse<READUserDto>(null, "One of the items provided does not exist: status, property, role, gender.");
+                    FirstName = dto.FirstName,
+                    LastName = dto.LastName,
+                    UserName = dto.LastName,
+                    Email = dto.EmailAddress,
+                    AccountId = _currentuser.AccountId
+                };
+
+                var identityResult = await _userManager.CreateAsync(appUser, dto.Password);
+                if (!identityResult.Succeeded)
+                    return ApiResponse<READUserDto>.FailResponse(string.Join(", ", identityResult.Errors.Select(e => e.Description)));
+
+                // Assign role
+                var roleResult = await _userManager.AddToRoleAsync(appUser, role.Name);
+                if (!roleResult.Succeeded)
+                {
+                    await _userManager.DeleteAsync(appUser);
+                    return ApiResponse<READUserDto>.FailResponse(string.Join(", ", roleResult.Errors.Select(e => e.Description)));
                 }
 
+                // Create domain user
+                var userEntity = dto.ToEntity();
+                userEntity.ApplicationUserId = appUser.Id;
+                userEntity.RoleId = role.Id;
+                userEntity.UserStatusId = status.Id;
 
-                var entity = user.ToEntity();
-                var addedUser = await _repo.AddAsync(entity);
+                await _repo.AddAsync(userEntity); // Save domain user
 
-                if (addedUser == null)
-                {
-                    return new ApiResponse<READUserDto>(null, "Data Not Found.");
-                }
-
-
-                return new ApiResponse<READUserDto>(null, "User Created Successfully");
+                return ApiResponse<READUserDto>.SuccessResponse(userEntity.ToReadDto(), "User created successfully");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READUserDto>($"Error Occurred: {ex.InnerException.Message} ");
+                if (appUser != null) await _userManager.DeleteAsync(appUser);
+                return ApiResponse<READUserDto>.FailResponse($"Error occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
+
+
 
 
         public async Task<ApiResponse<READUserDto>> Update(int id, UPDATEUserDto user)
@@ -129,7 +164,7 @@ namespace RentalManager.Services.UserService
                     return new ApiResponse<READUserDto>(null, "One of the items provided does not exist: status, property, role, gender.");
                 }
 
-                var entity = user.ToEntity(id);
+                var entity = user.ToEntity();
                 var updated = await _repo.UpdateAsync(entity);
 
                 if (updated == null)
@@ -161,6 +196,22 @@ namespace RentalManager.Services.UserService
             {
                 return new ApiResponse<READUserDto>($"Error Occurred: {ex.InnerException.Message}");
             }
+        }
+
+
+        private User CreateUser(CREATEUserDto user, int appUserId)
+        {
+
+            var newUser = new User
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                EmailAddress = user.EmailAddress,
+                MobileNumber = user.MobileNumber,
+                ApplicationUserId = appUserId
+            };
+
+            return newUser;
         }
 
     }

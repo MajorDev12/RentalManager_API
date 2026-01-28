@@ -9,6 +9,8 @@ namespace RentalManager.Repositories.TransactionRepository
 
         Task<List<Transaction>?> GetByUserIdAsync(int userId);
 
+        Task<Transaction?> GetByExpenseIdAsync(int id);
+
         Task<Transaction> AddAsync(Transaction transaction);
 
         Task<int> AddRangeAsync(IEnumerable<Transaction> transactions);
@@ -19,7 +21,7 @@ namespace RentalManager.Repositories.TransactionRepository
 
         Task<Transaction?> FindAsync(int id);
 
-        Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, string? category = "", List<UtilityBill>? utilities = null);
+        Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, int? categoryId = 0, List<UtilityBill>? utilities = null);
 
         Task<List<TenantBalanceDto>> GetBalancesAsync();
 

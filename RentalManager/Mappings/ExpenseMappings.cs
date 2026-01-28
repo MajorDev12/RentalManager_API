@@ -10,10 +10,19 @@ namespace RentalManager.Mappings
             Name = dto.Name,
             Amount = dto.Amount,
             Notes = dto.Notes,
-            PropertyId = dto.PropertyId
+            PropertyId = dto.PropertyId,
         };
 
 
+        public static Transaction ToTransactionEntity(this CREATEExpenseDto dto) => new Transaction
+        {
+            Amount = dto.Amount,
+            PropertyId = dto.PropertyId,
+            Notes = dto.Notes,
+            TransactionDate = DateTime.UtcNow
+        };
+
+        
 
         public static READExpenseDto ToReadDto(this Expense dto) => new READExpenseDto
         {
@@ -50,11 +59,17 @@ namespace RentalManager.Mappings
             existing.Name = dto.Name;
             existing.Amount = dto.Amount;
             existing.Notes = dto.Notes;
-            existing.PropertyId = dto.PropertyId; 
+            existing.PropertyId = dto.PropertyId;
 
             return existing;
         }
 
+        public static Transaction UpdateTransactionEntity(this UPDATEExpenseDto dto, Transaction existing)
+        {
+            existing.Amount = dto.Amount;
+            existing.ExpenseCategoryId = dto.ExpenseCategoryId;
 
+            return existing;
+        }
     }
 }

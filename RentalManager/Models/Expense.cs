@@ -1,6 +1,8 @@
-﻿namespace RentalManager.Models
+﻿using RentalManager.Services.AccountAccessService;
+
+namespace RentalManager.Models
 {
-    public class Expense : AuditableEntity
+    public class Expense : AuditableEntity, IAccountContext
     {
         public int Id { get; set; }
 
@@ -14,5 +16,8 @@
 
         public Property Property { get; set; } = null!;
 
+        public int AccountId {  get; set; }
+
+        public Account Account { get; set; } = null!;
     }
 }

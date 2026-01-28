@@ -18,9 +18,7 @@ namespace RentalManager.DTOs.User
 
         public string? AlternativeNumber { get; set; }
 
-        public string PasswordHash { get; set; } = string.Empty;
-
-        public DateTime? LastPasswordChange { get; set; }
+        public string Password { get; set; } = string.Empty;
 
         public int? NationalId { get; set; }
 

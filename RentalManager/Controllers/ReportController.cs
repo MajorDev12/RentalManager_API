@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Report;
 using RentalManager.Services.ReportService;
 
 namespace RentalManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]s")]
     [ApiController]
     public class ReportController : ControllerBase
     {
@@ -18,6 +20,7 @@ namespace RentalManager.Controllers
         }
 
 
+        [Authorize(Policy = PolicyNames.Report.Read)]
         [HttpGet("IncomeSummary")]
         public async Task<IActionResult> GetSummary([FromQuery] ReportFilterDto filter)
         {

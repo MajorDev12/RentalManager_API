@@ -2,6 +2,8 @@
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.UnitRepository
 {
@@ -14,34 +16,35 @@ namespace RentalManager.Repositories.UnitRepository
         }
 
 
-        public async Task<List<Unit>?> GetAllAsync()
+        public async Task<List<Unit>?> GetAllAsync(ICurrentUser user)
         {
             return await _context.Units
-                .Include(ub => ub.Property)
-                .Include(ub => ub.UnitType)
-                .Include(ub => ub.Status)
+                .ApplyRoleFilter(user, _context)
+                .WithDetails()
                 .OrderBy(ub => ub.Property.Name).ThenBy(ub => ub.Name)
                 .ToListAsync();
         }
 
-        public async Task<Unit?> GetByIdAsync(int id)
+
+        public async Task<Unit?> GetByIdAsync(ICurrentUser user, int id)
         {
             return await _context.Units
-                .Include(c => c.Property)
-                .Include(ub => ub.UnitType)
-                .Include(s => s.Status)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .WithDetails()
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<List<Unit>?> GetByPropertyIdAsync(int id)
+
+        public async Task<List<Unit>?> GetByPropertyIdAsync(ICurrentUser user, int id)
         {
             return await _context.Units
-                .Include(u => u.Property)
-                .Include(u => u.UnitType)
-                .Include(u => u.Status)
                 .Where(u => u.PropertyId == id)
+                .ApplyRoleFilter(user, _context)
+                .WithDetails()
                 .ToListAsync();
         }
+
 
         public async Task<Unit> AddAsync(Unit unit)
         {
@@ -51,22 +54,17 @@ namespace RentalManager.Repositories.UnitRepository
             return unit;
         }
 
-        public async Task<Unit> UpdateAsync(Unit unit)
+
+        public async Task UpdateAsync(Unit unit)
         {
-            var existingUnit = await FindAsync(unit.Id);
-
-            if (existingUnit == null) return null;
-
-            var updatedEntity = unit.UpdateEntity(existingUnit);
 
             await _context.SaveChangesAsync();
-
-            return updatedEntity;
         }
 
-        public async Task<Unit> UpdateStatus(int unitId, int statusId)
+
+        public async Task<Unit> UpdateStatus(ICurrentUser user, int unitId, int statusId)
         {
-            var existingUnit = await FindAsync(unitId);
+            var existingUnit = await FindAsync(user, unitId);
 
             if (existingUnit == null) return null;
 
@@ -76,15 +74,21 @@ namespace RentalManager.Repositories.UnitRepository
             return existingUnit;
         }
 
+
         public async Task DeleteAsync(Unit unit)
         {
             _context.Units.Remove(unit);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Unit?> FindAsync(int id)
+
+        public async Task<Unit?> FindAsync(ICurrentUser user, int id)
         {
-            return await _context.Units.FindAsync(id);
+            return await _context.Units
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .WithDetails()
+                .FirstOrDefaultAsync();
         }
 
 

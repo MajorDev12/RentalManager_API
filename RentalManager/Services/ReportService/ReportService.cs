@@ -17,16 +17,16 @@ namespace RentalManager.Services.ReportService
 
 
 
-        public async Task<ApiResponse<List<READReportDto>>> GetReport(ReportFilterDto filter)
+        public async Task<ApiResponse<object>> GetReport(ReportFilterDto filter)
         {
             try 
             {
                 var data = await _repo.GetReportAsync(filter);
 
-                return new ApiResponse<List<READReportDto>>(data, "");
+                return new ApiResponse<object>(data, "");
             }catch (Exception ex)
             {
-                return new ApiResponse<List<READReportDto>>(null, $"Error Occured: {ex.InnerException?.Message ?? ex.Message}");
+                return new ApiResponse<object>(null, $"Error Occured: {ex.InnerException?.Message ?? ex.Message}");
             }
 
         }

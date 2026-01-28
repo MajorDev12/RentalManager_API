@@ -11,7 +11,5 @@ namespace RentalManager.DTOs.UtilityBill
         public bool isReccuring { get; set; }
 
         public int PropertyId { get; set; }
-
-        public DateTime UpdatedOn { get; set; } = DateTime.UtcNow;
     }
 }

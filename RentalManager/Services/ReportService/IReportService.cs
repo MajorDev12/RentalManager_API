@@ -5,6 +5,6 @@ namespace RentalManager.Services.ReportService
 {
     public interface IReportService
     {
-        Task<ApiResponse<List<READReportDto>>> GetReport(ReportFilterDto filter);
+        Task<ApiResponse<object>> GetReport(ReportFilterDto filter);
     }
 }

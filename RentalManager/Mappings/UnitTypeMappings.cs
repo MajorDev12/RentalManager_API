@@ -17,11 +17,10 @@ namespace RentalManager.Mappings
             };
         }
 
-        public static UnitType ToEntity(this UPDATEUnitTypeDto dto, int id)
+        public static UnitType ToEntity(this UPDATEUnitTypeDto dto)
         {
             return new UnitType
             {
-                Id = id,
                 Name = dto.Name,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId

@@ -1,11 +1,10 @@
-﻿using RentalManager.DTOs.Unit;
-using RentalManager.DTOs.UnitType;
-using RentalManager.DTOs.UtilityBill;
+﻿using RentalManager.DTOs.UtilityBill;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.TenantRepository;
 using RentalManager.Repositories.UtilityBillRepository;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Services.UtilityBillService
 {
@@ -15,12 +14,18 @@ namespace RentalManager.Services.UtilityBillService
         private readonly IUtilityBillRepository _repo;
         private readonly IPropertyRepository _propertyrepo;
         private readonly ITenantRepository _tenantrepo;
+        private readonly ICurrentUser _currentuser;
 
-        public UtilityBillService(IUtilityBillRepository repo, IPropertyRepository propertyrepo, ITenantRepository tenantrepo)
+        public UtilityBillService(
+            IUtilityBillRepository repo,
+            IPropertyRepository propertyrepo,
+            ITenantRepository tenantrepo,
+            ICurrentUser currentuser)
         {
             _repo = repo;
             _propertyrepo = propertyrepo;
             _tenantrepo = tenantrepo;
+            _currentuser = currentuser;
         }
 
 
@@ -29,7 +34,7 @@ namespace RentalManager.Services.UtilityBillService
         {
             try
             {
-                var bills = await _repo.GetAllAsync();
+                var bills = await _repo.GetAllAsync(_currentuser);
 
                 if (bills == null)
                 {
@@ -51,7 +56,7 @@ namespace RentalManager.Services.UtilityBillService
         {
             try
             {
-                var bill = await _repo.GetByIdAsync(id);
+                var bill = await _repo.GetByIdAsync(_currentuser, id);
 
                 if (bill == null)
                 {
@@ -73,7 +78,7 @@ namespace RentalManager.Services.UtilityBillService
         {
             try
             {
-                var bills = await _repo.GetByPropertyIdAsync(id);
+                var bills = await _repo.GetByPropertyIdAsync(_currentuser, id);
 
                 if (bills == null || bills.Count == 0)
                 {
@@ -89,6 +94,7 @@ namespace RentalManager.Services.UtilityBillService
                 return new ApiResponse<List<READUtilityBillDto>>("Error Occurred");
             }
         }
+
 
         public async Task<ApiResponse<List<READUtilityBillDto>>> GetByTenantId(int id)
         {
@@ -99,8 +105,7 @@ namespace RentalManager.Services.UtilityBillService
                 if(tenant == null)
                     return new ApiResponse<List<READUtilityBillDto>>(null, "tenant was not found");
 
-
-                var bills = await _repo.GetByPropertyIdAsync(tenant.User.PropertyId);
+                var bills = await _repo.GetByPropertyIdAsync(_currentuser, tenant.User.PropertyId);
 
 
                 if (bills == null || bills.Count == 0)
@@ -118,16 +123,19 @@ namespace RentalManager.Services.UtilityBillService
             }
         }
 
+
         public async Task<ApiResponse<READUtilityBillDto>> Add(CREATEUtilityBillDto AddedBill)
         {
             try
             {
-                var property = await _propertyrepo.FindAsync(AddedBill.PropertyId);
+                var property = await _propertyrepo.FindAsync(_currentuser, AddedBill.PropertyId);
 
                 if (property == null) return new ApiResponse<READUtilityBillDto>(null, "Property Provided Does Not Exist.");
 
 
                 var entity = AddedBill.ToEntity();
+                entity.AccountId = _currentuser.AccountId;
+
                 var bill = await _repo.AddAsync(entity);
 
                 if (bill == null)
@@ -150,22 +158,30 @@ namespace RentalManager.Services.UtilityBillService
             try
             {
 
-                var existing = await _repo.FindAsync(id);
+                var existing = await _repo.FindAsync(_currentuser, id);
 
                 if (existing == null) return new ApiResponse<READUtilityBillDto>(null, "No Such Data.");
 
-                var property = await _propertyrepo.FindAsync(bill.PropertyId);
+                var property = await _propertyrepo.FindAsync(_currentuser, bill.PropertyId);
 
                 if (property == null) return new ApiResponse<READUtilityBillDto>(null, "Property Does Not Exist.");
 
 
-                var entity = bill.ToEntity(id);
-                var updated = await _repo.UpdateAsync(entity);
+                var entity = bill.ToEntity();
 
-                if (updated == null)
-                    return new ApiResponse<READUtilityBillDto>(null, "Data Not Found.");
+                
+                if (!HasUtilityBillChanged(existing, entity))
+                {
+                    return new ApiResponse<READUtilityBillDto>(null, "No changes detected.", false);
+                }
 
-                return new ApiResponse<READUtilityBillDto>(null, "Updated successfully.");
+                var updatedEntity = entity.ToUpdateEntity(existing);
+
+                await _repo.UpdateAsync(updatedEntity);
+
+                var result = updatedEntity.ToReadDto();
+
+                return new ApiResponse<READUtilityBillDto>(result, "Updated successfully.");
             }
             catch (Exception ex)
             {
@@ -178,7 +194,7 @@ namespace RentalManager.Services.UtilityBillService
         {
             try
             {
-                var entity = await _repo.FindAsync(id);
+                var entity = await _repo.FindAsync(_currentuser, id);
 
                 if (entity == null)
                     return new ApiResponse<READUtilityBillDto>("Data Not Found.");
@@ -192,6 +208,17 @@ namespace RentalManager.Services.UtilityBillService
                 return new ApiResponse<READUtilityBillDto>($"Error Occurred: {ex.Message}");
             }
         }
+
+
+        private static bool HasUtilityBillChanged( UtilityBill existing, UtilityBill updated)
+        {
+            return
+                existing.Name != updated.Name ||
+                existing.Amount != updated.Amount ||
+                existing.isReccuring != updated.isReccuring ||
+                existing.PropertyId != updated.PropertyId;
+        }
+
 
     }
 }

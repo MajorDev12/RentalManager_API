@@ -9,5 +9,7 @@
         public string? Notes { get; set; }
 
         public int PropertyId { get; set; }
+
+        public int ExpenseCategoryId { get; set; }
     }
 }

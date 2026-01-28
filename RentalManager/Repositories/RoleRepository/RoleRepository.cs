@@ -43,7 +43,7 @@ namespace RentalManager.Repositories.RoleRepository
         public async Task<Role?> GetByNameAsync(string name)
         {
             var role = await _context.Roles
-                .FirstOrDefaultAsync(pr => pr.Name == name);
+                .FirstOrDefaultAsync(pr => pr.Name.ToLower() == name.ToLower());
 
             return role;
         }

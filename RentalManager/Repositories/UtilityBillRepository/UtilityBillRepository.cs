@@ -2,6 +2,8 @@
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.UtilityBillRepository
 {
@@ -16,32 +18,37 @@ namespace RentalManager.Repositories.UtilityBillRepository
         }
 
 
-        public async Task<List<UtilityBill>?> GetAllAsync()
+        public async Task<List<UtilityBill>?> GetAllAsync(ICurrentUser user)
         {
             return await _context.UnitCharges
-                .Include(ub => ub.Property)
+                .ApplyRoleFilter(user, _context)
+                .Include(p => p.Property)
                 .ToListAsync();
         }
 
 
-        public async Task<UtilityBill?> GetByIdAsync(int id)
+        public async Task<UtilityBill?> GetByIdAsync(ICurrentUser user, int id)
         {
             return await _context.UnitCharges
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
                 .Include(c => c.Property)
-                .FirstOrDefaultAsync(pr => pr.Id == id);
+                .FirstOrDefaultAsync();
         }
 
 
-        public async Task<List<UtilityBill>?> GetByPropertyIdAsync(int id, bool? isReccurring)
+        public async Task<List<UtilityBill>?> GetByPropertyIdAsync(ICurrentUser user, int id, bool? isReccurring)
         {
-            var query = _context.UnitCharges
-                        .Include(u => u.Property)
-                        .Where(u => u.PropertyId == id);
+            IQueryable<UtilityBill> query = _context.UnitCharges
+                        .Where(u => u.PropertyId == id)
+                        .ApplyRoleFilter(user, _context);
 
             if (isReccurring == true)
                 query = query.Where(u => u.isReccuring == isReccurring);
 
-            return await query.ToListAsync();
+            return await query
+                .Include(u => u.Property)
+                .ToListAsync();
         }
 
 
@@ -55,17 +62,9 @@ namespace RentalManager.Repositories.UtilityBillRepository
         }
 
 
-        public async Task<UtilityBill> UpdateAsync(UtilityBill bill)
+        public async Task UpdateAsync(UtilityBill bill)
         {
-            var existingbill = await FindAsync(bill.Id);
-
-            if (existingbill == null) return null;
-
-            var updatedEntity = bill.UpdateEntity(existingbill);
-
             await _context.SaveChangesAsync();
-
-            return updatedEntity;
         }
 
 
@@ -76,9 +75,12 @@ namespace RentalManager.Repositories.UtilityBillRepository
         }
 
 
-        public async Task<UtilityBill?> FindAsync(int id)
+        public async Task<UtilityBill?> FindAsync(ICurrentUser user, int id)
         {
-            return await _context.UnitCharges.FindAsync(id);
+            return await _context.UnitCharges
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .FirstOrDefaultAsync();
         }
 
 

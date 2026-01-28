@@ -4,8 +4,6 @@
     {
         public string Name { get; set; } = string.Empty;
 
-        public int StatusId { get; set; }
-
         public int Amount { get; set; }
 
         public string? Notes { get; set; }

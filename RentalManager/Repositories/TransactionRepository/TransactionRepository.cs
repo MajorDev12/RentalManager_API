@@ -2,7 +2,10 @@
 using RentalManager.Data;
 using RentalManager.DTOs.Transaction;
 using RentalManager.DTOs.User;
+using RentalManager.Extensions.Query;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 using System.Linq;
 
 namespace RentalManager.Repositories.TransactionRepository
@@ -11,11 +14,12 @@ namespace RentalManager.Repositories.TransactionRepository
     {
 
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUser _currentuser;
 
-        public TransactionRepository(ApplicationDbContext context)
+        public TransactionRepository(ApplicationDbContext context, ICurrentUser currentuser)
         {
             _context = context;
-
+            _currentuser = currentuser;
         }
 
         public async Task<Transaction> AddAsync(Transaction transaction)
@@ -45,12 +49,15 @@ namespace RentalManager.Repositories.TransactionRepository
 
         public async Task<Transaction?> FindAsync(int id)
         {
-            return await _context.Transactions.FindAsync(id);
+            return await _context.Transactions
+                .ApplyRoleFilter(_currentuser, _context)
+                .Where(u => u.Id == id)
+                .FirstOrDefaultAsync();
         }
 
 
 
-        public async Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, string? category, List<UtilityBill>? utilities)
+        public async Task<List<Transaction>?> FindByMonthAsync(int month, int year, int? propertyId, int? categoryId, List<UtilityBill>? utilities)
         {
             var query = _context.Transactions
                         .Include(t => t.TransactionCategory)
@@ -59,22 +66,12 @@ namespace RentalManager.Repositories.TransactionRepository
 
 
             if (propertyId.HasValue)
-                query = query.Where(t => t.PropertyId == propertyId.Value);
+                query = query.ByProperty(propertyId.Value);
 
-            if (!string.IsNullOrWhiteSpace(category))
-                query = query.Where(t => t.TransactionCategory.Item.ToLower() == category.ToLower());
+            if (categoryId.HasValue)
+                query = query.ByCategory(categoryId);
 
-
-            // Filter by utility bills if any are provided
-            if (utilities != null && utilities.Count > 0)
-            {
-                var utilityIds = utilities
-                    .Where(u => u != null)
-                    .Select(u => u.Id)
-                    .ToList();
-
-                query = query.Where(t => t.UtilityBillId.HasValue && utilityIds.Contains(t.UtilityBillId.Value));
-            }
+            query = query.ByUtilities(utilities);
 
             return await query.ToListAsync();
         }
@@ -84,14 +81,21 @@ namespace RentalManager.Repositories.TransactionRepository
         public async Task<List<Transaction>?> GetAllAsync()
         {
             return await _context.Transactions
-                .Include(t => t.User)
-                .Include(p => p.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.UtilityBill)
-                .Include(t => t.TransactionType)
-                .Include(t => t.TransactionCategory)
-                .Include(t => t.PaymentMethod)
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithDetails()
+                .OrderBy(t => t.CreatedOn)
                 .ToListAsync();
+        }
+
+
+        public async Task<Transaction?> GetByExpenseIdAsync(int id)
+        {
+            return await _context.Transactions
+                .ApplyRoleFilter(_currentuser, _context)
+                .Where(u => u.ExpenseId == id)
+                .WithDetails()
+                .OrderBy(t => t.CreatedOn)
+                .FirstOrDefaultAsync();
         }
 
 
@@ -100,13 +104,8 @@ namespace RentalManager.Repositories.TransactionRepository
         {
             return await _context.Transactions
                 .Where(u => u.UserId == userId)
-                .Include(t => t.User)
-                .Include(p => p.Property)
-                .Include(t => t.Unit)
-                .Include(t => t.UtilityBill)
-                .Include(t => t.TransactionType)
-                .Include(t => t.TransactionCategory)
-                .Include(t => t.PaymentMethod)
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithDetails()
                 .ToListAsync();
         }
 
@@ -122,108 +121,202 @@ namespace RentalManager.Repositories.TransactionRepository
 
         public async Task<List<TenantBalanceDto>> GetBalancesAsync()
         {
-            return await _context.Transactions
-                .Where(t => t.UserId != null)
-                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor, category = t.TransactionCategory.Item })
-                .Select(g => new TenantBalanceDto
+            // ================================
+            // 1. AGGREGATE (SQL ONLY)
+            // ================================
+            var aggregated = await _context.Transactions
+                .WithUserOnly()
+                .GroupBy(t => new
                 {
-                    UserId = g.Key.UserId.Value,
-
-                    // ✅ project scalar properties instead of returning nav objects
-                    FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
-                    UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
-                    PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
-
-                    CategoryName = g.Key.category,
-                    Month = g.Key.MonthFor,
-                    Year = g.Key.YearFor,
-
-                    TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
-                    TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
-                    Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
-                             - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
+                    UserId = t.UserId!.Value,
+                    t.MonthFor,
+                    t.YearFor,
+                    t.TransactionCategoryId
                 })
-                .Where(b => b.Balance > 0)
-                .OrderBy(b => b.Year).ThenBy(b => b.Month).ThenBy(b => b.CategoryName)
+                .Select(g => new
+                {
+                    g.Key.UserId,
+                    g.Key.MonthFor,
+                    g.Key.YearFor,
+                    CategoryId = g.Key.TransactionCategoryId,
+
+                    TotalCharges = g.Sum(t =>
+                        t.TransactionType.Item == "Charge" ? t.Amount : 0),
+
+                    TotalPayments = g.Sum(t =>
+                        t.TransactionType.Item == "Payment" ? t.Amount : 0)
+                })
+                .Where(x => x.TotalCharges - x.TotalPayments > 0)
+                .OrderBy(x => x.YearFor)
+                .ThenBy(x => x.MonthFor)
                 .ToListAsync();
 
 
+            if (!aggregated.Any())
+                return new List<TenantBalanceDto>();
+
+
+            // ================================
+            // 2. LOAD LOOKUPS (SEPARATE QUERIES)
+            // ================================
+            var userIds = aggregated.Select(x => x.UserId).Distinct().ToList();
+            var categoryIds = aggregated.Select(x => x.CategoryId).Distinct().ToList();
+
+            var users = await _context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            var categories = await _context.SystemCodeItems
+                .Where(c => categoryIds.Contains(c.Id))
+                .ToDictionaryAsync(c => c.Id);
+
+            // Units are linked via Transaction.UnitId (NOT Tenant)
+            var unitMap = await _context.Transactions
+                .Where(t => userIds.Contains(t.UserId!.Value))
+                .Select(t => new { t.UserId, t.UnitId })
+                .Distinct()
+                .Join(
+                    _context.Units.Include(u => u.Property),
+                    tu => tu.UnitId,
+                    u => u.Id,
+                    (tu, u) => new { tu.UserId, Unit = u }
+                )
+                .GroupBy(x => x.UserId!.Value)
+                .ToDictionaryAsync(g => g.Key, g => g.First().Unit);
+
+
+            // ================================
+            // 3. FINAL PROJECTION (IN MEMORY)
+            // ================================
+            var result = aggregated.Select(a =>
+            {
+                users.TryGetValue(a.UserId, out User? user);
+                categories.TryGetValue(a.CategoryId, out SystemCodeItem? category);
+                unitMap.TryGetValue(a.UserId, out Unit? unit);
+
+                return new TenantBalanceDto
+                {
+                    UserId = a.UserId,
+                    FullName = user != null
+                        ? user.FirstName + " " + user.LastName
+                        : "",
+
+                    UnitName = unit != null ? unit.Name : "",
+                    PropertyName = unit?.Property != null ? unit.Property.Name : "",
+
+                    CategoryId = a.CategoryId,
+                    CategoryName = category != null ? category.Item : "",
+
+                    Month = a.MonthFor,
+                    Year = a.YearFor,
+
+                    TotalCharges = a.TotalCharges,
+                    TotalPayments = a.TotalPayments,
+                    Balance = a.TotalCharges - a.TotalPayments
+                };
+            })
+            .ToList();
+
+            return result;
         }
+
 
 
 
         public async Task<List<TenantBalanceDto>> GetBalanceByUserAsync(int userId)
         {
-            return await _context.Transactions
-                .Include(t => t.TransactionCategory)
-                .Where(t => t.UserId != null && t.UserId == userId)
-                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor, Category = t.TransactionCategory.Item, categoryId = t.TransactionCategoryId })
-                .Select(g => new TenantBalanceDto
+            var chargeTypeId = await _context.SystemCodeItems
+                .Where(x => x.Item == "Charge")
+                .Select(x => x.Id)
+                .FirstAsync();
+
+            var paymentTypeId = await _context.SystemCodeItems
+                .Where(x => x.Item == "Payment")
+                .Select(x => x.Id)
+                .FirstAsync();
+
+            var data = await _context.Transactions
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithUserOnly()
+                .Where(t => t.UserId == userId)
+                .GroupBy(t => new
                 {
-                    UserId = g.Key.UserId.Value,
-
-                    // ✅ project scalar properties instead of returning nav objects
-                    FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
-                    UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
-                    PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
-
-                    CategoryName = g.Key.Category,
-                    CategoryId = g.Key.categoryId,
-                    Month = g.Key.MonthFor,
-                    Year = g.Key.YearFor,
-
-                    TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
-                    TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
-                    Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
-                             - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
+                    t.UserId,
+                    t.MonthFor,
+                    t.YearFor,
+                    t.TransactionCategoryId
                 })
-                .Where(b => b.Balance > 0)
-                .OrderBy(b => b.Year).ThenBy(b => b.Month).ThenBy(b => b.CategoryName)
+                .Select(g => new
+                {
+                    g.Key.UserId,
+                    g.Key.MonthFor,
+                    g.Key.YearFor,
+                    g.Key.TransactionCategoryId,
+
+                    TotalCharges = g
+                        .Where(t => t.TransactionTypeId == chargeTypeId)
+                        .Sum(t => t.Amount),
+
+                    TotalPayments = g
+                        .Where(t => t.TransactionTypeId == paymentTypeId)
+                        .Sum(t => t.Amount)
+                })
+                .Where(x => x.TotalCharges - x.TotalPayments > 0)
+                .OrderBy(x => x.YearFor)
+                .ThenBy(x => x.MonthFor)
                 .ToListAsync();
 
+            // Enrich names AFTER SQL
+            var categories = await _context.SystemCodeItems
+                .ToDictionaryAsync(x => x.Id, x => x.Item);
+
+            return data.Select(x => new TenantBalanceDto
+            {
+                UserId = x.UserId!.Value,
+                Month = x.MonthFor,
+                Year = x.YearFor,
+                CategoryId = x.TransactionCategoryId,
+                CategoryName = categories.GetValueOrDefault(x.TransactionCategoryId, ""),
+                TotalCharges = x.TotalCharges,
+                TotalPayments = x.TotalPayments,
+                Balance = x.TotalCharges - x.TotalPayments
+            }).ToList();
         }
 
 
-        public async Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(int utilityBillId, BalanceFilter? filter = null)
+
+        public async Task<List<TenantBalanceDto>> GetBalanceByUtillityAsync(
+            int utilityBillId,
+            BalanceFilter? filter = null)
         {
             var query = _context.Transactions
-                .Where(t => t.UserId != null && t.UtilityBillId == utilityBillId);
+                .ApplyRoleFilter(_currentuser, _context)
+                .WithUserOnly()
+                .Where(t => t.UtilityBillId == utilityBillId);
 
-            // ✅ Apply filters conditionally
-            if (filter != null)
-            {
-                if (filter.MonthFor.HasValue)
-                    query = query.Where(t => t.MonthFor == filter.MonthFor.Value);
+            if (filter?.MonthFor != null)
+                query = query.Where(t => t.MonthFor == filter.MonthFor.Value);
 
-                if (filter.YearFor.HasValue)
-                    query = query.Where(t => t.YearFor == filter.YearFor.Value);
+            if (filter?.YearFor != null)
+                query = query.Where(t => t.YearFor == filter.YearFor.Value);
 
-                if (filter.UserId.HasValue)
-                    query = query.Where(t => t.UserId == filter.UserId.Value);
-            }
+            if (filter?.UserId != null)
+                query = query.Where(t => t.UserId == filter.UserId.Value);
 
             return await query
-                .GroupBy(t => new { t.UserId, t.MonthFor, t.YearFor })
-                .Select(g => new TenantBalanceDto
-                {
-                    UserId = g.Key.UserId.Value,
-                    FullName = g.Select(x => x.User.FirstName + " " + x.User.LastName).FirstOrDefault() ?? "",
-                    UnitName = g.Select(x => x.Unit.Name).FirstOrDefault() ?? "",
-                    PropertyName = g.Select(x => x.Unit.Property.Name).FirstOrDefault() ?? "",
-
-                    Month = g.Key.MonthFor,
-                    Year = g.Key.YearFor,
-
-                    TotalCharges = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount),
-                    TotalPayments = g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount),
-                    Balance = g.Where(t => t.TransactionType.Item == "Charge").Sum(t => t.Amount)
-                             - g.Where(t => t.TransactionType.Item == "Payment").Sum(t => t.Amount)
-                })
-                .Where(b => b.Balance > 0)
-                .OrderBy(b => b.Year)
-                .ThenBy(b => b.Month)
+                .GroupBy(t => new TenantBalanceGroupKey
+                (
+                    t.UserId!.Value,
+                    t.MonthFor,
+                    t.YearFor,
+                    t.TransactionCategoryId
+                ))
+                .ToTenantBalance()
+                .WithPositiveBalance()
+                .OrderByPeriod()
                 .ToListAsync();
         }
+
 
 
     }

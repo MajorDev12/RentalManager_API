@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Tenant;
 using RentalManager.Services;
 
@@ -15,7 +17,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-
+        [Authorize(Policy = PolicyNames.Tenant.ReadAll)]
         [HttpGet("Tenants")]
         public async Task<IActionResult> GetTenants()
         {
@@ -34,7 +36,7 @@ namespace RentalManager.Controllers
             }
         }
 
-
+        [Authorize(Policy = PolicyNames.Tenant.ReadSelf)]
         [HttpGet("Tenants/{id}")]
         public async Task<IActionResult> GetTenantById(int id)
         {
@@ -55,7 +57,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.Tenant.Create)]
         [HttpPost("Tenants")]
         public async Task<IActionResult> AddTenant([FromBody] CREATETenantDto AddedTenant)
         {
@@ -77,7 +79,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.Tenant.Update)]
         [HttpPut("Tenants/{id}")]
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
@@ -99,7 +101,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.Tenant.Delete)]
         [HttpDelete("Tenants/{id}")]
         public async Task<IActionResult> DeleteTenant(int id)
         {
@@ -120,7 +122,7 @@ namespace RentalManager.Controllers
 
 
 
-
+        [Authorize(Policy = PolicyNames.Tenant.Assign)]
         [HttpPost("Tenants/AssignUnit")]
         public async Task<IActionResult> AssignUnit([FromBody] ASSIGNUnitDto unitAssigned)
         {
@@ -139,6 +141,29 @@ namespace RentalManager.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+
+
+
+        [Authorize(Policy = PolicyNames.Tenant.Assign)]
+        [HttpPost("Tenants/AssignStatus")]
+        public async Task<IActionResult> AssignStatus([FromBody] ASSIGNStatusDto status)
+        {
+            try
+            {
+                var result = await _service.AssignStatus(status);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
 
 
     }

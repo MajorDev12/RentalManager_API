@@ -6,6 +6,7 @@ using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UnitTypeRepository;
+using RentalManager.Services.AccountAccessService;
 using System.Data;
 
 namespace RentalManager.Services.UnitService
@@ -16,25 +17,28 @@ namespace RentalManager.Services.UnitService
         private readonly IPropertyRepository _propertyrepo;
         private readonly IUnitTypeRepository _unittyperepo;
         private readonly ISystemCodeItemRepository _systemcodeitemrepo;
+        private readonly ICurrentUser _currentuser;
 
         public UnitService(
             IUnitRepository repo, 
             IPropertyRepository propertyrepo, 
             IUnitTypeRepository unittyperepo,
-            ISystemCodeItemRepository systemcodeitemrepo
+            ISystemCodeItemRepository systemcodeitemrepo,
+            ICurrentUser currentuser
             )
         {
             _repo = repo;
             _propertyrepo = propertyrepo;
             _unittyperepo = unittyperepo;
             _systemcodeitemrepo = systemcodeitemrepo;
+            _currentuser = currentuser;
         }
 
         public async Task<ApiResponse<List<READUnitDto>>> GetAll()
         {
             try
             {
-                var units = await _repo.GetAllAsync();
+                var units = await _repo.GetAllAsync(_currentuser);
 
                 if (units == null)
                 {
@@ -56,7 +60,7 @@ namespace RentalManager.Services.UnitService
         {
             try
             {
-                var unit = await _repo.GetByIdAsync(id);
+                var unit = await _repo.GetByIdAsync(_currentuser, id);
 
                 if (unit == null)
                 {
@@ -78,7 +82,7 @@ namespace RentalManager.Services.UnitService
         {
             try
             {
-                var units = await _repo.GetByPropertyIdAsync(id);
+                var units = await _repo.GetByPropertyIdAsync(_currentuser, id);
 
                 if (units == null || units.Count == 0)
                 {
@@ -100,9 +104,9 @@ namespace RentalManager.Services.UnitService
         {
             try
             {
-                var property = await _propertyrepo.FindAsync(unit.PropertyId);
-                var unitType = await _unittyperepo.FindAsync(unit.UnitTypeId);
-                var unitStatus = await _systemcodeitemrepo.GetByItemAsync("vacant");
+                var property = await _propertyrepo.FindAsync(_currentuser, unit.PropertyId);
+                var unitType = await _unittyperepo.FindAsync(_currentuser, unit.UnitTypeId);
+                var unitStatus = await _systemcodeitemrepo.GetByItemAsync("Vacant");
 
                 if (property == null || unitType == null) return new ApiResponse<READUnitDto>(null, "One Of The Items Provided Does Not Exist.");
 
@@ -110,6 +114,8 @@ namespace RentalManager.Services.UnitService
 
 
                 var entity = unit.ToEntity(unitStatus.Id);
+                entity.AccountId = _currentuser.AccountId;
+
                 var types = await _repo.AddAsync(entity);
 
                 if (types == null)
@@ -132,27 +138,34 @@ namespace RentalManager.Services.UnitService
             try
             {
 
-                var existing = await _repo.FindAsync(id);
+                var existing = await _repo.FindAsync(_currentuser, id);
 
-                if (existing == null) return new ApiResponse<READUnitDto>(null, "No Such Data.");
+                if (existing == null) return new ApiResponse<READUnitDto>(null, "No Such Data.", false);
 
-                var property = await _propertyrepo.FindAsync(unit.PropertyId);
-                var unitType = await _unittyperepo.FindAsync(unit.UnitTypeId);
-                var unitStatus = await _unittyperepo.FindAsync(unit.StatusId);
+                var entity = unit.ToEntity();
 
-                if (property == null || unitType == null || unitStatus == null) return new ApiResponse<READUnitDto>(null, "One Of The Items Provided Does Not Exist.");
+                if (!HasChanged(existing, entity))
+                {
+                    return new ApiResponse<READUnitDto>(null, "No changes detected.", false);
+                }
 
-                var entity = unit.ToEntity(id);
-                var updated = await _repo.UpdateAsync(entity);
 
-                if (updated == null)
-                    return new ApiResponse<READUnitDto>(null, "Data Not Found.");
+                var property = await _propertyrepo.FindAsync(_currentuser, unit.PropertyId);
+                var unitType = await _unittyperepo.FindAsync(_currentuser, unit.UnitTypeId);
 
-                return new ApiResponse<READUnitDto>(null, "Updated successfully.");
+                if (property == null || unitType == null) 
+                    return new ApiResponse<READUnitDto>(null, "One Of The Items Provided Does Not Exist.");
+
+
+                var updatedEntity = entity.UpdateEntity(existing);
+                await _repo.UpdateAsync(entity);
+
+
+                return new ApiResponse<READUnitDto>(updatedEntity.ToReadDto(), "Updated successfully.");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READUnitDto>("Error Occurred.");
+                return new ApiResponse<READUnitDto>($"Error Occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -162,7 +175,7 @@ namespace RentalManager.Services.UnitService
         {
             try
             {
-                var entity = await _repo.FindAsync(id);
+                var entity = await _repo.FindAsync(_currentuser, id);
 
                 if (entity == null)
                     return new ApiResponse<READUnitDto>("Data Not Found.");
@@ -177,6 +190,15 @@ namespace RentalManager.Services.UnitService
             }
         }
 
+
+        private static bool HasChanged(Unit existing, Unit updated)
+        {
+            return
+                existing.Name != updated.Name ||
+                existing.Amount != updated.Amount ||
+                existing.UnitTypeId != updated.UnitTypeId ||
+                existing.PropertyId != updated.PropertyId;
+        }
 
     }
 }

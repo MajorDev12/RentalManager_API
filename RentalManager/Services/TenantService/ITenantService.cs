@@ -11,5 +11,6 @@ namespace RentalManager.Services
         Task<ApiResponse<READTenantDto>> Update(int id, UPDATETenantDto tenant);
         Task<ApiResponse<READTenantDto>> Delete(int id);
         Task<ApiResponse<READTenantDto>> AssignUnit(ASSIGNUnitDto unitAssigned);
+        Task<ApiResponse<READTenantDto>> AssignStatus(ASSIGNStatusDto statusDto);
     }
 }

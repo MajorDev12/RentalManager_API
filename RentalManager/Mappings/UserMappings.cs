@@ -14,8 +14,6 @@ namespace RentalManager.Mappings
                 EmailAddress = dto.EmailAddress,
                 MobileNumber = dto.MobileNumber,
                 AlternativeNumber = dto.AlternativeNumber,
-                PasswordHash = dto.PasswordHash,
-                LastPasswordChange = dto.LastPasswordChange,
                 NationalId = dto.NationalId,
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
@@ -25,11 +23,10 @@ namespace RentalManager.Mappings
             };
         }
 
-        public static User ToEntity(this UPDATEUserDto dto, int id)
+        public static User ToEntity(this UPDATEUserDto dto)
         {
             return new User
             {
-                Id = id,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 EmailAddress = dto.EmailAddress,
@@ -53,8 +50,6 @@ namespace RentalManager.Mappings
                 EmailAddress = dto.EmailAddress,
                 MobileNumber = dto.MobileNumber,
                 AlternativeNumber = dto.AlternativeNumber,
-                PasswordHash = dto.PasswordHash,
-                LastPasswordChange = dto.LastPasswordChange,
                 NationalId = dto.NationalId,
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
@@ -64,6 +59,8 @@ namespace RentalManager.Mappings
                 PropertyId = dto.PropertyId
             };
         }
+
+
 
 
 
@@ -118,7 +115,6 @@ namespace RentalManager.Mappings
                 NationalId = dto.NationalId,
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
-                GenderId = dto.GenderId,
                 UserStatusId = dto.UserStatusId
             };
         }

@@ -12,6 +12,7 @@ using RentalManager.Repositories.TransactionRepository;
 using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UserRepository;
 using RentalManager.Repositories.UtilityBillRepository;
+using RentalManager.Services.AccountAccessService;
 using RentalManager.Services.InvoiceService;
 using System.Diagnostics;
 
@@ -29,6 +30,7 @@ namespace RentalManager.Services.TransactionService
         private readonly IInvoiceRepository _invoicerepo;
         private readonly IInvoiceService _invoiceservice;
         private readonly IUtilityBillRepository _utilitybillrepo;
+        private readonly ICurrentUser _currentuser;
 
         public TransactionService(
             ITransactionRepository repo,
@@ -40,7 +42,8 @@ namespace RentalManager.Services.TransactionService
             IUserRepository userrepo,
             IInvoiceRepository invoiceRepo,
             IInvoiceService invoiceservice,
-            IUtilityBillRepository utilitybillrepo)
+            IUtilityBillRepository utilitybillrepo,
+            ICurrentUser currentuser)
         {
             _repo = repo;
             _systemcodeitemrepo = systemcodeitemrepo;
@@ -52,6 +55,7 @@ namespace RentalManager.Services.TransactionService
             _invoicerepo = invoiceRepo;
             _invoiceservice = invoiceservice;
             _utilitybillrepo = utilitybillrepo;
+            _currentuser = currentuser;
         }
 
 
@@ -72,7 +76,7 @@ namespace RentalManager.Services.TransactionService
             }
             catch (Exception ex)
             {
-                return new ApiResponse<List<READTransactionDto>>($"Error Occurred: {ex.InnerException?.Message}");
+                return new ApiResponse<List<READTransactionDto>>($"Error Occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -105,7 +109,7 @@ namespace RentalManager.Services.TransactionService
             try
             {
                 // check if property exist
-                var property = await _propertyrepo.GetByIdAsync(transaction.PropertyId);
+                var property = await _propertyrepo.GetByIdAsync(_currentuser, transaction.PropertyId.Value);
 
                 if (property == null)
                     return new ApiResponse<READTransactionDto>(null, "Property does not exist");
@@ -113,7 +117,7 @@ namespace RentalManager.Services.TransactionService
                 // check if there is unit then confirm its from the property above
                 if (transaction.UnitId is int unitId)
                 {
-                    var unit = await _unitrepo.GetByIdAsync(unitId);
+                    var unit = await _unitrepo.GetByIdAsync(_currentuser, unitId);
 
                     if (unit == null)
                         return new ApiResponse<READTransactionDto>(null, "Unit does not exist");
@@ -206,79 +210,143 @@ namespace RentalManager.Services.TransactionService
         public async Task<ApiResponse<READTransactionDto>> AddCharge(CREATEIncoiceTransactionDto createdCharge)
         {
             if (createdCharge.Item == null || !createdCharge.Item.Any())
-                return new ApiResponse<READTransactionDto>(null, "Choose at least one item");
+                return ApiResponse<READTransactionDto>.FailResponse("Choose at least one item");
 
             var user = await _userrepo.GetByIdAsync(createdCharge.UserId);
             if (user == null)
-                return new ApiResponse<READTransactionDto>(null, "User does not exist");
+                return ApiResponse<READTransactionDto>.FailResponse("User does not exist");
 
             var tenant = await _tenantrepo.GetByUserIdAsync(user.Id);
             if (tenant == null)
-                return new ApiResponse<READTransactionDto>(null, "Tenant does not exist");
+                return ApiResponse<READTransactionDto>.FailResponse("Tenant does not exist");
 
             var transactionType = await _systemcodeitemrepo.GetByItemAsync("charge");
             if (transactionType == null)
-                return new ApiResponse<READTransactionDto>(null, "Transaction type 'charge' not found");
+                return ApiResponse<READTransactionDto>.FailResponse("Transaction type 'charge' not found");
 
             try
             {
                 var transactions = new List<Transaction>();
-                decimal totalAmount = 0;
 
                 foreach (var item in createdCharge.Item)
                 {
-                    var category = await _systemcodeitemrepo.GetByItemAsync(item.TransactionCategory);
+                    var category = await _systemcodeitemrepo.GetByIdAsync(item.TransactionCategoryId);
                     if (category == null)
-                        return new ApiResponse<READTransactionDto>(null, $"Category {item.TransactionCategory} not found");
+                        return ApiResponse<READTransactionDto>.FailResponse( $"Category {item.TransactionCategoryId} not found");
 
-                    var transactionDto = new CREATETransactionDto
+                    UtilityBill? utility = null;
+
+                    if (category.Item == "utility")
                     {
+                        if (!item.UtilityBillId.HasValue)
+                            return ApiResponse<READTransactionDto>
+                                .FailResponse("Utility bill is required for utility charges");
+
+                        utility = await _utilitybillrepo
+                            .GetByIdAsync(_currentuser, item.UtilityBillId.Value);
+
+                        if (utility == null)
+                            return ApiResponse<READTransactionDto>
+                                .FailResponse("Utility bill not found");
+                    }
+
+
+
+
+                    var transaction = new Transaction
+                    {
+                        AccountId = _currentuser.AccountId,
                         UserId = createdCharge.UserId,
                         PropertyId = user.PropertyId,
                         UnitId = tenant.UnitId,
                         TransactionTypeId = transactionType.Id,
                         TransactionCategoryId = category.Id,
+                        UtilityBillId = utility?.Id,
                         Amount = item.Amount,
                         MonthFor = createdCharge.MonthFor,
                         YearFor = createdCharge.YearFor,
                         TransactionDate = createdCharge.InvoiceDate,
-                        Notes = createdCharge.Notes
+                        Notes = createdCharge.Notes,
+                        Combine = createdCharge.Combine
                     };
 
-                    var transactionEntity = transactionDto.ToEntity();
-                    transactions.Add(transactionEntity);
-                    totalAmount += item.Amount;
+                    transactions.Add(transaction);
                 }
 
                 // Save all transactions in one go (atomic)
                 await _repo.AddRangeAsync(transactions);
 
-                // ✅ Now create the invoice
-                var invoiceDto = new CREATEInvoiceDto
-                {
-                    TotalAmount = totalAmount,
-                    Status = "Unpaid",
-                    Combine = createdCharge.Combine,
-                    TransactionId = transactions.First().Id
-                };
-
-                var invoiceLines = createdCharge.Item.Select(i => new CREATEInvoiceLineDto
-                {
-                    TransactionCategory = i.TransactionCategory,
-                    Amount = i.Amount
-                }).ToList();
-
-                var invoice = await _invoiceservice.Add(invoiceDto, invoiceLines);
-
-                return new ApiResponse<READTransactionDto>(null, "Charge and invoice created successfully");
+                return ApiResponse<READTransactionDto>.SuccessResponse(null, "Invoice Created Successfully");
             }
 
             catch(Exception ex)
             {
-                return new ApiResponse<READTransactionDto>(null, ex.InnerException?.Message ?? ex.Message);
+                return ApiResponse<READTransactionDto>.FailResponse(ex.InnerException?.Message ?? ex.Message);
             }
 
 
+        }
+
+
+        public async Task<ApiResponse<READTransactionDto>> AddPayment(CREATEPaymentDto payment)
+        {
+            try
+            {
+                // 1. Validate tenant
+                var tenantPaid = await _tenantrepo.GetByIdAsync(payment.TenantId);
+                if (tenantPaid == null)
+                    return ApiResponse<READTransactionDto>.FailResponse("Tenant not found");
+
+                // 2. Get all outstanding balances for that tenant
+                var balances = await _repo.GetBalanceByUserAsync(tenantPaid.UserId);
+
+                var paymentType = await _systemcodeitemrepo.GetByItemAsync("payment");
+                if (paymentType == null)
+                    return ApiResponse<READTransactionDto>.FailResponse("Payment transaction type not found");
+
+
+                if (balances == null || !balances.Any())
+                {
+                    var advanceCategory = await _systemcodeitemrepo.GetByItemAsync("advance", "TRANSACTIONCATEGORY");
+
+                    if (advanceCategory == null)
+                        return ApiResponse<READTransactionDto>.FailResponse("Failed to add Advance Payment");
+
+                    var advanceTx = CreateAdvancePaymentTransaction(payment, tenantPaid, paymentType.Id, advanceCategory.Id);
+                    await _repo.AddAsync(advanceTx);
+
+                    return new ApiResponse<READTransactionDto>(advanceTx.ToReadDto(), "Tenant had no debt. Payment saved as advance.");
+                }
+
+                // Order debts oldest first (Year, then Month)
+                balances = balances.OrderBy(b => b.Year).ThenBy(b => b.Month).ToList();
+
+
+                // Generate transactions
+                var newTransactions = await CreatePaymentTransactions(
+                    balances,
+                    tenantPaid,
+                    payment.Amount,
+                    paymentType.Id
+                );
+
+
+                // Save to DB
+                var result = await _repo.AddRangeAsync(newTransactions);
+
+
+                return result > 0
+                    ? new ApiResponse<READTransactionDto>(null, "Payment applied successfully")
+                    : new ApiResponse<READTransactionDto>(null, "Failed to add payment(s)");
+
+            }
+            catch (Exception ex)
+            {
+                return new ApiResponse<READTransactionDto>(
+                    null,
+                    $"Error Occurred: {ex.InnerException?.Message ?? ex.Message}"
+                );
+            }
         }
 
 
@@ -287,48 +355,66 @@ namespace RentalManager.Services.TransactionService
         {
             try
             {
-                // 1. Validate property
-                var property = await _propertyrepo.GetByIdAsync(propertyId);
-                if (property == null)
-                    return new ApiResponse<bool>(false, "Property does not exist");
+                var now = DateTime.UtcNow;
+                var month = now.Month;
+                var year = now.Year;
 
-                var month = DateTime.UtcNow.Month;
-                var year = DateTime.UtcNow.Year;
+                // 1. Validate property
+                var property = await _propertyrepo.GetByIdAsync(_currentuser, propertyId);
+                if (property == null)
+                    return ApiResponse<bool>.FailResponse("Property does not exist");
 
                 // 2. Get active tenants once
                 var tenants = await _tenantrepo.GetAllByPropertyId(propertyId, true);
-                if (tenants is null)
-                    return new ApiResponse<bool>(false, "No active tenants found for this property");
+                if (tenants == null || tenants.Count == 0)
+                    return ApiResponse<bool>.FailResponse("No active tenants found");
 
-                // 3. Get existing charge for current month in one query
-                var existingCharges = await _repo.FindByMonthAsync(month, year, propertyId, "rent");
+                // 3. Resolve system codes ONCE
+                var chargeType = await _systemcodeitemrepo.GetByItemAsync("charge");
+                if (chargeType == null)
+                    return ApiResponse<bool>.FailResponse("Transaction type 'charge' not found");
 
-                // 4. Generate invoices depending on situation
+                var rentCategory = await _systemcodeitemrepo.GetByItemAsync("rent", "TRANSACTIONCATEGORY");
+                if (rentCategory == null)
+                    return ApiResponse<bool>.FailResponse("Transaction category 'rent' not found");
+
+                // 4. Fetch existing rent charges for the period
+                var existingCharges = await _repo.FindByMonthAsync(
+                    month,
+                    year,
+                    propertyId,
+                    rentCategory.Id
+                );
+
+                // 5. Generate invoice DTOs
                 List<CREATEIncoiceTransactionDto> invoiceDtos;
 
-
-                if (existingCharges == null || !existingCharges.Any())
+                if (existingCharges == null || existingCharges.Count == 0)
                 {
-                    // First rent invoice creation
-                    invoiceDtos = CreateFullRentInvoice(tenants);
+                    // No rent charges yet → full rent
+                    invoiceDtos = CreateFullRentInvoice(tenants, rentCategory.Id, now);
                 }
                 else
                 {
-                    invoiceDtos = CreateRentBalanceInvoice(tenants, existingCharges);
+                    // Partial / missing rent → balance invoices
+                    invoiceDtos = CreateRentBalanceInvoice(
+                        tenants,
+                        existingCharges,
+                        rentCategory.Id,
+                        now
+                    );
                 }
-
 
                 // Nothing to save
                 if (!invoiceDtos.Any())
-                    return new ApiResponse<bool>(true, "Nothing to generate");
+                    return ApiResponse<bool>.SuccessResponse(true, "Invoices Already Created for this month");
 
-                var tenantLookup = tenants.ToDictionary(t => t.User.Id, t => t);
+                // 6. Tenant lookup for mapping
+                var tenantLookup = tenants
+                    .Where(t => t.User != null && t.Unit != null)
+                    .ToDictionary(t => t.User.Id);
 
-                // get transactionCategory = "charge", transactionType = "rent"
-                var type = await _systemcodeitemrepo.GetByItemAsync("charge");
-                var category = await _systemcodeitemrepo.GetByItemAsync("rent");
-
-                // Convert DTOs to Entities
+                // 7. Map DTOs → Transactions
                 var entities = invoiceDtos.Select(dto =>
                 {
                     var tenant = tenantLookup[dto.UserId];
@@ -337,23 +423,28 @@ namespace RentalManager.Services.TransactionService
                     {
                         PropertyId = propertyId,
                         UnitId = tenant.Unit.Id,
-                        TransactionTypeId = type.Id,
-                        TransactionCategoryId = category.Id
+                        TransactionTypeId = chargeType.Id,
+                        TransactionCategoryId = rentCategory.Id
                     };
 
-                    return dto.ToEntity(ctx);
+                    var entity = dto.ToEntity(ctx);
+                    entity.AccountId = _currentuser.AccountId;
+
+                    return entity;
                 }).ToList();
 
+                // 8. Persist atomically
                 var added = await _repo.AddRangeAsync(entities);
 
                 return added > 0
-                    ? new ApiResponse<bool>(true, "Rent invoices generated successfully")
-                    : new ApiResponse<bool>(false, "Failed to generate invoices");
+                    ? ApiResponse<bool>.SuccessResponse(true, "Rent invoices generated successfully")
+                    : ApiResponse<bool>.FailResponse("Failed to generate rent invoices");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool>(false,
-                    $"Error occurred: {ex.InnerException?.Message ?? ex.Message}");
+                return ApiResponse<bool>.FailResponse(
+                    $"Error occurred: {ex.InnerException?.Message ?? ex.Message}"
+                );
             }
         }
 
@@ -363,108 +454,97 @@ namespace RentalManager.Services.TransactionService
         {
             try
             {
+                var now = DateTime.UtcNow;
+                var month = now.Month;
+                var year = now.Year;
+
                 // 1. Validate property
-                var property = await _propertyrepo.GetByIdAsync(propertyId);
+                var property = await _propertyrepo.GetByIdAsync(_currentuser, propertyId);
                 if (property == null)
-                    return new ApiResponse<bool>(false, "Property does not exist");
+                    return ApiResponse<bool>.FailResponse("Property does not exist");
 
-                var month = DateTime.UtcNow.Month;
-                var year = DateTime.UtcNow.Year;
-
-                // 2. Get active tenants once
+                // 2. Active tenants
                 var tenants = await _tenantrepo.GetAllByPropertyId(propertyId, true);
-                if (tenants is null)
-                    return new ApiResponse<bool>(false, "No active tenants found for this property");
+                if (tenants == null || tenants.Count == 0)
+                    return ApiResponse<bool>.FailResponse("No active tenants found");
 
-                // 3. Get existing charge for current month in one query
-                List<CREATEIncoiceTransactionDto> invoiceDtos;
-                bool isReccurring = true;
+                // 3. Recurring utilities
+                var utilities = await _utilitybillrepo.GetByPropertyIdAsync(
+                    _currentuser,
+                    propertyId,
+                    isReccurring: true
+                );
 
-                var utilities = await _utilitybillrepo.GetByPropertyIdAsync(property.Id, isReccurring);
+                if (utilities == null || utilities.Count == 0)
+                    return ApiResponse<bool>.SuccessResponse(true, "No utilities to invoice");
 
-                var existingCharges = await _repo.FindByMonthAsync(month, year, propertyId, "", utilities);
+                // 4. Resolve transaction type & category ONCE
+                var chargeType = await _systemcodeitemrepo.GetByItemAsync("charge", "TRANSACTIONTYPE");
+                var utilityCategory = await _systemcodeitemrepo.GetByItemAsync("utility", "TRANSACTIONCATEGORY");
 
+                if (chargeType == null || utilityCategory == null)
+                    return ApiResponse<bool>.FailResponse("Transaction codes not configured");
 
-                if(utilities is null)
-                    return new ApiResponse<bool>(true, "No utilities available");
+                // 5. Existing utility charges for this month
+                var existingCharges = await _repo.FindByMonthAsync(
+                    month,
+                    year,
+                    propertyId,
+                    utilityCategory.Id
+                );
 
-                if (existingCharges == null || !existingCharges.Any())
-                {
-                    // First rent invoice creation
-                    invoiceDtos = CreateFullUtilityInvoices(tenants, utilities);
-                }
-                else
-                {
-                    invoiceDtos = CreateUtilityBalanceInvoices(tenants, utilities, existingCharges);
-                }
+                // 6. Generate invoice DTOs
+                var invoiceDtos = existingCharges == null || !existingCharges.Any()
+                    ? CreateFullUtilityInvoices(tenants, utilities, now)
+                    : CreateUtilityBalanceInvoices(tenants, utilities, existingCharges, now);
 
-
-                // Nothing to save
                 if (!invoiceDtos.Any())
-                    return new ApiResponse<bool>(true, "UtilityBill invoices already exists");
+                    return ApiResponse<bool>.SuccessResponse(true, "Utility invoices already exist");
 
-
-
-                var transactionType = await _systemcodeitemrepo.GetByItemAsync("charge");
-
-                var systemCategories = await _systemcodeitemrepo.GetByCodeAsync("TRANSACTIONCATEGORY");
-                var systemCategoryLookup = systemCategories
-                                                            .GroupBy(c => c.Item.ToLower())
-                                                            .ToDictionary(g => g.Key, g => g.First().Id);
-
-
-                var utilityLookup = utilities.ToDictionary(u => u.Name.ToLower(), u => u.Id);
-
-                var tenantLookup = tenants.ToDictionary(t => t.User.Id, t => t);
+                var tenantLookup = tenants
+                    .Where(t => t.User != null && t.Unit != null)
+                    .ToDictionary(t => t.User.Id);
 
                 var entities = new List<Transaction>();
 
+                // 7. Map DTOs → Transactions
                 foreach (var dto in invoiceDtos)
                 {
                     var tenant = tenantLookup[dto.UserId];
 
                     foreach (var item in dto.Item)
                     {
-                        if (!systemCategoryLookup.TryGetValue(item.TransactionCategory.ToLower(), out var categoryId))
+                        var entity = new Transaction
                         {
-                            var SystemCode = await _systemcoderepo.GetByCodeAsync("TRANSACTIONCATEGORY");
-                            var newItem = await _systemcodeitemrepo.AddAsync(new SystemCodeItem
-                            {
-                                SystemCodeId = SystemCode.Id,
-                                Item = item.TransactionCategory
-                            });
-
-                            categoryId = newItem.Id;
-                            systemCategoryLookup[item.TransactionCategory] = categoryId;
-                        }
-
-                        var utilityBillId = utilityLookup[item.TransactionCategory.ToLower()];
-
-                        var ctx = new InvoiceMappingContext
-                        {
+                            AccountId = _currentuser.AccountId,
+                            UserId = tenant.User.Id,
                             PropertyId = propertyId,
                             UnitId = tenant.Unit.Id,
-                            TransactionTypeId = transactionType.Id,
-                            TransactionCategoryId = categoryId,
-                            UtilityBillId = utilityBillId
+
+                            TransactionTypeId = chargeType.Id,
+                            TransactionCategoryId = utilityCategory.Id,
+
+                            UtilityBillId = item.UtilityBillId,   // 👈 THIS is the differentiator
+
+                            Amount = item.Amount,
+                            MonthFor = dto.MonthFor,
+                            YearFor = dto.YearFor,
+                            TransactionDate = dto.InvoiceDate,
+                            Notes = "Utility charge"
                         };
 
-                        entities.Add(dto.ToEntity(ctx, item.Amount));
+                        entities.Add(entity);
                     }
                 }
 
+                await _repo.AddRangeAsync(entities);
 
-                var added = await _repo.AddRangeAsync(entities);
-
-                return added > 0
-                    ? new ApiResponse<bool>(true, "Utility invoices generated successfully")
-                    : new ApiResponse<bool>(false, "Failed to generate invoices");
-
+                return ApiResponse<bool>.SuccessResponse(true, "Utility invoices generated successfully");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<bool>(false,
-                    $"Error occurred: {ex.InnerException?.Message ?? ex.Message}");
+                return ApiResponse<bool>.FailResponse(
+                    ex.InnerException?.Message ?? ex.Message);
             }
         }
 
@@ -565,198 +645,117 @@ namespace RentalManager.Services.TransactionService
 
 
 
-        public async Task<ApiResponse<READTransactionDto>> AddPayment(CREATEPaymentDto payment)
+
+
+
+
+
+        // HELPER METHODS
+
+
+
+
+
+        private List<CREATEIncoiceTransactionDto> CreateRentBalanceInvoice(
+            List<Tenant> tenants,
+            List<Transaction> existingCharges,
+            int rentCategory,
+            DateTime now)
         {
-            try
-            {
-                // 1. Validate tenant
-                var tenantPaid = await _tenantrepo.GetByIdAsync(payment.TenantId);
-                if (tenantPaid == null)
-                    return new ApiResponse<READTransactionDto>(null, "Tenant not found");
-
-                // 2. Get all outstanding balances for that tenant
-                var balances = await _repo.GetBalanceByUserAsync(tenantPaid.UserId);
-
-                if (balances == null || !balances.Any())
-                {
-                    // No debts → record as advance payment
-                    var transactionType = await _systemcodeitemrepo.GetByItemAsync("payment");
-
-                    var advanceTx = CreateAdvancePaymentTransaction(payment, tenantPaid, transactionType.Id);
-                    await _repo.AddAsync(advanceTx);
-
-                    return new ApiResponse<READTransactionDto>(advanceTx.ToReadDto(), "Tenant had no debt. Payment saved as advance.");
-                }
-
-                // Order debts oldest first (Year, then Month)
-                balances = balances.OrderBy(b => b.Year).ThenBy(b => b.Month).ToList();
-
-
-                // Generate transactions
-                var newTransactions = await CreatePaymentTransactions(
-                    balances,
-                    tenantPaid,
-                    payment.Amount
-                );
-
-
-                // Save to DB
-                var result = await _repo.AddRangeAsync(newTransactions);
-                
-
-                return result > 0
-                    ? new ApiResponse<READTransactionDto>(null, "Payment applied successfully")
-                    : new ApiResponse<READTransactionDto>(null, "Failed to add payment(s)");
-
-            }
-            catch (Exception ex)
-            {
-                return new ApiResponse<READTransactionDto>(
-                    null,
-                    $"Error Occurred: {ex.InnerException?.Message ?? ex.Message}"
-                );
-            }
-        }
-
-
-
-
-
-                                    // HELPER METHODS
-
-
-
-
-
-        private List<CREATEIncoiceTransactionDto> CreateRentBalanceInvoice(List<Tenant> tenants, List<Transaction> existingCharges)
-        {
-            var month = DateTime.UtcNow.Month;
-            var year = DateTime.UtcNow.Year;
-
-            // Group charges by user
             var chargesLookup = existingCharges
-                .GroupBy(c => c.UserId)
+                .Where(c => c.UserId.HasValue)
+                .GroupBy(c => c.UserId!.Value)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            var invoiceList = new List<CREATEIncoiceTransactionDto>();
+            var invoices = new List<CREATEIncoiceTransactionDto>();
 
             foreach (var tenant in tenants)
             {
+                if (tenant.User == null || tenant.Unit == null)
+                    continue;
+
                 var tenantId = tenant.User.Id;
                 var monthlyRent = tenant.Unit.Amount;
 
-                // Get existing charges
                 chargesLookup.TryGetValue(tenantId, out var tenantCharges);
 
-                // no charges exist -> full invoice
-                if (tenantCharges == null || tenantCharges.Count == 0)
-                {
-                    invoiceList.Add(new CREATEIncoiceTransactionDto
-                    {
-                        UserId = tenantId,
-                        MonthFor = month,
-                        YearFor = year,
-                        InvoiceDate = DateTime.UtcNow,
-                        Item = new List<CREATEItemDto>
-                {
-                    new CREATEItemDto
-                    {
-                        TransactionCategory = "Rent",
-                        Amount = monthlyRent
-                    }
-                }
-                    });
+                var totalCharged = tenantCharges?.Sum(c => c.Amount) ?? 0m;
+                var balance = monthlyRent - totalCharged;
+
+                if (balance <= 0)
                     continue;
+
+                invoices.Add(new CREATEIncoiceTransactionDto
+                {
+                    UserId = tenantId,
+                    MonthFor = now.Month,
+                    YearFor = now.Year,
+                    InvoiceDate = now,
+                    Item = new List<CREATEItemDto>
+            {
+                new CREATEItemDto
+                {
+                    TransactionCategoryId = rentCategory,
+                    Amount = balance
                 }
+            }
+                });
+            }
 
-                var totalCharged = tenantCharges.Sum(c => c.Amount);
+            return invoices;
+        }
 
-                // partial paid → invoice only balance
-                if (totalCharged < monthlyRent)
+
+        private List<CREATEIncoiceTransactionDto> CreateFullRentInvoice(
+            List<Tenant> tenants,
+            int categoryId,
+            DateTime now)
+        {
+            return tenants
+                .Where(t => t.User != null && t.Unit != null)
+                .Select(t => new CREATEIncoiceTransactionDto
                 {
-                    var balance = monthlyRent - totalCharged;
-
-                    invoiceList.Add(new CREATEIncoiceTransactionDto
+                    UserId = t.User.Id,
+                    MonthFor = now.Month,
+                    YearFor = now.Year,
+                    InvoiceDate = now,
+                    Item = new List<CREATEItemDto>
                     {
-                        UserId = tenantId,
-                        MonthFor = month,
-                        YearFor = year,
-                        InvoiceDate = DateTime.UtcNow,
-                        Item = new List<CREATEItemDto>
+                new CREATEItemDto
                 {
-                    new CREATEItemDto
-                    {
-                        TransactionCategory = "Rent",
-                        Amount = balance
+                    TransactionCategoryId = categoryId,
+                    Amount = t.Unit.Amount
+                }
                     }
-                }
-                    });
-                }
-
-                // fully paid → do nothing
-            }
-
-            return invoiceList;
-        }
-
-
-        private List<CREATEIncoiceTransactionDto> CreateFullRentInvoice(List<Tenant> tenants)
-        {
-
-            var month = DateTime.UtcNow.Month;
-            var year = DateTime.UtcNow.Year;
-
-            return tenants.Select(t => new CREATEIncoiceTransactionDto
-            {
-                UserId = t.User.Id,
-                MonthFor = month,
-                YearFor = year,
-                InvoiceDate = DateTime.UtcNow,
-                Item = new List<CREATEItemDto>
-        {
-            new CREATEItemDto
-            {
-                TransactionCategory = "Rent",
-                Amount = t.Unit.Amount
-            }
-        }
-            }).ToList();
-
+                })
+                .ToList();
         }
 
 
         private List<CREATEIncoiceTransactionDto> CreateFullUtilityInvoices(
             List<Tenant> tenants,
-            List<UtilityBill> utilities)
+            List<UtilityBill> utilities,
+            DateTime now)
         {
-            var month = DateTime.UtcNow.Month;
-            var year = DateTime.UtcNow.Year;
-
             var invoices = new List<CREATEIncoiceTransactionDto>();
-
-            // If no utilities, return empty list
-            if (utilities == null || utilities.Count == 0)
-                return invoices;
 
             foreach (var tenant in tenants)
             {
-                // Create invoice items — one entry for each utility bill
-                var items = utilities.Select(u => new CREATEItemDto
-                {
-                    TransactionCategory = u.Name,
-                    Amount = u.Amount
-                }).ToList();
+                if (tenant.User == null || tenant.Unit == null)
+                    continue;
 
-                var invoice = new CREATEIncoiceTransactionDto
+                invoices.Add(new CREATEIncoiceTransactionDto
                 {
                     UserId = tenant.User.Id,
-                    MonthFor = month,
-                    YearFor = year,
-                    InvoiceDate = DateTime.UtcNow,
-                    Item = items
-                };
-
-                invoices.Add(invoice);
+                    MonthFor = now.Month,
+                    YearFor = now.Year,
+                    InvoiceDate = now,
+                    Item = utilities.Select(u => new CREATEItemDto
+                    {
+                        UtilityBillId = u.Id,
+                        Amount = u.Amount
+                    }).ToList()
+                });
             }
 
             return invoices;
@@ -766,57 +765,46 @@ namespace RentalManager.Services.TransactionService
         private List<CREATEIncoiceTransactionDto> CreateUtilityBalanceInvoices(
             List<Tenant> tenants,
             List<UtilityBill> utilities,
-            List<Transaction> existingCharges)
+            List<Transaction> existingCharges,
+            DateTime now)
         {
-            var month = DateTime.UtcNow.Month;
-            var year = DateTime.UtcNow.Year;
-
             var invoices = new List<CREATEIncoiceTransactionDto>();
 
-            if (utilities == null || utilities.Count == 0)
-                return invoices;
-
-            // Build lookup: { UserId -> List<Transaction> }
-            var chargesLookup = existingCharges
-                .GroupBy(t => t.UserId)
-                .ToDictionary(g => g.Key, g => g.ToList());
+            // { UserId -> UtilityBillIds already billed }
+            var billedLookup = existingCharges
+                .Where(c => c.UserId.HasValue && c.UtilityBillId.HasValue)
+                .GroupBy(c => c.UserId!.Value)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(x => x.UtilityBillId!.Value).ToHashSet()
+                );
 
             foreach (var tenant in tenants)
             {
-                var userId = tenant.User.Id;
-                chargesLookup.TryGetValue(userId, out var tenantCharges);
-
-                List<CREATEItemDto> itemsToBill = new();
-
-                foreach (var utility in utilities)
-                {
-                    // Does this tenant already have a charge entry for this utility?
-                    bool hasCharge =
-                        tenantCharges?.Any(c => c.TransactionCategory.Item.ToLower() == utility.Name.ToLower()) ?? false;
-
-                    if (!hasCharge)
-                    {
-                        // Utility missing → bill full amount
-                        itemsToBill.Add(new CREATEItemDto
-                        {
-                            TransactionCategory = utility.Name,
-                            Amount = utility.Amount
-                        });
-                    }
-                }
-
-                // If all utilities already billed → skip tenant
-                if (!itemsToBill.Any())
+                if (tenant.User == null || tenant.Unit == null)
                     continue;
 
-                // Create invoice for missing utilities
+                billedLookup.TryGetValue(tenant.User.Id, out var billedUtilities);
+
+                var items = utilities
+                    .Where(u => billedUtilities == null || !billedUtilities.Contains(u.Id))
+                    .Select(u => new CREATEItemDto
+                    {
+                        UtilityBillId = u.Id,
+                        Amount = u.Amount
+                    })
+                    .ToList();
+
+                if (!items.Any())
+                    continue;
+
                 invoices.Add(new CREATEIncoiceTransactionDto
                 {
-                    UserId = userId,
-                    MonthFor = month,
-                    YearFor = year,
-                    InvoiceDate = DateTime.UtcNow,
-                    Item = itemsToBill
+                    UserId = tenant.User.Id,
+                    MonthFor = now.Month,
+                    YearFor = now.Year,
+                    InvoiceDate = now,
+                    Item = items
                 });
             }
 
@@ -825,20 +813,21 @@ namespace RentalManager.Services.TransactionService
 
 
 
-        private Transaction CreateAdvancePaymentTransaction(CREATEPaymentDto payment, Tenant tenant, int transactionTypeId)
+        private Transaction CreateAdvancePaymentTransaction(CREATEPaymentDto payment, Tenant tenant, int transactionTypeId, int transactionCategoryId)
         {
 
             return new Transaction
             {
                 UserId = tenant.User.Id,
-                PropertyId = tenant.Unit.PropertyId,
+                AccountId = _currentuser.AccountId,
+                PropertyId = tenant.User.PropertyId,
                 UnitId = tenant.Unit.Id,
                 TransactionDate = DateTime.UtcNow,
                 MonthFor = DateTime.UtcNow.Month,
                 YearFor = DateTime.UtcNow.Year,
                 Amount = payment.Amount,
                 TransactionTypeId = transactionTypeId,
-                TransactionCategoryId = transactionTypeId,
+                TransactionCategoryId = transactionCategoryId,
                 Notes = "Advance payment"
             };
         }
@@ -849,12 +838,10 @@ namespace RentalManager.Services.TransactionService
         private async Task<List<Transaction>> CreatePaymentTransactions(
             List<TenantBalanceDto> balances,
             Tenant tenant,
-            decimal amountPaid)
+            decimal amountPaid,
+            int paymentTypeId)
         {
             var newTransactions = new List<Transaction>();
-
-            // Look up transaction type once
-            var transactionType = await _systemcodeitemrepo.GetByItemAsync("payment");
 
             // Loop through each balance in order
             foreach (var bal in balances)
@@ -869,14 +856,16 @@ namespace RentalManager.Services.TransactionService
                 var tx = new Transaction
                 {
                     UserId = tenant.UserId,
+                    AccountId = _currentuser.AccountId,
                     PropertyId = tenant.User.PropertyId,
                     UnitId = tenant.UnitId,
                     TransactionDate = DateTime.UtcNow,
                     MonthFor = bal.Month,
                     YearFor = bal.Year,
                     Amount = payable,
-                    TransactionTypeId = transactionType.Id,
-                    TransactionCategoryId = bal.CategoryId,   // Make sure you use ID, not name
+                    TransactionTypeId = paymentTypeId,
+                    TransactionCategoryId = bal.CategoryId, 
+                    UtilityBillId = bal.UtilityBillId,
                     Notes = "Payment recorded"
                 };
 
@@ -886,6 +875,8 @@ namespace RentalManager.Services.TransactionService
             // If still money left → create advance payment
             if (amountPaid > 0)
             {
+                var advanceCategory = await _systemcodeitemrepo.GetByItemAsync("advance");
+
                 var advanceTx = CreateAdvancePaymentTransaction(
                     new CREATEPaymentDto
                     {
@@ -893,7 +884,8 @@ namespace RentalManager.Services.TransactionService
                         TenantId = tenant.Id
                     },
                     tenant,
-                    transactionType.Id
+                    paymentTypeId,
+                    advanceCategory.Id
                 );
 
                 newTransactions.Add(advanceTx);

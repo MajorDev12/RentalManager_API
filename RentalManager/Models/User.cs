@@ -18,10 +18,6 @@ namespace RentalManager.Models
 
         public string? AlternativeNumber { get; set; }
 
-        public string PasswordHash { get; set; } = string.Empty;
-        
-        public DateTime? LastPasswordChange { get; set; }
-
         public int? NationalId { get; set; }
 
         public string? ProfilePhotoUrl { get; set; }
@@ -29,9 +25,8 @@ namespace RentalManager.Models
         public bool IsActive { get; set; } = false;
 
 
-
-        public int GenderId { get; set; }
-        public SystemCodeItem Gender { get; set; } = null!;
+        public int? GenderId { get; set; }
+        public SystemCodeItem? Gender { get; set; }
 
         public int UserStatusId { get; set; }
         public SystemCodeItem UserStatus { get; set; } = null!;
@@ -39,8 +34,12 @@ namespace RentalManager.Models
         public int RoleId { get; set; }
         public Role Role { get; set; } = null!;
 
+
+        public int ApplicationUserId { get; set; }
+        public ApplicationUser ApplicationUser { get; set; } = null!;
+
         public int PropertyId { get; set; }
-        public Property Property{ get; set; } = null!;
+        public Property? Property { get; set; }
 
     }
 }

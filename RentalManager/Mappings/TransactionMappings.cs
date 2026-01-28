@@ -21,7 +21,7 @@ namespace RentalManager.Mappings
             TransactionDate = dto.TransactionDate,
             MonthFor = dto.MonthFor,
             YearFor = dto.YearFor,
-            Notes = dto.Notes
+            Notes = dto.Notes,
         };
 
 
@@ -113,8 +113,7 @@ namespace RentalManager.Mappings
             Id = dto.Id,
             UserId = dto.UserId,
             UserName = $"{dto.User?.FirstName}  {dto.User?.LastName}",
-            PropertyId = dto.PropertyId,
-            PropertyName = dto.Property.Name,
+            PropertyName = dto.Property?.Name,
             UnitId = dto.Unit?.Id,
             Unit = dto.Unit?.Name,
             UtilityBillId = dto.UtilityBillId,

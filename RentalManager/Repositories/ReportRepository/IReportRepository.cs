@@ -5,6 +5,6 @@ namespace RentalManager.Repositories.ReportRepository
 {
     public interface IReportRepository
     {
-        Task<List<READReportDto>> GetReportAsync(ReportFilterDto filters);
+        Task<ReportResponseDto> GetReportAsync(ReportFilterDto filters);
     }
 }

@@ -1,19 +1,28 @@
-﻿using Microsoft.EntityFrameworkCore;
-using RentalManager.Data;
+﻿using Microsoft.AspNetCore.Identity;
 using RentalManager.DTOs.Property;
 using RentalManager.Mappings;
 using RentalManager.Models;
 using RentalManager.Repositories.PropertyRepository;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Services.PropertyService
 {
     public class PropertyService : IPropertyService
     {
         private readonly IPropertyRepository _propertyRepo;
+        private readonly UserManager<ApplicationUser> _usermanager;
+        private readonly ICurrentUser _currentuser;
 
-        public PropertyService(IPropertyRepository propertyRepo)
+
+        public PropertyService(
+            IPropertyRepository propertyRepo,
+            UserManager<ApplicationUser> usermanager,
+            ICurrentUser currentuser
+            )
         {
             _propertyRepo = propertyRepo;
+            _usermanager = usermanager;
+            _currentuser = currentuser;
         }
 
 
@@ -22,7 +31,7 @@ namespace RentalManager.Services.PropertyService
         {
             try
             {
-                var properties = await _propertyRepo.GetAllAsync();
+                var properties = await _propertyRepo.GetAllAsync(_currentuser);
 
                 if(properties == null || !properties.Any()) return new ApiResponse<List<READPropertyDto>>(null, "Data Not Found");
 
@@ -31,7 +40,7 @@ namespace RentalManager.Services.PropertyService
             }
             catch (Exception ex)
             {
-                return new ApiResponse<List<READPropertyDto>>("error occured");
+                return new ApiResponse<List<READPropertyDto>>(null, $"error occured: {ex.InnerException?.Message ?? ex.Message}", false);
             }
         }
 
@@ -39,7 +48,7 @@ namespace RentalManager.Services.PropertyService
         {
             try
             {
-                var property = await _propertyRepo.GetByIdAsync(id);
+                var property = await _propertyRepo.GetByIdAsync(_currentuser, id);
 
                 if (property == null) return new ApiResponse<READPropertyDto>("Data Not Found");
 
@@ -53,14 +62,15 @@ namespace RentalManager.Services.PropertyService
             }
         }
 
-        public async Task<ApiResponse<READPropertyDto>> Create(CREATEPropertyDto dto)
+        public async Task<ApiResponse<READPropertyDto>> Create(CREATEPropertyDto dto, int accountId)
         {
             try
             {
 
                 var property = dto.ToEntity();
+                property.AccountId = accountId;
 
-                if(property == null) return new ApiResponse<READPropertyDto>("An error occurred");
+                if(property == null || property.AccountId <= 0) return new ApiResponse<READPropertyDto>("An error occurred");
 
                 var savedProperty = await _propertyRepo.AddProperty(property);
                 var readDto = savedProperty.ToReadDto();
@@ -74,23 +84,29 @@ namespace RentalManager.Services.PropertyService
             }
         }
 
-        public async Task<ApiResponse<READPropertyDto>> Update(UPDATEPropertyDto dto)
+        public async Task<ApiResponse<READPropertyDto>> Update(int id, UPDATEPropertyDto dto)
         {
             try
             {
-                var entity = dto.ToUpdateEntity();
+                var existingProperty = await _propertyRepo.GetByIdAsync(_currentuser, id);
 
-                var updatedProperty = await _propertyRepo.UpdateAsync(entity);
+                if (existingProperty == null)
+                    return new ApiResponse<READPropertyDto>(null, "Property does not exist", false);
 
-                if (updatedProperty == null)
-                    return new ApiResponse<READPropertyDto>(null, "Property Not Found");
+                // chane to property entity
+                var updateEntity = dto.ToUpdateEntity();
 
-                return new ApiResponse<READPropertyDto>(updatedProperty.ToReadDto(), "Updated successfully");
+                // make the changes
+                var updated = updateEntity.ToUpdateEntity(existingProperty);
+
+                await _propertyRepo.UpdateAsync(updated);
+
+                return new ApiResponse<READPropertyDto>(updated.ToReadDto(), "Updated successfully");
 
             }
             catch (Exception ex)
             {
-                return new ApiResponse<READPropertyDto>("Error Occurred");
+                return new ApiResponse<READPropertyDto>($"Error Occurred: {ex.InnerException?.Message ?? ex.Message}");
             }
         }
 
@@ -98,7 +114,7 @@ namespace RentalManager.Services.PropertyService
         {
             try
             {
-                var property = await _propertyRepo.FindAsync(id);
+                var property = await _propertyRepo.FindAsync(_currentuser, id);
 
                 if (property == null)
                 {

@@ -1,23 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.ExpenseRepository
 {
     public class ExpenseRepository : IExpenseRepository
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUser _currentuser;
 
 
-        public ExpenseRepository(ApplicationDbContext context)
+        public ExpenseRepository(ApplicationDbContext context, ICurrentUser currentuser)
         {
             _context = context;
+            _currentuser = currentuser;
         }
 
 
         public async Task<List<Expense>?> GetAllAsync()
         {
             var expenses = await _context.Expenses
+                .ApplyRoleFilter(_currentuser, _context)
                 .Include(p => p.Property)
                 .ToListAsync();
             return expenses;

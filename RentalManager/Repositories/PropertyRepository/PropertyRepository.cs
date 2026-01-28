@@ -2,8 +2,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
+using RentalManager.Helpers.Authorization;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Repositories.QueryExtensions;
+using RentalManager.Services.AccountAccessService;
+using System.Security.Claims;
 
 namespace RentalManager.Repositories.PropertyRepository
 {
@@ -26,28 +30,27 @@ namespace RentalManager.Repositories.PropertyRepository
             return property;
         }
 
-        public async Task<Property> GetByIdAsync(int id)
+
+        public async Task<Property?> GetByIdAsync(ICurrentUser user, int id)
         {
-            var property = await _context.Properties.FirstOrDefaultAsync(pr => pr.Id == id);
-            return property;
+            return await _context.Properties
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .FirstOrDefaultAsync();
         }
 
-        public async Task<List<Property>> GetAllAsync()
+
+        public async Task<List<Property>?> GetAllAsync(ICurrentUser user)
         {
-            var properties = await _context.Properties.ToListAsync();
-            return properties;
+            return await _context.Properties
+                .ApplyRoleFilter(user, _context)
+                .ToListAsync();
         }
 
-        public async Task<Property> UpdateAsync(Property property)
+
+        public async Task UpdateAsync(Property property)
         {
-            var existing = await FindAsync(property.Id);
-            if (existing == null) return null;
-
-            var updated = existing.ToUpdateEntity(property);
-
             await _context.SaveChangesAsync();
-            return existing;
-
         }
 
         public async Task DeleteAsync(Property property)
@@ -56,11 +59,12 @@ namespace RentalManager.Repositories.PropertyRepository
             await _context.SaveChangesAsync();
         }
 
-        public async Task<Property> FindAsync(int id)
+        public async Task<Property?> FindAsync(ICurrentUser user, int id)
         {
-            var property = await _context.Properties.FindAsync(id);
-            if (property == null) return null;
-            return property;
+            return await _context.Properties
+                .Where(u => u.Id == id)
+                .ApplyRoleFilter(user, _context)
+                .FirstOrDefaultAsync();
         }
     }
 }
