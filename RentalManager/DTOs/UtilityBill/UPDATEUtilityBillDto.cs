@@ -4,12 +4,14 @@ namespace RentalManager.DTOs.UtilityBill
 {
     public class UPDATEUtilityBillDto
     {
-        public string Name { get; set; } = string.Empty;
+        public int UtilityId { get; set; }
+        public int BillingCycleId { get; set; }
 
         public decimal Amount { get; set; }
 
-        public bool isReccuring { get; set; }
+        public bool IsMetered { get; set; }
 
         public int PropertyId { get; set; }
+        public int? UnitId { get; set; }
     }
 }

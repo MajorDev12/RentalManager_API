@@ -39,6 +39,14 @@ namespace RentalManager.Repositories.QueryExtensions
         }
 
 
+        public static IQueryable<Tenant> ByUnit(
+            this IQueryable<Tenant> query,
+            int unitId)
+        {
+            return query.Where(t => t.UnitId == unitId);
+        }
+
+
         public static IQueryable<Tenant> IsActive(
             this IQueryable<Tenant> query)
         {
@@ -51,8 +59,6 @@ namespace RentalManager.Repositories.QueryExtensions
         {
             return query
                 .Include(t => t.Unit)
-                .Include(t => t.User)
-                    .ThenInclude(u => u.Role)
                 .Include(t => t.User)
                     .ThenInclude(u => u.Gender)
                 .Include(t => t.User)

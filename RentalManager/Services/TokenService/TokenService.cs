@@ -1,24 +1,20 @@
-﻿// Services/TokenService.cs
-using Azure;
-using Azure.Core;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using RentalManager.Data;
 using RentalManager.DTOs.Authentication;
 using RentalManager.Models;
 using RentalManager.Repositories.TokenRepository;
+using RentalManager.Services.AccountAccessService;
 using RentalManager.Services.TokenService;
-using ServiceStack.Text;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 public class TokenService : ITokenService
 {
     private readonly IConfiguration _config;
-    private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _context;
+    private readonly IAccountContext _accountContext;
     private readonly ITokenRepository _tokenrepo;
     private readonly RSA _privateRsa;
     private readonly RsaSecurityKey _privateKey;
@@ -32,11 +28,13 @@ public class TokenService : ITokenService
     public TokenService(    
         IWebHostEnvironment env,
         IConfiguration config,
-        UserManager<ApplicationUser> userManager,
+        ApplicationDbContext context,
+        IAccountContext accountContext,
         ITokenRepository tokenrepo)
     {
         _config = config;
-        _userManager = userManager;
+        _context = context;
+        _accountContext = accountContext;
         _tokenrepo = tokenrepo;
 
         var privateKeyPath = Path.Combine(env.ContentRootPath, "Keys", "private.pem");
@@ -49,12 +47,24 @@ public class TokenService : ITokenService
         _privateRsa = RSA.Create();
         _privateRsa.ImportFromPem(privatePem);
         _privateKey = new RsaSecurityKey(_privateRsa);
+
+        // PUBLIC KEY
+        var publicKeyPath = Path.Combine(env.ContentRootPath, "Keys", "public.pem");
+
+        if (!File.Exists(publicKeyPath))
+            throw new FileNotFoundException("Public key file not found", publicKeyPath);
+
+        var publicPem = File.ReadAllText(publicKeyPath);
+        var publicRsa = RSA.Create();
+        publicRsa.ImportFromPem(publicPem);
+
+        _publicKey = new RsaSecurityKey(publicRsa);
     }
 
 
 
 
-    public async Task<AuthResultDto> GenerateTokensAsync(ApplicationUser user, string ipAddress)
+    public async Task<AuthResultDto> GenerateTokensAsync(User user, string ipAddress)
     {
         try
         {
@@ -92,23 +102,48 @@ public class TokenService : ITokenService
 
 
 
-    public async Task<string> CreateAccessTokenAsync(ApplicationUser user)
+    public async Task<string> CreateAccessTokenAsync(User user)
     {
         var now = DateTime.UtcNow;
-        var roles = await _userManager.GetRolesAsync(user);
-        var role = roles.FirstOrDefault() ?? "";
 
+        var roleIds = await _context.UserRoles
+            .IgnoreQueryFilters()
+            .Where(ur => ur.UserId == user.Id)
+            .Select(ur => ur.RoleId)
+            .ToListAsync();
+
+        var roles = await _context.Roles
+            .IgnoreQueryFilters()
+            .Where(r => roleIds.Contains(r.Id))
+            .ToListAsync();
+
+        var permissions = await _context.RolePermissions
+            .IgnoreQueryFilters()
+            .Where(rp => roleIds.Contains(rp.RoleId) && rp.IsAllowed)
+            .Select(rp => rp.Permission.Name)
+            .Distinct()
+            .ToListAsync();
 
         // build claims
         var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
+            new Claim(JwtRegisteredClaimNames.Email, user.EmailAddress ?? string.Empty),
             new Claim(JwtRegisteredClaimNames.Name, user.FirstName ?? string.Empty),
-            new Claim("accountId", user.AccountId?.ToString() ?? string.Empty),
-            new Claim("roles", role)
+            new Claim("accountId", user.AccountId.ToString() ?? string.Empty)
+
         };
 
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim("roles", role.Name ?? string.Empty));
+        }
+
+
+        foreach (var permission in permissions)
+        {
+            claims.Add(new Claim("permissions", permission ?? string.Empty));
+        }
 
         var creds = new SigningCredentials(_privateKey, SecurityAlgorithms.RsaSha256);
 

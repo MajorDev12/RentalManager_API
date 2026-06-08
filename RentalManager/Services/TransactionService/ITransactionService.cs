@@ -7,7 +7,9 @@ namespace RentalManager.Services.TransactionService
     {
         Task<ApiResponse<List<READTransactionDto>>> GetAll();
 
-        Task<ApiResponse<List<READTransactionDto>>> GetByUser(int userId);
+        Task<ApiResponse<List<READTransactionDto>>> GetByUser(int domainUserId);
+
+        Task<ApiResponse<List<READTransactionDto>>> GetByTenantId(int tenantId);
 
         Task<ApiResponse<READTransactionDto>> Add(CREATETransactionDto transaction);
 

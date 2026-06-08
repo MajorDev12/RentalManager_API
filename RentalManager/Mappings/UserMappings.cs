@@ -41,6 +41,18 @@ namespace RentalManager.Mappings
         }
 
 
+        public static ApplicationUser ToEntity(this UPDATEBasicUserDto dto)
+        {
+            return new ApplicationUser
+            {
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Email = dto.EmailAddress,
+                PhoneNumber = dto.MobileNumber,
+            };
+        }
+
+
         public static User ToEntity(this CREATEUserDto dto, int roleId, int UserStatus)
         {
             return new User
@@ -54,7 +66,6 @@ namespace RentalManager.Mappings
                 ProfilePhotoUrl = dto.ProfilePhotoUrl,
                 IsActive = dto.IsActive,
                 GenderId = dto.GenderId,
-                RoleId = roleId,
                 UserStatusId = UserStatus,
                 PropertyId = dto.PropertyId
             };
@@ -64,7 +75,7 @@ namespace RentalManager.Mappings
 
 
 
-        public static User UpdateEntity(this User dto, User existingUser)
+        public static User UpdateEntity(this UPDATEUserDto dto, User existingUser)
         {
             existingUser.FirstName = dto.FirstName;
             existingUser.LastName = dto.LastName;
@@ -96,10 +107,22 @@ namespace RentalManager.Mappings
                 IsActive = dto.IsActive,
                 GenderId = dto.GenderId,
                 GenderName = dto.Gender.Item,
+                PropertyId = dto.Property?.Id,
+                PropertyName = dto.Property?.Name,
                 UserStatus = dto.UserStatus.Item,
-                RoleName = dto.Role.Name,
-                propertyId = dto.PropertyId,
-                PropertyName = dto.Property.Name
+            };
+        }
+
+        public static READAppUserDto ToReadDto(this ApplicationUser dto)
+        {
+            return new READAppUserDto
+            {
+                Id = dto.Id,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                UserName = dto.UserName,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
             };
         }
 

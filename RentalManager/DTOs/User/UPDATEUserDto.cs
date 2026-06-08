@@ -6,7 +6,9 @@
 
         public string LastName { get; set; } = string.Empty;
 
-        public string? EmailAddress { get; set; }
+        public string? UserName { get; set; }
+
+        public string EmailAddress { get; set; } = string.Empty;
 
         public string MobileNumber { get; set; } = string.Empty;
 

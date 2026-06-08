@@ -67,7 +67,7 @@ namespace RentalManager.Mappings
         public static Transaction UpdateTransactionEntity(this UPDATEExpenseDto dto, Transaction existing)
         {
             existing.Amount = dto.Amount;
-            existing.ExpenseCategoryId = dto.ExpenseCategoryId;
+            //existing.ExpenseCategoryId = dto.ExpenseCategoryId;
 
             return existing;
         }

@@ -24,11 +24,13 @@
 
         public string GenderName { get; set; } = string.Empty;
 
+        public int RoleId { get; set; } 
+
         public string RoleName { get; set; } = string.Empty;
 
         public string UserStatus { get; set; } = string.Empty;
 
-        public int? propertyId { get; set; }
+        public int? PropertyId { get; set; }
 
         public string PropertyName { get; set; } = string.Empty;
     }

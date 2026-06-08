@@ -78,7 +78,7 @@ namespace RentalManager.Migrations
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 6,
                             Name = "Tenant",
                             NormalizedName = "TENANT"
                         });
@@ -201,10 +201,19 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("IsTrial")
                         .ValueGeneratedOnAdd()
@@ -232,6 +241,8 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("UpdatedBy");
 
                     b.ToTable("Accounts");
@@ -248,7 +259,7 @@ namespace RentalManager.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<int?>("AccountId")
+                    b.Property<int>("AccountId")
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
@@ -316,6 +327,59 @@ namespace RentalManager.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("RentalManager.Models.AuditTrail", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EntityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("EntityId");
+
+                    b.HasIndex("EntityName");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("EntityName", "EntityId");
+
+                    b.ToTable("AuditTrails");
+                });
+
             modelBuilder.Entity("RentalManager.Models.Expense", b =>
                 {
                     b.Property<int>("Id")
@@ -335,6 +399,15 @@ namespace RentalManager.Migrations
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -360,6 +433,8 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("PropertyId");
 
                     b.HasIndex("UpdatedBy");
@@ -367,7 +442,7 @@ namespace RentalManager.Migrations
                     b.ToTable("Expenses");
                 });
 
-            modelBuilder.Entity("RentalManager.Models.Invoice", b =>
+            modelBuilder.Entity("RentalManager.Models.Lease", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -375,123 +450,151 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Combine")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("CreatedBy")
+                    b.Property<int>("BillingCycleId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("InvoiceDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("InvoiceNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("TotalAmount")
+                    b.Property<decimal?>("DepositAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("TransactionId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedOn")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("isMain")
-                        .HasColumnType("bit");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("TransactionId");
-
-                    b.HasIndex("UpdatedBy");
-
-                    b.ToTable("Invoices");
-                });
-
-            modelBuilder.Entity("RentalManager.Models.InvoiceLine", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("LeaseStatusId")
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<DateTime>("NextBillingDate")
+                        .HasColumnType("datetime2");
 
-                    b.Property<decimal>("Amount")
+                    b.Property<decimal>("RentAmount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int?>("CreatedBy")
-                        .HasColumnType("int");
+                    b.Property<bool>("RequiresDeposit")
+                        .HasColumnType("bit");
 
-                    b.Property<DateTime>("CreatedOn")
+                    b.Property<DateTime>("StartDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("InvoiceId")
+                    b.Property<int>("UnitId")
                         .HasColumnType("int");
-
-                    b.Property<string>("TransactionCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("UpdatedBy")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("InvoiceId");
-
-                    b.HasIndex("UpdatedBy");
-
-                    b.ToTable("InvoiceLines");
-                });
-
-            modelBuilder.Entity("RentalManager.Models.Landlord", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("EmailAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("MobileNumber")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BillingCycleId");
+
+                    b.HasIndex("LeaseStatusId");
+
+                    b.HasIndex("NextBillingDate");
+
+                    b.HasIndex("UnitId")
+                        .IsUnique();
+
                     b.HasIndex("UserId");
 
-                    b.ToTable("Landlords");
+                    b.ToTable("Leases");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.MeterReading", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("CurrentReading")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DeletedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PreviousReading")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Rate")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("ReadingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("UnitsConsumed")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("UtilityBillId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("DeletedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("UtilityBillId");
+
+                    b.ToTable("MeterReadings");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.Permission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Permissions");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Property", b =>
@@ -526,6 +629,12 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EmailAddress")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -533,6 +642,9 @@ namespace RentalManager.Migrations
 
                     b.Property<int>("Floor")
                         .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("decimal(9,6)");
@@ -559,6 +671,9 @@ namespace RentalManager.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<int>("PropertyTypeId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
@@ -570,6 +685,10 @@ namespace RentalManager.Migrations
                     b.HasIndex("AccountId");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("PropertyTypeId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -594,6 +713,15 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<int>("PropertyId")
                         .HasColumnType("int");
 
@@ -609,6 +737,8 @@ namespace RentalManager.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("PropertyId");
 
@@ -683,6 +813,15 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsEnabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -703,6 +842,8 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("UpdatedBy");
 
                     b.ToTable("Roles");
@@ -711,45 +852,78 @@ namespace RentalManager.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(1839),
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4473),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "SuperAdmin"
                         },
                         new
                         {
                             Id = 2,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2042),
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4519),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "Owner"
                         },
                         new
                         {
                             Id = 3,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2046),
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4523),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "Manager"
                         },
                         new
                         {
                             Id = 4,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2048),
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4525),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "Admin"
                         },
                         new
                         {
                             Id = 5,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2050),
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4527),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "Landlord"
                         },
                         new
                         {
-                            Id = 6,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2052),
+                            Id = 7,
+                            CreatedOn = new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4529),
+                            IsDeleted = false,
                             IsEnabled = true,
                             Name = "Tenant"
                         });
+                });
+
+            modelBuilder.Entity("RentalManager.Models.RolePermission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsAllowed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PermissionId");
+
+                    b.HasIndex("RoleId", "PermissionId")
+                        .IsUnique();
+
+                    b.ToTable("RolePermissions");
                 });
 
             modelBuilder.Entity("RentalManager.Models.SystemCode", b =>
@@ -762,14 +936,24 @@ namespace RentalManager.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(100)
@@ -783,7 +967,12 @@ namespace RentalManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("UpdatedBy");
 
@@ -798,20 +987,45 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Color")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("IconKey")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Item")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
 
                     b.Property<int>("SystemCodeId")
                         .HasColumnType("int");
@@ -826,85 +1040,14 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.HasIndex("SystemCodeId");
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("UpdatedBy");
 
-                    b.ToTable("SystemCodeItems");
+                    b.HasIndex("SystemCodeId", "Item")
+                        .IsUnique();
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1041,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2203),
-                            Item = "Maintenance",
-                            Notes = "House Maintenance",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1042,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2214),
-                            Item = "Salary",
-                            Notes = "Staff Salary Payments",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1043,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2216),
-                            Item = "Cleaning",
-                            Notes = "Cleaning Services",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1044,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2219),
-                            Item = "Insurance",
-                            Notes = "Property Insurance Costs",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1045,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2221),
-                            Item = "Legal",
-                            Notes = "Legal Fees and Services",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1046,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2240),
-                            Item = "Marketing",
-                            Notes = "Advertising and Promotion Costs",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1047,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2245),
-                            Item = "Office Supplies",
-                            Notes = "Office and Administrative Supplies",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1048,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2248),
-                            Item = "Security",
-                            Notes = "Security and Surveillance Expenses",
-                            SystemCodeId = 16
-                        },
-                        new
-                        {
-                            Id = 1049,
-                            CreatedOn = new DateTime(2026, 1, 21, 22, 7, 38, 399, DateTimeKind.Local).AddTicks(2250),
-                            Item = "Other",
-                            Notes = "Other expenses not classified elsewhere",
-                            SystemCodeId = 16
-                        });
+                    b.ToTable("SystemCodeItems");
                 });
 
             modelBuilder.Entity("RentalManager.Models.SystemLog", b =>
@@ -926,9 +1069,18 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<int>("LogLevel")
                         .HasColumnType("int");
@@ -950,6 +1102,8 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("LogLevel");
 
                     b.HasIndex("UpdatedBy");
@@ -970,21 +1124,7 @@ namespace RentalManager.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<string>("EmailAddress")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("MobileNumber")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("nvarchar(15)");
-
-                    b.Property<int>("Status")
+                    b.Property<int>("TenantStatusId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UnitId")
@@ -995,7 +1135,7 @@ namespace RentalManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Status");
+                    b.HasIndex("TenantStatusId");
 
                     b.HasIndex("UnitId");
 
@@ -1016,12 +1156,7 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18, 2)");
-
-                    b.Property<bool>("Combine")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -1029,14 +1164,16 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ExpenseCategoryId")
+                    b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ExpenseId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
 
-                    b.Property<int>("MonthFor")
-                        .HasMaxLength(10)
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("MonthFor")
                         .HasColumnType("int");
 
                     b.Property<string>("Notes")
@@ -1049,15 +1186,23 @@ namespace RentalManager.Migrations
                     b.Property<int?>("PropertyId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Status")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                    b.Property<int?>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("TransactionCategoryId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("TransactionDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("TransactionNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("TransactionTypeId")
                         .HasColumnType("int");
@@ -1074,11 +1219,7 @@ namespace RentalManager.Migrations
                     b.Property<int?>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UtilityBillId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("YearFor")
-                        .HasMaxLength(4)
+                    b.Property<int?>("YearFor")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -1087,15 +1228,20 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.HasIndex("ExpenseCategoryId");
-
-                    b.HasIndex("ExpenseId");
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("PaymentMethodId");
 
-                    b.HasIndex("PropertyId");
+                    b.HasIndex("ReferenceId");
+
+                    b.HasIndex("ReferenceType");
 
                     b.HasIndex("TransactionCategoryId");
+
+                    b.HasIndex("TransactionDate");
+
+                    b.HasIndex("TransactionNumber")
+                        .IsUnique();
 
                     b.HasIndex("TransactionTypeId");
 
@@ -1105,9 +1251,69 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.HasIndex("UtilityBillId");
+                    b.HasIndex("ReferenceType", "ReferenceId");
+
+                    b.HasIndex("PropertyId", "MonthFor", "YearFor");
 
                     b.ToTable("Transactions");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.TransactionAllocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("ChargeTransactionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentTransactionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChargeTransactionId");
+
+                    b.HasIndex("PaymentTransactionId");
+
+                    b.ToTable("TransactionAllocations");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.TransactionRelation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FromTransactionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("RelationTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ToTransactionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromTransactionId");
+
+                    b.HasIndex("RelationTypeId");
+
+                    b.HasIndex("ToTransactionId");
+
+                    b.ToTable("TransactionRelations");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Unit", b =>
@@ -1121,7 +1327,10 @@ namespace RentalManager.Migrations
                     b.Property<int>("AccountId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Amount")
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("BillingCycleId")
                         .HasColumnType("int");
 
                     b.Property<int?>("CreatedBy")
@@ -1129,6 +1338,20 @@ namespace RentalManager.Migrations
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Floor")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -1140,6 +1363,9 @@ namespace RentalManager.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RentalTypeId")
                         .HasColumnType("int");
 
                     b.Property<int>("StatusId")
@@ -1156,9 +1382,17 @@ namespace RentalManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("BillingCycleId");
+
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("PropertyId");
+
+                    b.HasIndex("RentalTypeId");
 
                     b.HasIndex("StatusId");
 
@@ -1167,6 +1401,128 @@ namespace RentalManager.Migrations
                     b.HasIndex("UpdatedBy");
 
                     b.ToTable("Units");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UnitFeature", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DataType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Icon")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.HasIndex("AccountId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("UnitFeatures");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UnitFeatureAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UnitFeatureId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UnitId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DeletedBy");
+
+                    b.HasIndex("UnitFeatureId");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.HasIndex("UnitId", "UnitFeatureId")
+                        .IsUnique();
+
+                    b.ToTable("UnitFeatureAssignments");
                 });
 
             modelBuilder.Entity("RentalManager.Models.UnitType", b =>
@@ -1186,16 +1542,23 @@ namespace RentalManager.Migrations
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SystemCodeItemId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
@@ -1210,7 +1573,11 @@ namespace RentalManager.Migrations
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("PropertyId");
+
+                    b.HasIndex("SystemCodeItemId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -1225,6 +1592,9 @@ namespace RentalManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
                     b.Property<string>("AlternativeNumber")
                         .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)");
@@ -1236,6 +1606,12 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("EmailAddress")
@@ -1255,6 +1631,9 @@ namespace RentalManager.Migrations
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1272,10 +1651,7 @@ namespace RentalManager.Migrations
                     b.Property<string>("ProfilePhotoUrl")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("PropertyId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RoleId")
+                    b.Property<int?>("PropertyId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
@@ -1289,16 +1665,18 @@ namespace RentalManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
                     b.HasIndex("ApplicationUserId")
                         .IsUnique();
 
                     b.HasIndex("CreatedBy");
 
+                    b.HasIndex("DeletedBy");
+
                     b.HasIndex("GenderId");
 
                     b.HasIndex("PropertyId");
-
-                    b.HasIndex("RoleId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -1314,6 +1692,9 @@ namespace RentalManager.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
@@ -1347,9 +1728,45 @@ namespace RentalManager.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AccountId");
+
                     b.HasIndex("UserId");
 
                     b.ToTable("UserLogins");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UserRole", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("UserId", "RoleId", "AccountId", "PropertyId")
+                        .IsUnique()
+                        .HasFilter("[PropertyId] IS NOT NULL");
+
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("RentalManager.Models.UtilityBill", b =>
@@ -1366,18 +1783,33 @@ namespace RentalManager.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<int>("BillingCycleId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int?>("DeletedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMetered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
 
                     b.Property<int>("PropertyId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UnitId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UpdatedBy")
@@ -1386,22 +1818,159 @@ namespace RentalManager.Migrations
                     b.Property<DateTime?>("UpdatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("isReccuring")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
+                    b.Property<int>("UtilityId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
 
+                    b.HasIndex("BillingCycleId");
+
                     b.HasIndex("CreatedBy");
 
-                    b.HasIndex("PropertyId");
+                    b.HasIndex("DeletedBy");
 
                     b.HasIndex("UpdatedBy");
 
-                    b.ToTable("UnitCharges");
+                    b.HasIndex("UtilityId");
+
+                    b.HasIndex("PropertyId", "UtilityId")
+                        .IsUnique()
+                        .HasFilter("[UnitId] IS NULL");
+
+                    b.HasIndex("UnitId", "PropertyId", "UtilityId")
+                        .IsUnique()
+                        .HasFilter("[UnitId] IS NOT NULL");
+
+                    b.ToTable("UtilityBills");
+                });
+
+            modelBuilder.Entity("RentalManager.Notification.Models.InAppNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("GETUTCDATE()");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("InAppNotifications");
+                });
+
+            modelBuilder.Entity("RentalManager.Notification.Models.NotificationPreference", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("EmailEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("InAppEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("SmsEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId", "EventType", "UserId");
+
+                    b.ToTable("NotificationPreferences");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            AccountId = 1,
+                            EmailEnabled = true,
+                            EventType = "TENANT_ADDED",
+                            InAppEnabled = true,
+                            IsEnabled = true,
+                            SmsEnabled = false
+                        },
+                        new
+                        {
+                            Id = 2,
+                            AccountId = 13,
+                            EmailEnabled = false,
+                            EventType = "TENANT_ADDED",
+                            InAppEnabled = true,
+                            IsEnabled = true,
+                            SmsEnabled = false
+                        },
+                        new
+                        {
+                            Id = 3,
+                            AccountId = 13,
+                            EmailEnabled = true,
+                            EventType = "RENT_PAID",
+                            InAppEnabled = true,
+                            IsEnabled = true,
+                            SmsEnabled = true
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AccountId = 13,
+                            EmailEnabled = false,
+                            EventType = "RENT_PAID",
+                            InAppEnabled = true,
+                            IsEnabled = true,
+                            SmsEnabled = false
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -1462,6 +2031,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
@@ -1469,7 +2043,27 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.AuditTrail", b =>
+                {
+                    b.HasOne("RentalManager.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Expense", b =>
@@ -1485,6 +2079,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.Property", "Property")
                         .WithMany()
                         .HasForeignKey("PropertyId")
@@ -1500,70 +2099,75 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Property");
 
                     b.Navigation("UpdatedByUser");
                 });
 
-            modelBuilder.Entity("RentalManager.Models.Invoice", b =>
+            modelBuilder.Entity("RentalManager.Models.Lease", b =>
                 {
-                    b.HasOne("RentalManager.Models.User", "CreatedByUser")
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "BillingCycle")
                         .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RentalManager.Models.Transaction", "Transactions")
-                        .WithMany()
-                        .HasForeignKey("TransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("BillingCycleId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.User", "UpdatedByUser")
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "LeaseStatus")
                         .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Transactions");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("RentalManager.Models.InvoiceLine", b =>
-                {
-                    b.HasOne("RentalManager.Models.User", "CreatedByUser")
-                        .WithMany()
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RentalManager.Models.Invoice", "Invoices")
-                        .WithMany()
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("LeaseStatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.User", "UpdatedByUser")
-                        .WithMany()
-                        .HasForeignKey("UpdatedBy")
-                        .OnDelete(DeleteBehavior.Restrict);
+                    b.HasOne("RentalManager.Models.Unit", "Unit")
+                        .WithMany("Leases")
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
-                    b.Navigation("CreatedByUser");
-
-                    b.Navigation("Invoices");
-
-                    b.Navigation("UpdatedByUser");
-                });
-
-            modelBuilder.Entity("RentalManager.Models.Landlord", b =>
-                {
                     b.HasOne("RentalManager.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("BillingCycle");
+
+                    b.Navigation("LeaseStatus");
+
+                    b.Navigation("Unit");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.MeterReading", b =>
+                {
+                    b.HasOne("RentalManager.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId");
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedByUserId");
+
+                    b.HasOne("RentalManager.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId");
+
+                    b.HasOne("RentalManager.Models.UtilityBill", "UtilityBill")
+                        .WithMany("UtilityReadings")
+                        .HasForeignKey("UtilityBillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
+
+                    b.Navigation("UtilityBill");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Property", b =>
@@ -1579,6 +2183,17 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "PropertyType")
+                        .WithMany()
+                        .HasForeignKey("PropertyTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
@@ -1588,6 +2203,10 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("PropertyType");
+
                     b.Navigation("UpdatedByUser");
                 });
 
@@ -1596,6 +2215,11 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.Property", "Property")
@@ -1617,6 +2241,8 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Property");
 
                     b.Navigation("UpdatedByUser");
@@ -1626,7 +2252,7 @@ namespace RentalManager.Migrations
 
             modelBuilder.Entity("RentalManager.Models.RefreshToken", b =>
                 {
-                    b.HasOne("RentalManager.Models.ApplicationUser", "User")
+                    b.HasOne("RentalManager.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1642,6 +2268,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
@@ -1649,7 +2280,26 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.RolePermission", b =>
+                {
+                    b.HasOne("RentalManager.Models.Permission", "Permission")
+                        .WithMany()
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
                 });
 
             modelBuilder.Entity("RentalManager.Models.SystemCode", b =>
@@ -1659,12 +2309,19 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -1674,6 +2331,11 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.SystemCode", "SystemCode")
@@ -1689,6 +2351,8 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("SystemCode");
 
                     b.Navigation("UpdatedByUser");
@@ -1699,6 +2363,11 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.SystemCodeItem", "LogLevelStatus")
@@ -1720,6 +2389,8 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("LogLevelStatus");
 
                     b.Navigation("UpdatedByUser");
@@ -1731,7 +2402,7 @@ namespace RentalManager.Migrations
                 {
                     b.HasOne("RentalManager.Models.SystemCodeItem", "TenantStatus")
                         .WithMany()
-                        .HasForeignKey("Status")
+                        .HasForeignKey("TenantStatusId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1766,14 +2437,9 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("RentalManager.Models.SystemCodeItem", "ExpenseCategory")
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
                         .WithMany()
-                        .HasForeignKey("ExpenseCategoryId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("RentalManager.Models.Expense", "Expenses")
-                        .WithMany()
-                        .HasForeignKey("ExpenseId")
+                        .HasForeignKey("DeletedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.SystemCodeItem", "PaymentMethod")
@@ -1813,18 +2479,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("RentalManager.Models.UtilityBill", "UtilityBill")
-                        .WithMany()
-                        .HasForeignKey("UtilityBillId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.Navigation("Account");
 
                     b.Navigation("CreatedByUser");
 
-                    b.Navigation("ExpenseCategory");
-
-                    b.Navigation("Expenses");
+                    b.Navigation("DeletedByUser");
 
                     b.Navigation("PaymentMethod");
 
@@ -1839,20 +2498,87 @@ namespace RentalManager.Migrations
                     b.Navigation("UpdatedByUser");
 
                     b.Navigation("User");
+                });
 
-                    b.Navigation("UtilityBill");
+            modelBuilder.Entity("RentalManager.Models.TransactionAllocation", b =>
+                {
+                    b.HasOne("RentalManager.Models.Transaction", "ChargeTransaction")
+                        .WithMany("ChargeAllocations")
+                        .HasForeignKey("ChargeTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.Transaction", "PaymentTransaction")
+                        .WithMany("PaymentAllocations")
+                        .HasForeignKey("PaymentTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ChargeTransaction");
+
+                    b.Navigation("PaymentTransaction");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.TransactionRelation", b =>
+                {
+                    b.HasOne("RentalManager.Models.Transaction", "FromTransaction")
+                        .WithMany("FromRelations")
+                        .HasForeignKey("FromTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "RelationType")
+                        .WithMany()
+                        .HasForeignKey("RelationTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.Transaction", "ToTransaction")
+                        .WithMany("ToRelations")
+                        .HasForeignKey("ToTransactionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromTransaction");
+
+                    b.Navigation("RelationType");
+
+                    b.Navigation("ToTransaction");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Unit", b =>
                 {
+                    b.HasOne("RentalManager.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "BillingCycle")
+                        .WithMany()
+                        .HasForeignKey("BillingCycleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RentalManager.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.Property", "Property")
                         .WithMany("Units")
                         .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "RentalType")
+                        .WithMany()
+                        .HasForeignKey("RentalTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1862,7 +2588,7 @@ namespace RentalManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("RentalManager.Models.UnitType", "UnitType")
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "UnitType")
                         .WithMany()
                         .HasForeignKey("UnitTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1873,13 +2599,93 @@ namespace RentalManager.Migrations
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.Navigation("Account");
+
+                    b.Navigation("BillingCycle");
+
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Property");
+
+                    b.Navigation("RentalType");
 
                     b.Navigation("Status");
 
                     b.Navigation("UnitType");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UnitFeature", b =>
+                {
+                    b.HasOne("RentalManager.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UnitFeatureAssignment", b =>
+                {
+                    b.HasOne("RentalManager.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.UnitFeature", "UnitFeature")
+                        .WithMany("UnitAssignments")
+                        .HasForeignKey("UnitFeatureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.Unit", "Unit")
+                        .WithMany("Features")
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("DeletedByUser");
+
+                    b.Navigation("Unit");
+
+                    b.Navigation("UnitFeature");
 
                     b.Navigation("UpdatedByUser");
                 });
@@ -1897,9 +2703,20 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.Property", "Property")
                         .WithMany()
                         .HasForeignKey("PropertyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "SystemCodeItem")
+                        .WithMany()
+                        .HasForeignKey("SystemCodeItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -1912,13 +2729,23 @@ namespace RentalManager.Migrations
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Property");
+
+                    b.Navigation("SystemCodeItem");
 
                     b.Navigation("UpdatedByUser");
                 });
 
             modelBuilder.Entity("RentalManager.Models.User", b =>
                 {
+                    b.HasOne("RentalManager.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RentalManager.Models.ApplicationUser", "ApplicationUser")
                         .WithOne("User")
                         .HasForeignKey("RentalManager.Models.User", "ApplicationUserId")
@@ -1930,6 +2757,11 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
+                        .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("RentalManager.Models.SystemCodeItem", "Gender")
                         .WithMany()
                         .HasForeignKey("GenderId")
@@ -1938,14 +2770,7 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.Property", "Property")
                         .WithMany()
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RentalManager.Models.Role", "Role")
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
@@ -1958,15 +2783,17 @@ namespace RentalManager.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Account");
+
                     b.Navigation("ApplicationUser");
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Gender");
 
                     b.Navigation("Property");
-
-                    b.Navigation("Role");
 
                     b.Navigation("UpdatedByUser");
 
@@ -1975,11 +2802,38 @@ namespace RentalManager.Migrations
 
             modelBuilder.Entity("RentalManager.Models.UserLogin", b =>
                 {
+                    b.HasOne("RentalManager.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("RentalManager.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Account");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UserRole", b =>
+                {
+                    b.HasOne("RentalManager.Models.Role", "Role")
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
 
                     b.Navigation("User");
                 });
@@ -1989,7 +2843,13 @@ namespace RentalManager.Migrations
                     b.HasOne("RentalManager.Models.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "BillingCycle")
+                        .WithMany()
+                        .HasForeignKey("BillingCycleId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("RentalManager.Models.User", "CreatedByUser")
@@ -1997,24 +2857,48 @@ namespace RentalManager.Migrations
                         .HasForeignKey("CreatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("RentalManager.Models.Property", "Property")
+                    b.HasOne("RentalManager.Models.User", "DeletedByUser")
                         .WithMany()
+                        .HasForeignKey("DeletedBy")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RentalManager.Models.Property", "Property")
+                        .WithMany("Utilities")
                         .HasForeignKey("PropertyId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("RentalManager.Models.Unit", "Unit")
+                        .WithMany("UtilityBills")
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RentalManager.Models.User", "UpdatedByUser")
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("RentalManager.Models.SystemCodeItem", "Utility")
+                        .WithMany()
+                        .HasForeignKey("UtilityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Account");
+
+                    b.Navigation("BillingCycle");
 
                     b.Navigation("CreatedByUser");
 
+                    b.Navigation("DeletedByUser");
+
                     b.Navigation("Property");
 
+                    b.Navigation("Unit");
+
                     b.Navigation("UpdatedByUser");
+
+                    b.Navigation("Utility");
                 });
 
             modelBuilder.Entity("RentalManager.Models.Account", b =>
@@ -2030,11 +2914,43 @@ namespace RentalManager.Migrations
             modelBuilder.Entity("RentalManager.Models.Property", b =>
                 {
                     b.Navigation("Units");
+
+                    b.Navigation("Utilities");
                 });
 
             modelBuilder.Entity("RentalManager.Models.SystemCode", b =>
                 {
                     b.Navigation("SystemCodeItems");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.Transaction", b =>
+                {
+                    b.Navigation("ChargeAllocations");
+
+                    b.Navigation("FromRelations");
+
+                    b.Navigation("PaymentAllocations");
+
+                    b.Navigation("ToRelations");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.Unit", b =>
+                {
+                    b.Navigation("Features");
+
+                    b.Navigation("Leases");
+
+                    b.Navigation("UtilityBills");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UnitFeature", b =>
+                {
+                    b.Navigation("UnitAssignments");
+                });
+
+            modelBuilder.Entity("RentalManager.Models.UtilityBill", b =>
+                {
+                    b.Navigation("UtilityReadings");
                 });
 #pragma warning restore 612, 618
         }

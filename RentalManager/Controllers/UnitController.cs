@@ -1,17 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
+using RentalManager.DTOs.Property;
 using RentalManager.DTOs.Unit;
-using RentalManager.Mappings;
-using RentalManager.Models;
 using RentalManager.Services.UnitService;
 
 namespace RentalManager.Controllers
 {
     [Route("api/Units")]
     [ApiController]
-    public class UnitController : ControllerBase
+    public class UnitController : BaseController
     {
         private readonly IUnitService _service;
 
@@ -21,7 +20,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Unit.Read)]
+        [Authorize(Policy = PermissionNames.Unit.Read)]
         [HttpGet]
         public async Task<IActionResult> GetUnits()
         {
@@ -41,7 +40,30 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Unit.Read)]
+
+        [Authorize(Policy = PermissionNames.Unit.Read)]
+        [HttpGet("Lookups")]
+        public async Task<IActionResult> GetUnitLookups()
+        {
+            var result = await _service.GetLookups();
+
+            return HandleResponse(result);
+        }
+
+
+
+        [Authorize(Policy = PermissionNames.Unit.Read)]
+        [HttpGet("Filtered")]
+        public async Task<IActionResult> GetUnitsFiltered([FromQuery] UnitQueryFilter filter)
+        {
+            var result = await _service.GetFiltered(filter);
+
+            return HandleResponse(result);
+
+        }
+
+
+        [Authorize(Policy = PermissionNames.Unit.Read)]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUnitById(int id)
         {
@@ -60,50 +82,58 @@ namespace RentalManager.Controllers
             }
         }
 
-        [Authorize(Policy = PolicyNames.Unit.Write)]
+
+        [Authorize(Policy = PermissionNames.Unit.Read)]
+        [HttpGet("Vacants")]
+        public async Task<IActionResult> GetVacantUnits()
+        {
+            try
+            {
+                var result = await _service.GetVacants();
+
+                if (result.Success == false) return BadRequest();
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.InnerException?.Message ?? ex.Message);
+            }
+        }
+
+
+
+        [Authorize(Policy = PermissionNames.Unit.Create)]
         [HttpPost]
         public async Task<IActionResult> AddUnit([FromBody] CREATEUnitDto AddedUnit)
         {
-            try
-            {
-                var result = await _service.Add(AddedUnit);
-
-                if (result.Success == false) return BadRequest();
-
-                return Ok(result);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.InnerException?.Message ?? ex.Message);
-            }
+            var result = await _service.Add(AddedUnit);
+            return HandleResponse(result);
         }
 
 
 
-        [Authorize(Policy = PolicyNames.Unit.Update)]
+        [Authorize(Policy = PermissionNames.Unit.Update)]
         [HttpPut("{id}")]
         public async Task<IActionResult> EditUnit(int id, [FromBody] UPDATEUnitDto UpdatedUnit)
         {
-
-            try
-            {
-                var result = await _service.Update(id, UpdatedUnit);
-
-                if (result.Success == false) return BadRequest();
-
-                return Ok(result);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.InnerException?.Message ?? ex.Message);
-            }
-
+            var result = await _service.Update(id, UpdatedUnit);
+            return HandleResponse(result);
         }
 
 
-        [Authorize(Policy = PolicyNames.Unit.Delete)]
+
+        [Authorize(Policy = PermissionNames.Unit.Update)]
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchUnit(int id, [FromBody] PATCHUnitDto PatchedUnit)
+        {
+            var result = await _service.Patch(id, PatchedUnit);
+            return HandleResponse(result);
+        }
+
+
+        [Authorize(Policy = PermissionNames.Unit.Delete)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUnit(int id)
         {
@@ -123,7 +153,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Unit.Read)]
+        [Authorize(Policy = PermissionNames.Unit.Read)]
         [HttpGet("By-Property/{PropertyId}")]
         public async Task<IActionResult> GetUnitsByProperty(int PropertyId)
         {
@@ -141,7 +171,6 @@ namespace RentalManager.Controllers
                 return BadRequest(ex.InnerException?.Message ?? ex.Message);
             }
         }
-
 
 
 

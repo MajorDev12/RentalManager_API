@@ -9,21 +9,12 @@ namespace RentalManager.Mappings
         {
             return new UtilityBill
             {
-                Name = dto.Name,
+                UtilityId = dto.UtilityId,
+                PropertyId = dto.PropertyId,
+                BillingCycleId = dto.BillingCycleId,
+                UnitId = dto.UnitId,
+                IsMetered = dto.IsMetered,
                 Amount = dto.Amount,
-                isReccuring = dto.isReccuring,
-                PropertyId = dto.PropertyId
-            };
-        }
-
-        public static UtilityBill ToEntity(this UPDATEUtilityBillDto dto)
-        {
-            return new UtilityBill
-            {
-                Name = dto.Name,
-                Amount = dto.Amount,
-                isReccuring = dto.isReccuring,
-                PropertyId = dto.PropertyId
             };
         }
 
@@ -35,36 +26,22 @@ namespace RentalManager.Mappings
             return new READUtilityBillDto
             {
                 Id = bill.Id,
-                Name = bill.Name,
+                UtilityId = bill.Utility.Id,
+                Name = bill.Utility.Item,
                 Amount = bill.Amount,
-                isReccuring = bill.isReccuring,
+                IsMetered = bill.IsMetered,
                 PropertyId = bill.PropertyId,
-                PropertyName = bill.Property.Name
+                PropertyName = bill.Property.Name,
+                BillingCycleId = bill.BillingCycle.Id,
+                BillingCycleName = bill.BillingCycle.Item,
+                UnitId = bill.UnitId,
+                UnitName = bill.Unit?.Name,
             };
         }
 
 
-        public static UPDATEUtilityBillDto ToUpdateDto(this UtilityBill bill)
-        {
-            return new UPDATEUtilityBillDto
-            {
-                Name = bill.Name,
-                Amount = bill.Amount,
-                isReccuring = bill.isReccuring,
-                PropertyId = bill.PropertyId
-            };
-        }
 
 
-        public static UtilityBill ToUpdateEntity(this UtilityBill updatedData, UtilityBill existingData)
-        {
-            existingData.PropertyId = updatedData.PropertyId;
-            existingData.Name = updatedData.Name;
-            existingData.Amount = updatedData.Amount;
-            existingData.isReccuring = updatedData.isReccuring;
-
-            return existingData;
-        }
 
     }
 }

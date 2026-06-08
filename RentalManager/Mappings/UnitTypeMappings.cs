@@ -11,7 +11,7 @@ namespace RentalManager.Mappings
         {
             return new UnitType
             {
-                Name = dto.Name,
+                SystemCodeItemId = dto.NameId,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId
             };
@@ -21,7 +21,7 @@ namespace RentalManager.Mappings
         {
             return new UnitType
             {
-                Name = dto.Name,
+                SystemCodeItemId = dto.NameId,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId
             };
@@ -33,7 +33,8 @@ namespace RentalManager.Mappings
             return new READUnitTypeDto
             {
                 Id = dto.Id,
-                Name = dto.Name,
+                NameId = dto.SystemCodeItemId,
+                Name = dto.SystemCodeItem.Item,
                 Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
                 PropertyName = dto.Property.Name
@@ -41,21 +42,13 @@ namespace RentalManager.Mappings
         }
 
 
-        public static UPDATEUnitTypeDto ToUpdateDto(this UnitType dto)
-        {
-            return new UPDATEUnitTypeDto
-            {
-                Name = dto.Name,
-                Notes = dto.Notes,
-                PropertyId = dto.PropertyId
-            };
-        }
+
 
 
         public static UnitType UpdateEntity(this UnitType updatedData, UnitType existingData)
         {
             existingData.PropertyId = updatedData.PropertyId;
-            existingData.Name = updatedData.Name;
+            existingData.Id = updatedData.Id;
             existingData.Notes = updatedData.Notes;
 
             return existingData;

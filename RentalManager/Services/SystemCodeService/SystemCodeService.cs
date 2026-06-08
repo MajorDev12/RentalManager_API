@@ -23,7 +23,7 @@ namespace RentalManager.Services.SystemCodeService
 
                 if (codes == null)
                 {
-                    return new ApiResponse<List<READSystemCodeDto>>(null, "Data Not Found.");
+                    return new ApiResponse<List<READSystemCodeDto>>(null, "Items Not Found.");
                 }
 
                 var codeDtos = codes.Select(it => it.ToReadDto()).ToList();
@@ -45,7 +45,7 @@ namespace RentalManager.Services.SystemCodeService
 
                 if (codes == null)
                 {
-                    return new ApiResponse<READSystemCodeDto>(null, "Data Not Found.");
+                    return new ApiResponse<READSystemCodeDto>(null, "Items Not Found.");
                 }
 
                 var codeDtos = codes.ToReadDto();
@@ -68,7 +68,7 @@ namespace RentalManager.Services.SystemCodeService
 
                 if (codes == null)
                 {
-                    return new ApiResponse<READSystemCodeDto>(null, "Data Not Found.");
+                    return new ApiResponse<READSystemCodeDto>(null, "Items Not Found.");
                 }
 
                 var codeDtos = codes.ToReadDto();
@@ -89,14 +89,14 @@ namespace RentalManager.Services.SystemCodeService
 
                 var existing = await _repo.FindAsync(id);
 
-                if(existing == null) return new ApiResponse<READSystemCodeDto>(null, "No Such Data.");
+                if(existing == null) return new ApiResponse<READSystemCodeDto>(null, "No Such Items.");
 
 
                 var entity = code.ToEntity(id);
                 var updated = await _repo.UpdateAsync(entity);
 
                 if (updated == null)
-                    return new ApiResponse<READSystemCodeDto>(null, "Data Not Found.");
+                    return new ApiResponse<READSystemCodeDto>(null, "Items Not Found.");
 
                 return new ApiResponse<READSystemCodeDto>(updated.ToReadDto(), "Updated successfully.");
             }
@@ -115,7 +115,7 @@ namespace RentalManager.Services.SystemCodeService
                 var entity = await _repo.FindAsync(id);
 
                 if (entity == null)
-                    return new ApiResponse<READSystemCodeDto>("Data Not Found.");
+                    return new ApiResponse<READSystemCodeDto>("Items Not Found.");
 
                 await _repo.DeleteAsync(entity);
 

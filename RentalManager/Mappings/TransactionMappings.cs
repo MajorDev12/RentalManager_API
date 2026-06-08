@@ -1,4 +1,4 @@
-﻿using RentalManager.DTOs.Invoice;
+﻿using RentalManager.DTOs.InvoiceLine;
 using RentalManager.DTOs.Tenant;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Models;
@@ -13,7 +13,7 @@ namespace RentalManager.Mappings
             UserId = dto.UserId,
             PropertyId = dto.PropertyId,
             UnitId = dto.UnitId,
-            UtilityBillId = dto.UtilityBillId,
+            //UtilityBillId = dto.UtilityBillId,
             TransactionTypeId = dto.TransactionTypeId,
             TransactionCategoryId = dto.TransactionCategoryId,
             Amount = dto.Amount,
@@ -30,7 +30,7 @@ namespace RentalManager.Mappings
             UserId = dto.UserId,
             PropertyId = transactionDto.PropertyId,
             UnitId = transactionDto.UnitId,
-            UtilityBillId = transactionDto.UtilityBillId,
+            //UtilityBillId = transactionDto.UtilityBillId,
             TransactionTypeId = transactionDto.TransactionTypeId,
             TransactionCategoryId = transactionDto.TransactionCategoryId,
             Amount = transactionDto.Amount,
@@ -68,7 +68,7 @@ namespace RentalManager.Mappings
                 UserId = dto.UserId,
                 PropertyId = ctx.PropertyId,
                 UnitId = ctx.UnitId,
-                UtilityBillId = ctx.UtilityBillId,
+                //UtilityBillId = ctx.UtilityBillId,
                 TransactionTypeId = ctx.TransactionTypeId,
                 TransactionCategoryId = ctx.TransactionCategoryId,
                 Amount = amount,
@@ -103,7 +103,7 @@ namespace RentalManager.Mappings
             UnitId = dto.unitId,
             Amount = dto.AmountPaid,
             PaymentMethodId = dto.PaymentMethodId,
-            TransactionDate = dto.PaymentDate
+            TransactionDate = dto.PaymentDate ?? DateTime.UtcNow
         };
 
 
@@ -116,8 +116,10 @@ namespace RentalManager.Mappings
             PropertyName = dto.Property?.Name,
             UnitId = dto.Unit?.Id,
             Unit = dto.Unit?.Name,
-            UtilityBillId = dto.UtilityBillId,
-            UtilityBill = dto.UtilityBill?.Name,
+            //UtilityBillId = dto.UtilityBillId,
+            //UtilityBill = dto.UtilityBill?.Name,
+            //ExpenseCategoryId = dto.ExpenseCategoryId,
+            //ExpenseCategory = dto.ExpenseCategory?.Item,
             TransactionTypeId = dto.TransactionTypeId,
             TransactionType = dto.TransactionType.Item,
             TransactionCategory = dto.TransactionCategory.Item,
@@ -125,8 +127,8 @@ namespace RentalManager.Mappings
             PaymentMethodId = dto.PaymentMethodId,
             PaymentMethod = dto.PaymentMethod?.Item,
             TransactionDate = dto.TransactionDate,
-            MonthFor = dto.MonthFor,
-            YearFor = dto.YearFor,
+            //MonthFor = dto.MonthFor,
+            //YearFor = dto.YearFor,
             Notes = dto?.Notes
         };
 
@@ -146,14 +148,6 @@ namespace RentalManager.Mappings
             return existing;
         }
 
-
-        public static CREATEInvoiceDto ToInvoice(this Transaction transaction) => new CREATEInvoiceDto
-        {
-            TotalAmount = transaction.Amount,
-            Status = transaction.Status,
-            Combine = true,
-            TransactionId = transaction.Id,
-        };
 
 
         public static CREATETransactionDto ToCreateTransaction(this CREATEIncoiceTransactionDto dto) => new CREATETransactionDto

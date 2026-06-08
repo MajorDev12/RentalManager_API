@@ -1,9 +1,7 @@
-﻿using RentalManager.DTOs.Invoice;
-using RentalManager.DTOs.InvoiceLine;
+﻿using RentalManager.DTOs.InvoiceLine;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Mappings;
 using RentalManager.Models;
-using RentalManager.Repositories.InvoiceRepository;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.SystemCodeRepository;
@@ -13,8 +11,6 @@ using RentalManager.Repositories.UnitRepository;
 using RentalManager.Repositories.UserRepository;
 using RentalManager.Repositories.UtilityBillRepository;
 using RentalManager.Services.AccountAccessService;
-using RentalManager.Services.InvoiceService;
-using System.Diagnostics;
 
 namespace RentalManager.Services.TransactionService
 {
@@ -27,8 +23,6 @@ namespace RentalManager.Services.TransactionService
         private readonly IUnitRepository _unitrepo;
         private readonly ITenantRepository _tenantrepo;
         private readonly IUserRepository _userrepo;
-        private readonly IInvoiceRepository _invoicerepo;
-        private readonly IInvoiceService _invoiceservice;
         private readonly IUtilityBillRepository _utilitybillrepo;
         private readonly ICurrentUser _currentuser;
 
@@ -40,8 +34,6 @@ namespace RentalManager.Services.TransactionService
             IUnitRepository unitrepo,
             ITenantRepository tenantrepo,
             IUserRepository userrepo,
-            IInvoiceRepository invoiceRepo,
-            IInvoiceService invoiceservice,
             IUtilityBillRepository utilitybillrepo,
             ICurrentUser currentuser)
         {
@@ -52,8 +44,6 @@ namespace RentalManager.Services.TransactionService
             _unitrepo = unitrepo;
             _tenantrepo = tenantrepo;
             _userrepo = userrepo;
-            _invoicerepo = invoiceRepo;
-            _invoiceservice = invoiceservice;
             _utilitybillrepo = utilitybillrepo;
             _currentuser = currentuser;
         }
@@ -65,14 +55,15 @@ namespace RentalManager.Services.TransactionService
             {
                 var transactions = await _repo.GetAllAsync();
 
-                if (transactions == null || transactions.Count == 0)
-                {
-                    return new ApiResponse<List<READTransactionDto>>(null, "Data Not Found.");
-                }
+                if (transactions == null)
+                    return ApiResponse<List<READTransactionDto>>.FailResponse("Something went wrong.");
+
+                if(transactions.Count == 0)
+                    return ApiResponse<List<READTransactionDto>>.SuccessResponse(null, "No Items Found.");
 
                 var transactionDtos = transactions.Select(it => it.ToReadDto()).ToList();
 
-                return new ApiResponse<List<READTransactionDto>>(transactionDtos, "");
+                return ApiResponse<List<READTransactionDto>>.SuccessResponse(transactionDtos, "");
             }
             catch (Exception ex)
             {
@@ -81,24 +72,56 @@ namespace RentalManager.Services.TransactionService
         }
 
 
-        public async Task<ApiResponse<List<READTransactionDto>>> GetByUser(int userId)
+        public async Task<ApiResponse<List<READTransactionDto>>> GetByUser(int domainUserId)
         {
             try
             {
-                var transactions = await _repo.GetByUserIdAsync(userId);
+                var transactions = await _repo.GetByUserIdAsync(domainUserId);
 
-                if (transactions == null || transactions.Count == 0)
-                {
-                    return new ApiResponse<List<READTransactionDto>>(null, "Data Not Found.");
-                }
+                if (transactions == null)
+                    return ApiResponse<List<READTransactionDto>>.FailResponse("Something went wrong.");
+
+                if (transactions.Count == 0)
+                    return ApiResponse<List<READTransactionDto>>.SuccessResponse(null, "No Items Found.");
+
 
                 var transactionDtos = transactions.Select(it => it.ToReadDto()).ToList();
 
-                return new ApiResponse<List<READTransactionDto>>(transactionDtos, "");
+                return ApiResponse<List<READTransactionDto>>.SuccessResponse(transactionDtos, "");
             }
             catch (Exception ex)
             {
-                return new ApiResponse<List<READTransactionDto>>($"Error Occurred: {ex.InnerException?.Message}");
+                
+                return ApiResponse<List<READTransactionDto>>.FailResponse($"Error Occurred: {ex.Message}");
+            }
+        }
+
+
+        public async Task<ApiResponse<List<READTransactionDto>>> GetByTenantId(int tenantId)
+        {
+            try
+            {
+                var domainUserId = await _tenantrepo.GetUserIdByTenantIdAsync(tenantId);
+
+                if (domainUserId == null) return ApiResponse<List<READTransactionDto>>.FailResponse("Something went wrong.Tenant Id Does Not Exist");
+
+                var transactions = await _repo.GetByUserIdAsync(domainUserId);
+
+                if (transactions == null)
+                    return ApiResponse<List<READTransactionDto>>.FailResponse("Something went wrong.");
+
+                if (transactions.Count == 0)
+                    return ApiResponse<List<READTransactionDto>>.SuccessResponse(null, "No Items Found.");
+
+
+                var transactionDtos = transactions.Select(it => it.ToReadDto()).ToList();
+
+                return ApiResponse<List<READTransactionDto>>.SuccessResponse(transactionDtos, "");
+            }
+            catch (Exception ex)
+            {
+
+                return ApiResponse<List<READTransactionDto>>.FailResponse($"Error Occurred: {ex.Message}");
             }
         }
 
@@ -109,7 +132,7 @@ namespace RentalManager.Services.TransactionService
             try
             {
                 // check if property exist
-                var property = await _propertyrepo.GetByIdAsync(_currentuser, transaction.PropertyId.Value);
+                var property = await _propertyrepo.GetByIdAsync(transaction.PropertyId.Value);
 
                 if (property == null)
                     return new ApiResponse<READTransactionDto>(null, "Property does not exist");
@@ -117,7 +140,7 @@ namespace RentalManager.Services.TransactionService
                 // check if there is unit then confirm its from the property above
                 if (transaction.UnitId is int unitId)
                 {
-                    var unit = await _unitrepo.GetByIdAsync(_currentuser, unitId);
+                    var unit = await _unitrepo.GetByIdAsync(unitId);
 
                     if (unit == null)
                         return new ApiResponse<READTransactionDto>(null, "Unit does not exist");
@@ -188,16 +211,12 @@ namespace RentalManager.Services.TransactionService
                 var transactionEntity = transaction.ToEntity();
                 var addedTransaction = await _repo.AddAsync(transactionEntity);
 
-                if (addedTransaction != null)
+                if (addedTransaction == null)
                 {
-                    var createInvoiceDto = addedTransaction.ToInvoice();
-                    var addedInvoice = await _invoiceservice.Add(createInvoiceDto, new List<CREATEInvoiceLineDto>());
+                    return new ApiResponse<READTransactionDto>(null, "Something went wrong");
+                }
+
                     return new ApiResponse<READTransactionDto>(null, "Transaction added Successfully");
-                }
-                else
-                {
-                    return new ApiResponse<READTransactionDto>(null, "Data Not Found");
-                }
             }
             catch (Exception ex)
             {
@@ -220,7 +239,7 @@ namespace RentalManager.Services.TransactionService
             if (tenant == null)
                 return ApiResponse<READTransactionDto>.FailResponse("Tenant does not exist");
 
-            var transactionType = await _systemcodeitemrepo.GetByItemAsync("charge");
+            var transactionType = await _systemcodeitemrepo.GetByCodeAndItemAsync("charge");
             if (transactionType == null)
                 return ApiResponse<READTransactionDto>.FailResponse("Transaction type 'charge' not found");
 
@@ -243,7 +262,7 @@ namespace RentalManager.Services.TransactionService
                                 .FailResponse("Utility bill is required for utility charges");
 
                         utility = await _utilitybillrepo
-                            .GetByIdAsync(_currentuser, item.UtilityBillId.Value);
+                            .GetByIdAsync(item.UtilityBillId.Value);
 
                         if (utility == null)
                             return ApiResponse<READTransactionDto>
@@ -261,13 +280,11 @@ namespace RentalManager.Services.TransactionService
                         UnitId = tenant.UnitId,
                         TransactionTypeId = transactionType.Id,
                         TransactionCategoryId = category.Id,
-                        UtilityBillId = utility?.Id,
                         Amount = item.Amount,
                         MonthFor = createdCharge.MonthFor,
                         YearFor = createdCharge.YearFor,
                         TransactionDate = createdCharge.InvoiceDate,
                         Notes = createdCharge.Notes,
-                        Combine = createdCharge.Combine
                     };
 
                     transactions.Add(transaction);
@@ -300,14 +317,14 @@ namespace RentalManager.Services.TransactionService
                 // 2. Get all outstanding balances for that tenant
                 var balances = await _repo.GetBalanceByUserAsync(tenantPaid.UserId);
 
-                var paymentType = await _systemcodeitemrepo.GetByItemAsync("payment");
+                var paymentType = await _systemcodeitemrepo.GetByCodeAndItemAsync("payment");
                 if (paymentType == null)
                     return ApiResponse<READTransactionDto>.FailResponse("Payment transaction type not found");
 
 
                 if (balances == null || !balances.Any())
                 {
-                    var advanceCategory = await _systemcodeitemrepo.GetByItemAsync("advance", "TRANSACTIONCATEGORY");
+                    var advanceCategory = await _systemcodeitemrepo.GetByCodeAndItemAsync("advance", "TRANSACTIONCATEGORY");
 
                     if (advanceCategory == null)
                         return ApiResponse<READTransactionDto>.FailResponse("Failed to add Advance Payment");
@@ -360,7 +377,7 @@ namespace RentalManager.Services.TransactionService
                 var year = now.Year;
 
                 // 1. Validate property
-                var property = await _propertyrepo.GetByIdAsync(_currentuser, propertyId);
+                var property = await _propertyrepo.GetByIdAsync(propertyId);
                 if (property == null)
                     return ApiResponse<bool>.FailResponse("Property does not exist");
 
@@ -370,11 +387,11 @@ namespace RentalManager.Services.TransactionService
                     return ApiResponse<bool>.FailResponse("No active tenants found");
 
                 // 3. Resolve system codes ONCE
-                var chargeType = await _systemcodeitemrepo.GetByItemAsync("charge");
+                var chargeType = await _systemcodeitemrepo.GetByCodeAndItemAsync("charge");
                 if (chargeType == null)
                     return ApiResponse<bool>.FailResponse("Transaction type 'charge' not found");
 
-                var rentCategory = await _systemcodeitemrepo.GetByItemAsync("rent", "TRANSACTIONCATEGORY");
+                var rentCategory = await _systemcodeitemrepo.GetByCodeAndItemAsync("rent", "TRANSACTIONCATEGORY");
                 if (rentCategory == null)
                     return ApiResponse<bool>.FailResponse("Transaction category 'rent' not found");
 
@@ -459,7 +476,7 @@ namespace RentalManager.Services.TransactionService
                 var year = now.Year;
 
                 // 1. Validate property
-                var property = await _propertyrepo.GetByIdAsync(_currentuser, propertyId);
+                var property = await _propertyrepo.GetByIdAsync(propertyId);
                 if (property == null)
                     return ApiResponse<bool>.FailResponse("Property does not exist");
 
@@ -469,18 +486,14 @@ namespace RentalManager.Services.TransactionService
                     return ApiResponse<bool>.FailResponse("No active tenants found");
 
                 // 3. Recurring utilities
-                var utilities = await _utilitybillrepo.GetByPropertyIdAsync(
-                    _currentuser,
-                    propertyId,
-                    isReccurring: true
-                );
+                var utilities = await _utilitybillrepo.GetByPropertyIdAsync(propertyId);
 
                 if (utilities == null || utilities.Count == 0)
                     return ApiResponse<bool>.SuccessResponse(true, "No utilities to invoice");
 
                 // 4. Resolve transaction type & category ONCE
-                var chargeType = await _systemcodeitemrepo.GetByItemAsync("charge", "TRANSACTIONTYPE");
-                var utilityCategory = await _systemcodeitemrepo.GetByItemAsync("utility", "TRANSACTIONCATEGORY");
+                var chargeType = await _systemcodeitemrepo.GetByCodeAndItemAsync("charge", "TRANSACTIONTYPE");
+                var utilityCategory = await _systemcodeitemrepo.GetByCodeAndItemAsync("utility", "TRANSACTIONCATEGORY");
 
                 if (chargeType == null || utilityCategory == null)
                     return ApiResponse<bool>.FailResponse("Transaction codes not configured");
@@ -524,7 +537,7 @@ namespace RentalManager.Services.TransactionService
                             TransactionTypeId = chargeType.Id,
                             TransactionCategoryId = utilityCategory.Id,
 
-                            UtilityBillId = item.UtilityBillId,   // 👈 THIS is the differentiator
+                            //UtilityBillId = item.UtilityBillId,
 
                             Amount = item.Amount,
                             MonthFor = dto.MonthFor,
@@ -625,11 +638,16 @@ namespace RentalManager.Services.TransactionService
 
 
 
-        public async Task<ApiResponse<List<TenantBalanceDto>>> GetUserBalances(int userId)
+        public async Task<ApiResponse<List<TenantBalanceDto>>> GetUserBalances(int tenantId)
         {
             try
             {
-                var balances = await _repo.GetBalanceByUserAsync(userId);
+                var domainUserId = await _tenantrepo.GetUserIdByTenantIdAsync(tenantId);
+
+                if (domainUserId == null || !domainUserId.HasValue)
+                    return ApiResponse<List<TenantBalanceDto>>.FailResponse("User ID not found.");
+
+                var balances = await _repo.GetBalanceByUserAsync(domainUserId.Value);
 
                 if (!balances.Any())
                     return new ApiResponse<List<TenantBalanceDto>>(null, "Tenant has no balance.");
@@ -772,11 +790,11 @@ namespace RentalManager.Services.TransactionService
 
             // { UserId -> UtilityBillIds already billed }
             var billedLookup = existingCharges
-                .Where(c => c.UserId.HasValue && c.UtilityBillId.HasValue)
+                .Where(c => c.UserId.HasValue && c.UnitId.HasValue) // changed from utilitybill
                 .GroupBy(c => c.UserId!.Value)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Select(x => x.UtilityBillId!.Value).ToHashSet()
+                    g => g.Select(x => x.UnitId!.Value).ToHashSet() // changed from utilitybill
                 );
 
             foreach (var tenant in tenants)
@@ -865,7 +883,7 @@ namespace RentalManager.Services.TransactionService
                     Amount = payable,
                     TransactionTypeId = paymentTypeId,
                     TransactionCategoryId = bal.CategoryId, 
-                    UtilityBillId = bal.UtilityBillId,
+                    //UtilityBillId = bal.UtilityBillId,
                     Notes = "Payment recorded"
                 };
 
@@ -875,7 +893,7 @@ namespace RentalManager.Services.TransactionService
             // If still money left → create advance payment
             if (amountPaid > 0)
             {
-                var advanceCategory = await _systemcodeitemrepo.GetByItemAsync("advance");
+                var advanceCategory = await _systemcodeitemrepo.GetByCodeAndItemAsync("advance");
 
                 var advanceTx = CreateAdvancePaymentTransaction(
                     new CREATEPaymentDto

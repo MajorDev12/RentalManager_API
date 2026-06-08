@@ -22,6 +22,7 @@ namespace RentalManager.Repositories.TokenRepository
         public async Task AddRefreshTokenAsync(RefreshToken token)
         {
             var activeTokens = await _context.RefreshTokens
+                .IgnoreQueryFilters()
                 .CountAsync(r => r.UserId == token.UserId && !r.Revoked);
 
             if (activeTokens >= 5)
@@ -46,8 +47,9 @@ namespace RentalManager.Repositories.TokenRepository
         public async Task<RefreshToken?> FindRefreshToken(string refreshToken)
         {
             var token = await _context.RefreshTokens
-            .Include(r => r.User)
-            .FirstOrDefaultAsync(r => r.Token == refreshToken);
+                .IgnoreQueryFilters()
+                .Include(r => r.User)
+                .FirstOrDefaultAsync(r => r.Token == refreshToken);
 
             return token;
         }
@@ -57,6 +59,7 @@ namespace RentalManager.Repositories.TokenRepository
         public async Task RevokeAllTokensAsync(int userId, string ip)
         {
             var tokens = await _context.RefreshTokens
+                .IgnoreQueryFilters()
                 .Where(r => r.UserId == userId && !r.Revoked)
                 .ToListAsync();
 

@@ -6,8 +6,8 @@ namespace RentalManager.Services.TokenService
 {
     public interface ITokenService
     {
-        Task<AuthResultDto> GenerateTokensAsync(ApplicationUser user, string ipAddress);
-        Task<string> CreateAccessTokenAsync(ApplicationUser user);
+        Task<AuthResultDto> GenerateTokensAsync(User user, string ipAddress);
+        Task<string> CreateAccessTokenAsync(User user);
         ClaimsPrincipal? ValidateToken(string token); // optional helper
 
         Task<ApiResponse<AuthResultDto>> RefreshTokenAsync(string token, string ip);

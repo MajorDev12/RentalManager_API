@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.UnitType;
 using RentalManager.Services.UnitTypeService;
@@ -20,7 +21,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.UnitType.Read)]
+        [Authorize(Policy = PermissionNames.UnitType.Read)]
         [HttpGet("UnitTypes")]
         public async Task<IActionResult> GetUnitType()
         {
@@ -40,7 +41,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.UnitType.Read)]
+        [Authorize(Policy = PermissionNames.UnitType.Read)]
         [HttpGet("UnitTypes/{id}")]
         public async Task<IActionResult> GetUnitTypeById(int id)
         {
@@ -61,7 +62,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.UnitType.Read)]
+        [Authorize(Policy = PermissionNames.UnitType.Read)]
         [HttpPost("UnitType")]
         public async Task<IActionResult> AddUnitType([FromBody] CREATEUnitTypeDto AddedUnitType)
         {
@@ -82,7 +83,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.UnitType.Update)]
+        [Authorize(Policy = PermissionNames.UnitType.Update)]
         [HttpPut("UnitType/{id}")]
         public async Task<IActionResult> EditUnitType(int id, [FromBody] UPDATEUnitTypeDto UpdatedType)
         {
@@ -102,7 +103,7 @@ namespace RentalManager.Controllers
 
         }
 
-        [Authorize(Policy = PolicyNames.UnitType.Delete)]
+        [Authorize(Policy = PermissionNames.UnitType.Delete)]
         [HttpDelete("UnitType/{id}")]
         public async Task<IActionResult> DeleteUnitType(int id)
         {
@@ -122,7 +123,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.UnitType.Read)]
+        [Authorize(Policy = PermissionNames.UnitType.Read)]
         [HttpGet("UnitTypes/By-Property/{PropertyId}")]
         public async Task<IActionResult> GetUnitTypesByProperty(int PropertyId)
         {

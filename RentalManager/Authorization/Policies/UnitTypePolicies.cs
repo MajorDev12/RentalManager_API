@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Requirements;
 
 namespace RentalManager.Authorization.Policies
@@ -8,23 +9,23 @@ namespace RentalManager.Authorization.Policies
         public static void Register(AuthorizationOptions options)
         {
             options.AddPolicy(PolicyNames.UnitType.Read, policy =>
-                policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord"
+                policy.Requirements.Add(new PermissionRequirement(
+                    PermissionNames.UnitType.Read
                 )));
 
-            options.AddPolicy(PolicyNames.UnitType.Write, policy =>
-                policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager"
+            options.AddPolicy(PermissionNames.UnitType.Create, policy =>
+                policy.Requirements.Add(new PermissionRequirement(
+                    PermissionNames.UnitType.Create
                 )));
 
-            options.AddPolicy(PolicyNames.UnitType.Update, policy =>
-                policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager"
+            options.AddPolicy(PermissionNames.UnitType.Update, policy =>
+                policy.Requirements.Add(new PermissionRequirement(
+                    PermissionNames.UnitType.Update
                 )));
 
-            options.AddPolicy(PolicyNames.UnitType.Delete, policy =>
-                policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager"
+            options.AddPolicy(PermissionNames.UnitType.Delete, policy =>
+                policy.Requirements.Add(new PermissionRequirement(
+                    PermissionNames.UnitType.Delete
                 )));
         }
     }

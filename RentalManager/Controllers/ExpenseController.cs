@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Expense;
 using RentalManager.Services.ExpenseService;
@@ -17,7 +18,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-        [Authorize(Policy = PolicyNames.Expense.Read)]
+        [Authorize(Policy = PermissionNames.Expense.Read)]
         [HttpGet]
         public async Task<IActionResult> GetExpenses()
         {
@@ -37,7 +38,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Expense.Read)]
+        [Authorize(Policy = PermissionNames.Expense.Read)]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetExpenseById(int id)
         {
@@ -58,7 +59,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Expense.Create)]
+        [Authorize(Policy = PermissionNames.Expense.Create)]
         [HttpPost]
         public async Task<IActionResult> AddExpense([FromBody] CREATEExpenseDto expense)
         {
@@ -78,7 +79,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Expense.Update)]
+        [Authorize(Policy = PermissionNames.Expense.Update)]
         [HttpPut("{id}")]
         public async Task<IActionResult> EditExpense(int id, [FromBody] UPDATEExpenseDto updatedExpense)
         {
@@ -100,7 +101,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Expense.Delete)]
+        [Authorize(Policy = PermissionNames.Expense.Delete)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteExpense(int id)
         {

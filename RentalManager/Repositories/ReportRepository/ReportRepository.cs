@@ -26,8 +26,8 @@ namespace RentalManager.Repositories.ReportRepository
 
         public async Task<ReportResponseDto> GetReportAsync(ReportFilterDto filters)
         {
-            var paymentType = await _systemcodeitemrepo.GetByItemAsync("payment", "TRANSACTIONTYPE");
-            var expenseType = await _systemcodeitemrepo.GetByItemAsync("expense", "TRANSACTIONTYPE");
+            var paymentType = await _systemcodeitemrepo.GetByCodeAndItemAsync("payment", "TRANSACTIONTYPE");
+            var expenseType = await _systemcodeitemrepo.GetByCodeAndItemAsync("expense", "TRANSACTIONTYPE");
 
             var year = filters.Year ?? DateTime.UtcNow.Year;
 

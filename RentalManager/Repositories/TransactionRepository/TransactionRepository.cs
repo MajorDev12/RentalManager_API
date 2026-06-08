@@ -6,6 +6,7 @@ using RentalManager.Extensions.Query;
 using RentalManager.Models;
 using RentalManager.Repositories.QueryExtensions;
 using RentalManager.Services.AccountAccessService;
+using ServiceStack;
 using System.Linq;
 
 namespace RentalManager.Repositories.TransactionRepository
@@ -24,10 +25,17 @@ namespace RentalManager.Repositories.TransactionRepository
 
         public async Task<Transaction> AddAsync(Transaction transaction)
         {
-            _context.Transactions.Add(transaction);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Transactions.Add(transaction);
+                await _context.SaveChangesAsync();
 
-            return transaction;
+                return transaction;
+            }catch
+            {
+                return null;
+
+            }
         }
 
 
@@ -61,7 +69,7 @@ namespace RentalManager.Repositories.TransactionRepository
         {
             var query = _context.Transactions
                         .Include(t => t.TransactionCategory)
-                        .Include(t => t.UtilityBill)
+                        //.Include(t => t.UtilityBill)
                         .Where(t => t.MonthFor == month && t.YearFor == year);
 
 
@@ -83,7 +91,7 @@ namespace RentalManager.Repositories.TransactionRepository
             return await _context.Transactions
                 .ApplyRoleFilter(_currentuser, _context)
                 .WithDetails()
-                .OrderBy(t => t.CreatedOn)
+                .OrderByDescending(t => t.CreatedOn)
                 .ToListAsync();
         }
 
@@ -92,7 +100,7 @@ namespace RentalManager.Repositories.TransactionRepository
         {
             return await _context.Transactions
                 .ApplyRoleFilter(_currentuser, _context)
-                .Where(u => u.ExpenseId == id)
+                //.Where(u => u.ExpenseId == id)
                 .WithDetails()
                 .OrderBy(t => t.CreatedOn)
                 .FirstOrDefaultAsync();
@@ -100,14 +108,21 @@ namespace RentalManager.Repositories.TransactionRepository
 
 
 
-        public async Task<List<Transaction>?> GetByUserIdAsync(int userId)
+        public async Task<List<Transaction>?> GetByUserIdAsync(int? domainUserId)
         {
-            return await _context.Transactions
-                .Where(u => u.UserId == userId)
+            var query = _context.Transactions.AsQueryable();
+
+            if (domainUserId.HasValue && domainUserId.Value > 0)
+            {
+                query = query.Where(u => u.UserId == domainUserId);
+            }
+
+            return await query
                 .ApplyRoleFilter(_currentuser, _context)
                 .WithDetails()
                 .ToListAsync();
         }
+
 
 
         public async Task<int> UpdateAsync()
@@ -170,7 +185,7 @@ namespace RentalManager.Repositories.TransactionRepository
                 .Where(c => categoryIds.Contains(c.Id))
                 .ToDictionaryAsync(c => c.Id);
 
-            // Units are linked via Transaction.UnitId (NOT Tenant)
+            // Units are linked via Transaction.UnitId
             var unitMap = await _context.Transactions
                 .Where(t => userIds.Contains(t.UserId!.Value))
                 .Select(t => new { t.UserId, t.UnitId })
@@ -207,8 +222,8 @@ namespace RentalManager.Repositories.TransactionRepository
                     CategoryId = a.CategoryId,
                     CategoryName = category != null ? category.Item : "",
 
-                    Month = a.MonthFor,
-                    Year = a.YearFor,
+                    //Month = a.MonthFor ? a.MonthFor : 0,
+                    //Year = a.YearFor ? a.YearFor : 0,
 
                     TotalCharges = a.TotalCharges,
                     TotalPayments = a.TotalPayments,
@@ -270,11 +285,19 @@ namespace RentalManager.Repositories.TransactionRepository
             var categories = await _context.SystemCodeItems
                 .ToDictionaryAsync(x => x.Id, x => x.Item);
 
+            var tenant = await _context.Tenants
+                .Include(t => t.Unit)
+                    .ThenInclude(u => u.Property)
+                .Where(u => u.UserId == userId)
+                .FirstOrDefaultAsync();
+
             return data.Select(x => new TenantBalanceDto
             {
                 UserId = x.UserId!.Value,
-                Month = x.MonthFor,
-                Year = x.YearFor,
+                //Month = x.MonthFor,
+                //Year = x.YearFor,
+                PropertyName = tenant?.Unit?.Property?.Name ?? "",
+                UnitName = tenant?.Unit?.Name ?? "",
                 CategoryId = x.TransactionCategoryId,
                 CategoryName = categories.GetValueOrDefault(x.TransactionCategoryId, ""),
                 TotalCharges = x.TotalCharges,
@@ -291,8 +314,8 @@ namespace RentalManager.Repositories.TransactionRepository
         {
             var query = _context.Transactions
                 .ApplyRoleFilter(_currentuser, _context)
-                .WithUserOnly()
-                .Where(t => t.UtilityBillId == utilityBillId);
+                .WithUserOnly();
+                //.Where(t => t.UtilityBillId == utilityBillId);
 
             if (filter?.MonthFor != null)
                 query = query.Where(t => t.MonthFor == filter.MonthFor.Value);
@@ -307,8 +330,8 @@ namespace RentalManager.Repositories.TransactionRepository
                 .GroupBy(t => new TenantBalanceGroupKey
                 (
                     t.UserId!.Value,
-                    t.MonthFor,
-                    t.YearFor,
+                    t.MonthFor ?? 0,
+                    t.YearFor ?? 0,
                     t.TransactionCategoryId
                 ))
                 .ToTenantBalance()

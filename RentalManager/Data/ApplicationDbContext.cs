@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RentalManager.Models;
+using RentalManager.Notification.Models;
 using RentalManager.Services.AccountAccessService;
+using System.Linq.Expressions;
+using System.Reflection;
 
 namespace RentalManager.Data
 {
@@ -35,17 +38,26 @@ namespace RentalManager.Data
         public DbSet<Property> Properties { get; set; }
         public DbSet<PropertyAssignment> PropertyAssignments { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<UnitType> UnitTypes { get; set; }
         public DbSet<Unit> Units { get; set; }
-        public DbSet<UtilityBill> UnitCharges { get; set; }
+        public DbSet<UnitFeature> UnitFeatures { get; set; }
+        public DbSet<UnitFeatureAssignment> UnitFeatureAssignments { get; set; }
+        public DbSet<UtilityBill> UtilityBills { get; set; }
+        public DbSet<MeterReading> MeterReadings { get; set; }
         public DbSet<UserLogin> UserLogins { get; set; }
         public DbSet<Tenant> Tenants { get; set; }
-        public DbSet<Landlord> Landlords { get; set; }
+        public DbSet<Lease> Leases { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
-        public DbSet<Invoice> Invoices { get; set; }
-        public DbSet<InvoiceLine> InvoiceLines { get; set; }
+        public DbSet<TransactionAllocation> TransactionAllocations { get; set; }
+        public DbSet<TransactionRelation> TransactionRelations { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<SystemLog> SystemLogs { get; set; }
+        public DbSet<AuditTrail> AuditTrails { get; set; }
+        public DbSet<NotificationPreference> NotificationPreferences { get; set; }
+        public DbSet<InAppNotification> InAppNotifications { get; set; }
 
 
 
@@ -60,25 +72,18 @@ namespace RentalManager.Data
             ConfigureAuditFields<PropertyAssignment>(modelBuilder);
             ConfigureAuditFields<Transaction>(modelBuilder);
             ConfigureAuditFields<Unit>(modelBuilder);
+            ConfigureAuditFields<UnitFeature>(modelBuilder);
+            ConfigureAuditFields<UnitFeatureAssignment>(modelBuilder);
             ConfigureAuditFields<UnitType>(modelBuilder);
             ConfigureAuditFields<UtilityBill>(modelBuilder);
             ConfigureAuditFields<SystemCode>(modelBuilder);
             ConfigureAuditFields<SystemCodeItem>(modelBuilder);
             ConfigureAuditFields<SystemLog>(modelBuilder);
             ConfigureAuditFields<Role>(modelBuilder);
-            ConfigureAuditFields<Invoice>(modelBuilder);
-            ConfigureAuditFields<InvoiceLine>(modelBuilder);
             ConfigureAuditFields<Expense>(modelBuilder);
 
             // APPLY FILTERS
-            ApplyAccountFilter<Property>(modelBuilder);
-            ApplyAccountFilter<Expense>(modelBuilder);
-            ApplyAccountFilter<Unit>(modelBuilder);
-            ApplyAccountFilter<UnitType>(modelBuilder);
-            ApplyAccountFilter<UtilityBill>(modelBuilder);
-            ApplyAccountFilter<Transaction>(modelBuilder);
-            ApplyAccountFilter<Tenant>(modelBuilder);
-
+            ApplyGlobalFilters(modelBuilder);
 
 
             // SEED DATA
@@ -109,7 +114,7 @@ namespace RentalManager.Data
                 },
                 new IdentityRole<int>
                 {
-                    Id = 5,
+                    Id = 6,
                     Name = "Tenant",
                     NormalizedName = "TENANT"
                 }
@@ -121,22 +126,70 @@ namespace RentalManager.Data
                 new Role { Id = 3, Name = "Manager", IsEnabled = true },
                 new Role { Id = 4, Name = "Admin", IsEnabled = true },
                 new Role { Id = 5, Name = "Landlord", IsEnabled = true },
-                new Role { Id = 6, Name = "Tenant", IsEnabled = true }
+                new Role { Id = 7, Name = "Tenant", IsEnabled = true }
             );
 
-            //modelBuilder.Entity<SystemCodeItem>().HasData(
-            //    new SystemCodeItem { Id = 1041, SystemCodeId = 16, Item = "Maintenance", Notes = "House Maintenance" },
-            //    new SystemCodeItem { Id = 1042, SystemCodeId = 16, Item = "Salary", Notes = "Staff Salary Payments" },
-            //    new SystemCodeItem { Id = 1043, SystemCodeId = 16, Item = "Cleaning", Notes = "Cleaning Services" },
-            //    new SystemCodeItem { Id = 1044, SystemCodeId = 16, Item = "Insurance", Notes = "Property Insurance Costs" },
-            //    new SystemCodeItem { Id = 1045, SystemCodeId = 16, Item = "Legal", Notes = "Legal Fees and Services" },
-            //    new SystemCodeItem { Id = 1046, SystemCodeId = 16, Item = "Marketing", Notes = "Advertising and Promotion Costs" },
-            //    new SystemCodeItem { Id = 1047, SystemCodeId = 16, Item = "Office Supplies", Notes = "Office and Administrative Supplies" },
-            //    new SystemCodeItem { Id = 1048, SystemCodeId = 16, Item = "Security", Notes = "Security and Surveillance Expenses" },
-            //    new SystemCodeItem { Id = 1049, SystemCodeId = 16, Item = "Other", Notes = "Other expenses not classified elsewhere" }
-            //);
+            modelBuilder.Entity<NotificationPreference>().HasData(
+
+                // 🔔 TENANT_ADDED — Owner
+                new NotificationPreference
+                {
+                    Id = 1,
+                    AccountId = 1,
+                    UserId = null,
+                    EventType = "TENANT_ADDED",
+                    InAppEnabled = true,
+                    SmsEnabled = false,
+                    EmailEnabled = true,
+                    IsEnabled = true
+                },
+
+                // 🔔 TENANT_ADDED — Landlord
+                new NotificationPreference
+                {
+                    Id = 2,
+                    AccountId = 13,
+                    UserId = null,
+                    EventType = "TENANT_ADDED",
+                    InAppEnabled = true,
+                    SmsEnabled = false,
+                    EmailEnabled = false,
+                    IsEnabled = true
+                },
+
+                // 🔔 RENT_PAID — Owner
+                new NotificationPreference
+                {
+                    Id = 3,
+                    AccountId = 13,
+                    UserId = null,
+                    EventType = "RENT_PAID",
+                    InAppEnabled = true,
+                    SmsEnabled = true,
+                    EmailEnabled = true,
+                    IsEnabled = true
+                },
+
+                // 🔔 RENT_PAID — Tenant (receipt)
+                new NotificationPreference
+                {
+                    Id = 4,
+                    AccountId = 13,
+                    UserId = null,
+                    EventType = "RENT_PAID",
+                    InAppEnabled = true,
+                    SmsEnabled = false,
+                    EmailEnabled = false,
+                    IsEnabled = true
+                }
+            );
 
 
+
+
+            modelBuilder.Entity<ApplicationUser>()
+                .Property(x => x.AccountId)
+                .IsRequired();
 
 
             // REFRESHTOKEN
@@ -154,13 +207,43 @@ namespace RentalManager.Data
                 entity.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).IsRequired().OnDelete(DeleteBehavior.Cascade);
             });
 
+            //USERROLE
+            modelBuilder.Entity<UserRole>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.UserId, x.RoleId, x.AccountId, x.PropertyId }).IsUnique();
+                entity.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Role).WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+
+            // PERMISSIONS
+            modelBuilder.Entity<Permission>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => x.Name).IsUnique();
+                entity.Property(x => x.Name).IsRequired().HasMaxLength(150);
+                entity.Property(x => x.Category).IsRequired().HasMaxLength(100);
+            });
+
+            modelBuilder.Entity<RolePermission>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.RoleId, x.PermissionId }).IsUnique();
+                entity.Property(x => x.IsAllowed).IsRequired();
+                entity.HasOne<Role>().WithMany().HasForeignKey(x => x.RoleId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Permission).WithMany().HasForeignKey(x => x.PermissionId).OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             // SYSTEMCODE
             modelBuilder.Entity<SystemCode>(entity =>
             {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Code).HasMaxLength(20).IsRequired();
+                entity.Property(u => u.Code).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.Property(e => e.Code).IsUnicode(false);
             });
 
 
@@ -169,10 +252,59 @@ namespace RentalManager.Data
             modelBuilder.Entity<SystemCodeItem>(entity =>
             {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Item).HasMaxLength(20).IsRequired();
+                entity.Property(u => u.Item).HasMaxLength(50).IsRequired();
+                entity.Property(u => u.DisplayName).HasMaxLength(50).IsRequired();
+                entity.Property(u => u.IconKey).HasMaxLength(50);
+                entity.Property(u => u.Color).HasMaxLength(50);
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.HasOne(u => u.SystemCode).WithMany(sc => sc.SystemCodeItems).HasForeignKey(u => u.SystemCodeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasIndex(e => new { e.SystemCodeId, e.Item }).IsUnique();
             });
+
+
+            // NOTIFICATION PREFERENCES
+            modelBuilder.Entity<NotificationPreference>(entity =>
+            {
+                entity.HasKey(u => u.Id);
+                entity.Property(u => u.EventType).HasMaxLength(100).IsRequired();
+                entity.Property(u => u.InAppEnabled).HasDefaultValue(true);
+                entity.Property(u => u.SmsEnabled).HasDefaultValue(false);
+                entity.Property(u => u.EmailEnabled).HasDefaultValue(false);
+                entity.Property(u => u.IsEnabled).HasDefaultValue(false);
+                entity.HasIndex(e => new
+                {
+                    e.AccountId,
+                    e.EventType,
+                    e.UserId
+                });
+            });
+
+
+            // INAPPNOTIFICATIONS
+            modelBuilder.Entity<InAppNotification>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.UserId)
+                    .IsRequired();
+
+                entity.Property(e => e.Title)
+                    .IsRequired()
+                    .HasMaxLength(200);
+
+                entity.Property(e => e.Body)
+                    .IsRequired();
+
+                entity.Property(e => e.IsRead)
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.CreatedAt)
+                    .HasDefaultValueSql("GETUTCDATE()");
+
+                entity.HasIndex(e => e.UserId);
+                entity.HasIndex(e => new { e.UserId, e.IsRead });
+            });
+
 
 
             // ACCOUNT
@@ -206,6 +338,7 @@ namespace RentalManager.Data
 
                 // Relationships
                 entity.HasOne(u => u.Account).WithMany(a => a.Properties).HasForeignKey(u => u.AccountId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.PropertyType).WithMany().HasForeignKey(u => u.PropertyTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 
@@ -227,8 +360,8 @@ namespace RentalManager.Data
                 entity.HasOne(u => u.ApplicationUser).WithOne(a => a.User).HasForeignKey<User>(u => u.ApplicationUserId).IsRequired().OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(u => u.Gender).WithMany().HasForeignKey(u => u.GenderId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.UserStatus).WithMany().HasForeignKey(u => u.UserStatusId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Role).WithMany().HasForeignKey(u => u.RoleId).IsRequired().OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 
@@ -264,6 +397,7 @@ namespace RentalManager.Data
                 entity.Property(u => u.IsActive).HasDefaultValue(true);
                 entity.Property(u => u.CreatedOn);
                 entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).IsRequired().OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 
@@ -271,57 +405,152 @@ namespace RentalManager.Data
             // TENANT
             modelBuilder.Entity<Tenant>(entity => {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.FullName).HasMaxLength(100).IsRequired();
-                entity.Property(u => u.EmailAddress).HasMaxLength(50);
-                entity.Property(u => u.MobileNumber).HasMaxLength(15).IsRequired();
                 entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Unit).WithMany().HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.TenantStatus).WithMany().HasForeignKey(u => u.Status).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.TenantStatus).WithMany().HasForeignKey(u => u.TenantStatusId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 
 
-            // LANDLORD
-            modelBuilder.Entity<Landlord>(entity =>
+            //LEASE
+            modelBuilder.Entity<Lease>(entity =>
             {
-                entity.HasKey(u => u.Id);
-                entity.Property(u => u.FullName).HasMaxLength(100).IsRequired();
-                entity.Property(u => u.EmailAddress).HasMaxLength(50);
-                entity.Property(u => u.MobileNumber).HasMaxLength(15).IsRequired();
-                entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
-            });
+                entity.HasKey(x => x.Id);
 
+                // Amount
+                entity.Property(x => x.RentAmount).HasColumnType("decimal(18,2)").IsRequired();
+
+                // Dates
+                entity.Property(x => x.StartDate).IsRequired();
+                entity.Property(x => x.NextBillingDate).IsRequired();
+                entity.Property(x => x.EndDate).IsRequired(false);
+                entity.Property(x => x.RequiresDeposit).IsRequired();
+                entity.Property(x => x.DepositAmount).HasColumnType("decimal(18,2)").IsRequired(false);
+
+                // Relationships
+                entity.HasOne(x => x.Unit).WithMany(x => x.Leases).HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.Tenant).WithMany().HasForeignKey(x => x.TenantId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.BillingCycle).WithMany().HasForeignKey(x => x.BillingCycleId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.LeaseStatus).WithMany().HasForeignKey(x => x.LeaseStatusId).OnDelete(DeleteBehavior.Restrict);
+
+                // Indexing
+                entity.HasIndex(x => x.NextBillingDate);
+                entity.HasIndex(x => x.UnitId).IsUnique();
+                entity.HasIndex(x => x.LeaseStatusId);
+            });
 
 
 
             // TRANSACTION
             modelBuilder.Entity<Transaction>(entity =>
             {
-                entity.HasKey(u => u.Id);
-                entity.Property(u => u.Amount).HasColumnType("decimal(18, 2)").IsRequired();
-                entity.Property(u => u.TransactionDate).IsRequired();
-                entity.Property(u => u.Notes).HasMaxLength(100);
-                entity.Property(u => u.MonthFor).HasMaxLength(10);
-                entity.Property(u => u.YearFor).HasMaxLength(4);
-                entity.Property(u => u.Combine).HasDefaultValue(true).IsRequired();
-                entity.Property(u => u.Status).HasMaxLength(100);
+                entity.HasKey(x => x.Id);
 
-                
+                entity.Property(x => x.TransactionNumber)
+                    .IsRequired()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.Amount)
+                    .HasColumnType("decimal(18,2)")
+                    .IsRequired();
+
+                entity.Property(x => x.TransactionDate)
+                    .IsRequired();
+
+                entity.Property(x => x.Notes)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.ReferenceType)
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.MonthFor);
+
+                entity.Property(x => x.YearFor);
+
+                // -------------------
                 // Relationships
-                entity.HasOne(u => u.User).WithMany().HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Unit).WithMany().HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.UtilityBill).WithMany().HasForeignKey(u => u.UtilityBillId).OnDelete(DeleteBehavior.SetNull);
-                entity.HasOne(u => u.PaymentMethod).WithMany().HasForeignKey(u => u.PaymentMethodId).OnDelete(DeleteBehavior.SetNull);
-                entity.HasOne(u => u.TransactionType).WithMany().HasForeignKey(u => u.TransactionTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.TransactionCategory).WithMany().HasForeignKey(u => u.TransactionCategoryId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.ExpenseCategory).WithMany().HasForeignKey(u => u.ExpenseCategoryId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Expenses).WithMany().HasForeignKey(u => u.ExpenseId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).OnDelete(DeleteBehavior.Restrict);
+                // -------------------
+
+                entity.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Property)
+                    .WithMany()
+                    .HasForeignKey(x => x.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Unit)
+                    .WithMany()
+                    .HasForeignKey(x => x.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.PaymentMethod)
+                    .WithMany()
+                    .HasForeignKey(x => x.PaymentMethodId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(x => x.TransactionType)
+                    .WithMany()
+                    .HasForeignKey(x => x.TransactionTypeId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.TransactionCategory)
+                    .WithMany()
+                    .HasForeignKey(x => x.TransactionCategoryId)
+                    .IsRequired()
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Account)
+                    .WithMany()
+                    .HasForeignKey(x => x.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                // -------------------
+                // Indexes
+                // -------------------
+
+                entity.HasIndex(x => x.TransactionNumber)
+                    .IsUnique();
+
+                entity.HasIndex(x => x.TransactionDate);
+
+                entity.HasIndex(x => new { x.PropertyId, x.MonthFor, x.YearFor });
+
+                entity.HasIndex(x => x.ReferenceType);
+
+                entity.HasIndex(x => x.ReferenceId);
+
+                entity.HasIndex(x => new { x.ReferenceType, x.ReferenceId });
             });
-           
 
 
+
+            //TRANSACTIONALLOCATION
+            modelBuilder.Entity<TransactionAllocation>(entity =>
+            {
+                entity.HasKey(i => i.Id);
+                entity.Property(u => u.Amount).HasColumnType("decimal(18,2)").IsRequired();
+
+                // Relationships
+                entity.HasOne(u => u.PaymentTransaction).WithMany(u => u.PaymentAllocations).HasForeignKey(u => u.PaymentTransactionId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.ChargeTransaction).WithMany(u => u.ChargeAllocations).HasForeignKey(u => u.ChargeTransactionId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            // TRANSACTIONRELATION
+            modelBuilder.Entity<TransactionRelation>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasOne(x => x.FromTransaction).WithMany(t => t.FromRelations).HasForeignKey(x => x.FromTransactionId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.ToTransaction).WithMany(t => t.ToRelations).HasForeignKey(x => x.ToTransactionId).OnDelete(DeleteBehavior.Restrict);
+
+                // Relation Type
+                entity.HasOne(x => x.RelationType).WithMany().HasForeignKey(x => x.RelationTypeId).OnDelete(DeleteBehavior.Restrict);
+                entity.Property(x => x.Notes).HasMaxLength(500);
+            });
 
 
 
@@ -346,18 +575,55 @@ namespace RentalManager.Data
                 entity.HasKey(u => u.Id);
                 entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.Amount).IsRequired();
+                entity.Property(u => u.Floor).HasDefaultValue(0).IsRequired();
                 entity.Property(u => u.Notes).HasMaxLength(100);
+
+                // relationships
                 entity.HasOne(u => u.Status).WithMany().HasForeignKey(u => u.StatusId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.BillingCycle).WithMany().HasForeignKey(u => u.BillingCycleId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.RentalType).WithMany().HasForeignKey(u => u.RentalTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.UnitType).WithMany().HasForeignKey(u => u.UnitTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Property).WithMany(u => u.Units).HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
 
+            // UNITFEATURE
+            modelBuilder.Entity<UnitFeature>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(300);
+                entity.Property(x => x.Icon).HasMaxLength(100);
+                entity.Property(x => x.IsActive).HasDefaultValue(true);
+                entity.Property(x => x.DataType).IsRequired();
+
+                // Indexing
+                entity.HasIndex(x => new {x.AccountId, x.Name}).IsUnique();
+
+                // RelationShips
+                entity.HasOne(x => x.Account).WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            // UNITFEATUREASSIGNMENT
+            modelBuilder.Entity<UnitFeatureAssignment>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Value).HasMaxLength(200);
+
+                // Indexing
+                entity.HasIndex(x => new {x.UnitId, x.UnitFeatureId}).IsUnique();
+
+                // Relationships
+                entity.HasOne(x => x.Unit).WithMany(x => x.Features).HasForeignKey(x => x.UnitId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.UnitFeature).WithMany(x => x.UnitAssignments).HasForeignKey(x => x.UnitFeatureId).OnDelete(DeleteBehavior.Restrict);
+            });
+
 
             // UNITTYPE
             modelBuilder.Entity<UnitType>(entity => {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
+                entity.HasOne(u => u.SystemCodeItem).WithMany().HasForeignKey(u => u.SystemCodeItemId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).OnDelete(DeleteBehavior.Cascade);
@@ -368,16 +634,33 @@ namespace RentalManager.Data
             // UTILITYBILL
             modelBuilder.Entity<UtilityBill>(entity => {
                 entity.HasKey(u => u.Id);
-                entity.Property(u => u.Name).HasMaxLength(50).IsRequired();
-                entity.Property(u => u.isReccuring).HasDefaultValue(true);
+                entity.Property(u => u.IsMetered).HasDefaultValue(false);
                 entity.Property(u => u.Amount).HasColumnType("decimal(18,4)").IsRequired();
 
+                // indexing
+                entity.HasIndex(x => new {x.PropertyId, x.UtilityId}).HasFilter("[UnitId] IS NULL").IsUnique();
+                entity.HasIndex(x => new{x.UnitId, x.PropertyId, x.UtilityId}).HasFilter("[UnitId] IS NOT NULL").IsUnique();
+
                 // Relationships
-                entity.HasOne(u => u.Property).WithMany().HasForeignKey(u => u.PropertyId).OnDelete(DeleteBehavior.Cascade);
-                entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(u => u.BillingCycle).WithMany().HasForeignKey(u => u.BillingCycleId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Utility).WithMany().HasForeignKey(u => u.UtilityId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Property).WithMany(u => u.Utilities).HasForeignKey(u => u.PropertyId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Unit).WithMany(u => u.UtilityBills).HasForeignKey(u => u.UnitId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(u => u.Account).WithMany().HasForeignKey(u => u.AccountId).IsRequired().OnDelete(DeleteBehavior.Restrict);
             });
 
+            modelBuilder.Entity<MeterReading>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.PreviousReading).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.CurrentReading).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.UnitsConsumed).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.Rate).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(x => x.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
+                entity.Property(x => x.ReadingDate).IsRequired();
 
+                entity.HasOne(x => x.UtilityBill).WithMany(u => u.UtilityReadings).HasForeignKey(x => x.UtilityBillId).IsRequired().OnDelete(DeleteBehavior.Cascade);
+            });
 
             // ROLE
             modelBuilder.Entity<Role>(entity => {
@@ -399,11 +682,35 @@ namespace RentalManager.Data
             });
 
 
+            // AUDITTRAIL
+            modelBuilder.Entity<AuditTrail>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.EntityName).IsRequired().HasMaxLength(100);
+                entity.Property(x => x.EntityId).IsRequired();
+                entity.Property(x => x.Action).IsRequired().HasMaxLength(20);
+                entity.Property(x => x.OldValues).HasColumnType("nvarchar(max)");
+                entity.Property(x => x.NewValues).HasColumnType("nvarchar(max)");
+
+                entity.Property(x => x.CreatedAt).IsRequired();
+
+                // Relationships
+                entity.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
+                entity.HasOne(x => x.Account).WithMany().HasForeignKey(x => x.AccountId).OnDelete(DeleteBehavior.Cascade);
+
+                // Indexing
+                entity.HasIndex(x => x.EntityName);
+                entity.HasIndex(x => x.EntityId);
+                entity.HasIndex(x => x.CreatedAt);
+                entity.HasIndex(x => new { x.EntityName, x.EntityId });
+            });
+
 
         }
 
         //public override async Task<int> SaveChangesAsync(
-        //     CancellationToken cancellationToken = default)
+        //    CancellationToken cancellationToken = default)
         //{
         //    var now = DateTime.UtcNow;
         //    var userId = _currentUser?.UserId;
@@ -415,8 +722,7 @@ namespace RentalManager.Data
         //            entry.Entity.CreatedOn = now;
         //            entry.Entity.CreatedBy = userId > 0 ? userId : null;
         //        }
-
-        //        if (entry.State == EntityState.Modified)
+        //        else if (entry.State == EntityState.Modified)
         //        {
         //            entry.Entity.UpdatedOn = now;
         //            entry.Entity.UpdatedBy = userId > 0 ? userId : null;
@@ -426,14 +732,72 @@ namespace RentalManager.Data
         //    return await base.SaveChangesAsync(cancellationToken);
         //}
 
-
-
-        private void ApplyAccountFilter<TEntity>(ModelBuilder modelBuilder) where TEntity : class, IAccountContext
+        private void ApplyGlobalFilters(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<TEntity>()
-                .HasQueryFilter(e => EF.Property<int>(e, "AccountId") == CurrentAccountId);
-        }
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var clrType = entityType.ClrType;
 
+                var parameter = Expression.Parameter(clrType, "e");
+                Expression? combinedExpression = null;
+
+                // Soft Delete Filter (if entity inherits AuditableEntity)
+                if (typeof(AuditableEntity).IsAssignableFrom(clrType))
+                {
+                    var isDeletedProperty = Expression.Call(
+                        typeof(EF),
+                        nameof(EF.Property),
+                        new[] { typeof(bool) },
+                        parameter,
+                        Expression.Constant("IsDeleted")
+                    );
+
+                    var isNotDeleted = Expression.Equal(
+                        isDeletedProperty,
+                        Expression.Constant(false)
+                    );
+
+                    combinedExpression = isNotDeleted;
+                }
+
+
+                // Account Filter (if entity has AccountId)
+                var accountIdPropertyInfo = entityType.FindProperty("AccountId");
+
+                if (accountIdPropertyInfo != null)
+                {
+                    var accountIdProperty = Expression.Call(
+                        typeof(EF),
+                        nameof(EF.Property),
+                        new[] { typeof(int) },
+                        parameter,
+                        Expression.Constant("AccountId")
+                    );
+
+
+                    var contextAccountId = Expression.Property(
+                        Expression.Constant(this),
+                        nameof(CurrentAccountId)
+                    );
+
+                    var accountFilter = Expression.Equal(
+                        accountIdProperty,
+                        contextAccountId
+                    );
+
+                    combinedExpression = combinedExpression == null
+                        ? accountFilter
+                        : Expression.AndAlso(combinedExpression, accountFilter);
+                }
+
+                if (combinedExpression == null)
+                    continue;
+
+                var lambda = Expression.Lambda(combinedExpression, parameter);
+
+                modelBuilder.Entity(clrType).HasQueryFilter(lambda);
+            }
+        }
 
 
         private void ConfigureAuditFields<T>(ModelBuilder modelBuilder) where T : class
@@ -448,6 +812,12 @@ namespace RentalManager.Data
                 .HasOne(typeof(User), "UpdatedByUser")
                 .WithMany()
                 .HasForeignKey("UpdatedBy")
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<T>()
+                .HasOne(typeof(User), "DeletedByUser")
+                .WithMany()
+                .HasForeignKey("DeletedBy")
                 .OnDelete(DeleteBehavior.Restrict);
         }
 

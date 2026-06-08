@@ -42,8 +42,9 @@ namespace RentalManager.Extensions.Query
                 .Include(t => t.Unit)
                 .Include(t => t.Property)
                 .Include(t => t.TransactionCategory)
-                .Include(t => t.TransactionType)
-                .Include(t => t.UtilityBill);
+                .Include(t => t.TransactionType);
+                //.Include(t => t.UtilityBill)
+                //.Include(t => t.ExpenseCategory);
         }
 
 
@@ -89,8 +90,8 @@ namespace RentalManager.Extensions.Query
                 .ToList();
 
             return query.Where(t =>
-                t.UtilityBillId.HasValue &&
-                utilityIds.Contains(t.UtilityBillId.Value));
+                t.UnitId.HasValue &&
+                utilityIds.Contains(t.UnitId.Value));
         }
 
 

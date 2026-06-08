@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Transaction;
 using RentalManager.Services.TransactionService;
@@ -16,7 +17,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
+        [Authorize(Policy = PermissionNames.Transaction.ReadAll)]
         [HttpGet]
         public async Task<IActionResult> GetTransactions()
         {
@@ -36,13 +37,13 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
-        [HttpGet("By-Tenant/{userId}")]
-        public async Task<IActionResult> GetTransactionsByUser(int userId)
+        [Authorize(Policy = PermissionNames.Transaction.ReadAll)]
+        [HttpGet("By-User/{userId}")]
+        public async Task<IActionResult> GetTransactionsByUser(int domainUserId)
         {
             try
             {
-                var result = await _service.GetByUser(userId);
+                var result = await _service.GetByUser(domainUserId);
 
                 if (result.Success == false) return BadRequest(result);
 
@@ -56,7 +57,27 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [Authorize(Policy = PermissionNames.Transaction.ReadAll)]
+        [HttpGet("By-Tenant/{TenantId}")]
+        public async Task<IActionResult> GetTransactionsByTenant(int tenantId)
+        {
+            try
+            {
+                var result = await _service.GetByTenantId(tenantId);
+
+                if (result.Success == false) return BadRequest(result);
+
+                return Ok(result);
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+        [Authorize(Policy = PermissionNames.Transaction.Create)]
         [HttpPost]
         public async Task<IActionResult> AddTransaction([FromBody] CREATETransactionDto transaction)
         {
@@ -77,7 +98,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [Authorize(Policy = PermissionNames.Transaction.Create)]
         [HttpPost("AddPayment")]
         public async Task<IActionResult> AddPayment([FromBody] CREATEPaymentDto payment)
         {
@@ -98,7 +119,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [Authorize(Policy = PermissionNames.Transaction.Create)]
         [HttpPost("AddInvoice")]
         public async Task<IActionResult> AddInvoiceCharge([FromBody] CREATEIncoiceTransactionDto transaction)
         {
@@ -118,7 +139,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Update)]
+        [Authorize(Policy = PermissionNames.Transaction.Update)]
         [HttpPut("{id}")]
         public async Task<IActionResult> EditTransaction(int id, [FromBody] UPDATETransactionDto updatedTransaction)
         {
@@ -139,7 +160,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Delete)]
+        [Authorize(Policy = PermissionNames.Transaction.Delete)]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTransaction(int id) 
         {
@@ -159,7 +180,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.ReadAll)]
+        [Authorize(Policy = PermissionNames.Transaction.ReadAll)]
         [HttpGet("UnpaidTenants")]
         public async Task<IActionResult> UnpaidTenants()
         {
@@ -179,13 +200,13 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.ReadSelf)]
-        [HttpGet("TenantBalances")]
-        public async Task<IActionResult> TenantBalances(int userId)
+        [Authorize(Policy = PermissionNames.Transaction.ReadSelf)]
+        [HttpGet("TenantBalances/{tenantId}")]
+        public async Task<IActionResult> TenantBalances(int tenantId)
         {
             try
             {
-                var result = await _service.GetUserBalances(userId);
+                var result = await _service.GetUserBalances(tenantId);
 
                 if (result.Success == false) return BadRequest(result);
 
@@ -199,7 +220,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [Authorize(Policy = PermissionNames.Transaction.Create)]
         [HttpPost("GenerateRentInvoices/{propertyId}")]
         public async Task<IActionResult> GenerateRentInvoices(int propertyId)
         {
@@ -219,7 +240,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.Transaction.Create)]
+        [Authorize(Policy = PermissionNames.Transaction.Create)]
         [HttpPost("GenerateUtilityBillInvoices/{propertyId}")]
         public async Task<IActionResult> GenerateUtilityInvoices(int propertyId)
         {

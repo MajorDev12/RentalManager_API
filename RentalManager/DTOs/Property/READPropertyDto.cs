@@ -4,15 +4,15 @@
     {
         public int Id { get; set; }
 
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = null!;
 
-        public string Country { get; set; } = string.Empty;
+        public string Country { get; set; } = null!;
 
-        public string County { get; set; } = string.Empty;
+        public string County { get; set; } = null!;
 
-        public string Area { get; set; } = string.Empty;
+        public string Area { get; set; } = null!;
 
-        public string PhysicalAddress { get; set; } = string.Empty;
+        public string PhysicalAddress { get; set; } = null!;
 
         public decimal? Longitude { get; set; }
 
@@ -20,10 +20,13 @@
 
         public int Floor { get; set; }
 
+        public string EmailAddress { get; set; } = null!;
+
+        public string MobileNumber { get; set; } = null!;
+
         public string? Notes { get; set; }
 
-        public string EmailAddress { get; set; } = string.Empty;
-
-        public string MobileNumber { get; set; } = string.Empty;
+        public int PropertyTypeId { get; set; }
+        public string PropertyTypeName { get; set; } = null!;
     }
 }

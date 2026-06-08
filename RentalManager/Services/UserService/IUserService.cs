@@ -7,6 +7,7 @@ namespace RentalManager.Services.UserService
     {
         Task<ApiResponse<List<READUserDto>>> GetAll();
         Task<ApiResponse<READUserDto>> GetById(int id);
+        Task<ApiResponse<READAppUserDto>> GetByApplicationUserId(int id);
         Task<ApiResponse<READUserDto>> Add(CREATEUserDto type);
         Task<ApiResponse<READUserDto>> Update(int id, UPDATEUserDto type);
         Task<ApiResponse<READUserDto>> Delete(int id);

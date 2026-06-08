@@ -16,7 +16,7 @@ namespace RentalManager.Services.AccountAccessService
         {
             var account = await _context.Accounts.FindAsync(accountId);
 
-            if (account == null)
+            if (account == null || account.Id <= 0)
                 return Denied("Account not found");
 
             if (!account.IsActive)

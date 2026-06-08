@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Requirements;
 
 namespace RentalManager.Authorization.Policies
@@ -7,34 +8,34 @@ namespace RentalManager.Authorization.Policies
     {
         public static void Register(AuthorizationOptions options)
         {
-            options.AddPolicy(PolicyNames.Transaction.ReadAll, policy =>
-                policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord"
+            options.AddPolicy(PermissionNames.Transaction.ReadAll, policy =>
+                policy.Requirements.Add(new PermissionRequirement(
+                    PermissionNames.Transaction.ReadAll
                 )));
 
-            options.AddPolicy(PolicyNames.Transaction.ReadSelf, policy =>
+            options.AddPolicy(PermissionNames.Transaction.ReadSelf, policy =>
                 policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord", "Tenant"
+                    PermissionNames.Transaction.ReadSelf
                 )));
 
-            options.AddPolicy(PolicyNames.Transaction.Create, policy =>
+            options.AddPolicy(PermissionNames.Transaction.Create, policy =>
                 policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord"
+                    PermissionNames.Transaction.Create
                 )));
 
-            options.AddPolicy(PolicyNames.Transaction.Update, policy =>
+            options.AddPolicy(PermissionNames.Transaction.Update, policy =>
                 policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord", "Tenant"
+                    PermissionNames.Transaction.Update
                 )));
 
-            options.AddPolicy(PolicyNames.Transaction.Assign, policy =>
+            options.AddPolicy(PermissionNames.Transaction.Assign, policy =>
                 policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner", "Manager", "Landlord"
+                    PermissionNames.Transaction.Assign
                 )));
 
-            options.AddPolicy(PolicyNames.Transaction.Delete, policy =>
+            options.AddPolicy(PermissionNames.Transaction.Delete, policy =>
                 policy.Requirements.Add(new AccountRoleRequirement(
-                    "Owner"
+                    PermissionNames.Transaction.Delete
                 )));
         }
     }

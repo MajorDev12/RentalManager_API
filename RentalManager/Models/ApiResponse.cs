@@ -26,6 +26,6 @@
     public static ApiResponse<T> SuccessResponse(T? data, string message = "")
         => new ApiResponse<T>(data, message, true);
 
-    public static ApiResponse<T> FailResponse(string message, List<string>? errors = null)
+    public static ApiResponse<T> FailResponse(string message, List<string>? errors = null )
         => new ApiResponse<T>(message, errors, false);
 }

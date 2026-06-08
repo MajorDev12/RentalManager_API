@@ -1,5 +1,4 @@
 ﻿using RentalManager.DTOs.Unit;
-using RentalManager.DTOs.UtilityBill;
 using RentalManager.Models;
 
 namespace RentalManager.Mappings
@@ -11,11 +10,14 @@ namespace RentalManager.Mappings
             return new Unit
             {
                 Name = dto.Name,
-                StatusId = statusId,
                 Amount = dto.Amount,
-                Notes = dto.Notes,
                 PropertyId = dto.PropertyId,
-                UnitTypeId = dto.UnitTypeId
+                UnitTypeId = dto.UnitTypeId,
+                RentalTypeId = dto.RentalTypeId,
+                BillingCycleId = dto.BillingCycleId,
+                Floor = dto.Floor,
+                StatusId = statusId,
+                Notes = dto.Notes,
             };
         }
 
@@ -45,7 +47,12 @@ namespace RentalManager.Mappings
                 PropertyName = dto.Property.Name,
                 PropertyId = dto.Property.Id,
                 UnitTypeId = dto.UnitType.Id,
-                UnitType = dto.UnitType.Name
+                RentalTypeId = dto.RentalType.Id,
+                RentalType = dto.RentalType.Item,
+                BillingCycleId = dto.BillingCycle.Id,
+                BillingCycle = dto.BillingCycle.Item,
+                Floor = dto.Floor,
+                UnitType = dto.UnitType.Item
             };
         }
 
@@ -62,13 +69,6 @@ namespace RentalManager.Mappings
             return existingData;
         }
 
-
-        public static Unit UpdateStatusEntity(this Unit existingData, int statusId)
-        {
-            existingData.StatusId = statusId;
-
-            return existingData;
-        }
 
     }
 }

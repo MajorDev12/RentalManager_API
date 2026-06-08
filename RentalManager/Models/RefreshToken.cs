@@ -13,6 +13,6 @@
         public DateTimeOffset? RevokedOn { get; set; }
         public string? ReplacedByToken { get; set; }
 
-        public ApplicationUser User { get; set; } = null!;
+        public User User { get; set; } = null!;
     }
 }

@@ -4,17 +4,16 @@ namespace RentalManager.DTOs.UtilityBill
 {
     public class CREATEUtilityBillDto
     {
-        [Required]
-        [MaxLength(50)]
-        public string Name { get; set; } = string.Empty;
+        public int UtilityId { get; set; }
 
-        [Required]
-        public decimal Amount { get; set; }
-
-        [Required]
         public int PropertyId { get; set; }
 
+        public int BillingCycleId { get; set; }
 
-        public bool isReccuring { get; set; }
+        public int? UnitId { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public bool IsMetered { get; set; } = false;
     }
 }

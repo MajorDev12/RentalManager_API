@@ -1,4 +1,5 @@
-﻿using RentalManager.Data;
+﻿using RentalManager.Constants;
+using RentalManager.Data;
 using RentalManager.DTOs.Expense;
 using RentalManager.Mappings;
 using RentalManager.Models;
@@ -6,6 +7,7 @@ using RentalManager.Repositories.ExpenseRepository;
 using RentalManager.Repositories.PropertyRepository;
 using RentalManager.Repositories.SystemCodeItemRepository;
 using RentalManager.Repositories.TransactionRepository;
+using RentalManager.Repositories.UserRepository;
 using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Services.ExpenseService
@@ -17,6 +19,7 @@ namespace RentalManager.Services.ExpenseService
         private readonly IPropertyRepository _propertyrepo;
         private readonly ISystemCodeItemRepository _systemcodeitemrepo;
         private readonly ITransactionRepository _transactionrepo;
+        private readonly IUserRepository _userRepo;
         private readonly ICurrentUser _currentuser;
 
         public ExpenseService(
@@ -25,6 +28,7 @@ namespace RentalManager.Services.ExpenseService
             IPropertyRepository propertyrepo,
             ISystemCodeItemRepository systemcodeitemrepo,
             ITransactionRepository transactionrepo,
+            IUserRepository userRepo,
             ICurrentUser currentuser)
         {
             _context = context;
@@ -32,6 +36,7 @@ namespace RentalManager.Services.ExpenseService
             _propertyrepo = propertyrepo;
             _systemcodeitemrepo = systemcodeitemrepo;
             _transactionrepo = transactionrepo;
+            _userRepo = userRepo;
             _currentuser = currentuser;
         }
 
@@ -42,7 +47,7 @@ namespace RentalManager.Services.ExpenseService
                 var expenses = await _repo.GetAllAsync();
 
                 if (expenses == null || !expenses.Any()) 
-                    return new ApiResponse<List<READExpenseDto>>(null, "Data Not Found");
+                    return new ApiResponse<List<READExpenseDto>>(null, "Items Not Found");
 
                 var expenseDtos = expenses.Select(p => p.ToReadDto()).ToList();
                 return new ApiResponse<List<READExpenseDto>>(expenseDtos, "Fetched Successfully");
@@ -61,7 +66,7 @@ namespace RentalManager.Services.ExpenseService
             {
                 var expense = await _repo.GetByIdAsync(id);
 
-                if (expense == null) return new ApiResponse<READExpenseDto>("Data Not Found");
+                if (expense == null) return new ApiResponse<READExpenseDto>("Items Not Found");
 
                 var expenseDto = expense.ToReadDto();
 
@@ -78,17 +83,19 @@ namespace RentalManager.Services.ExpenseService
         public async Task<ApiResponse<READExpenseDto>> Add(CREATEExpenseDto dto)
         {
             // 1. Validate property
-            var property = await _propertyrepo.GetByIdAsync(_currentuser, dto.PropertyId);
+            var property = await _propertyrepo.GetByIdAsync(dto.PropertyId);
             if (property == null)
                 return ApiResponse<READExpenseDto>.FailResponse("Property does not exist");
 
             // 2. Resolve transaction type (WHAT)
-            var transactionType = await _systemcodeitemrepo.GetByItemAsync("expense", "TRANSACTIONTYPE");
-            var transactionCategory = await _systemcodeitemrepo.GetByItemAsync("expense", "TRANSACTIONCATEGORY");
+            var transactionType = await _systemcodeitemrepo.GetByCodeAndItemAsync(SystemCodeNames.Item.TransactionType.Expense, SystemCodeNames.Code.TransactionType);
+            var transactionCategory = await _systemcodeitemrepo.GetByCodeAndItemAsync(SystemCodeNames.Item.TransactionCategory.Expense, SystemCodeNames.Code.TransactionCategory);
             var expenseCategory = await _systemcodeitemrepo.GetByIdAsync(dto.ExpenseCategoryId);
 
             if (transactionType == null || transactionCategory == null || expenseCategory == null)
                 return ApiResponse<READExpenseDto>.FailResponse("System Codes Not Configured");
+
+            var domainUserId = await _userRepo.GetIdByApplicationUserIdAsync(_currentuser.UserId);
 
             var now = DateTime.UtcNow;
 
@@ -106,9 +113,10 @@ namespace RentalManager.Services.ExpenseService
                 var transactionEntity = dto.ToTransactionEntity();
 
                 transactionEntity.AccountId = _currentuser.AccountId;
+                transactionEntity.UserId = domainUserId;
 
-                transactionEntity.ExpenseId = savedExpense.Id;
-                transactionEntity.ExpenseCategoryId = expenseCategory.Id;
+                //transactionEntity.ExpenseId = savedExpense.Id;
+                //transactionEntity.ExpenseCategoryId = expenseCategory.Id;
 
                 transactionEntity.TransactionTypeId = transactionType.Id;
                 transactionEntity.TransactionCategoryId = transactionCategory.Id;
@@ -150,15 +158,15 @@ namespace RentalManager.Services.ExpenseService
                     return new ApiResponse<READExpenseDto>(null, "Expense changed does not exist");
 
                 // check if change was made
-                bool hasChanges = ObjectComparer.HasChanges(existingExpense, dto, "UpdatedOn");
+                var changeResult = ObjectComparer.GetChanges(dto, existingExpense);
 
-                if (!hasChanges)
+                if (changeResult.HasChanges)
                     return new ApiResponse<READExpenseDto>(null, "No changes detected.");
 
-                var expenseEntity = dto.UpdateEntity(existingExpense);
+                ObjectComparer.ApplyChanges(dto, existingExpense);
                 var updated = await _repo.UpdateAsync();
 
-                var transactionUpdated = await _transactionrepo.GetByExpenseIdAsync(expenseEntity.Id);
+                var transactionUpdated = await _transactionrepo.GetByExpenseIdAsync(existingExpense.Id);
 
                 if (transactionUpdated == null)
                     return new ApiResponse<READExpenseDto>(null, "No Transaction Found For The Expense");

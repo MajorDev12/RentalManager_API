@@ -34,7 +34,7 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
         }
 
 
-        public async Task<SystemCodeItem?> GetByItemAsync(string item, string? code)
+        public async Task<SystemCodeItem?> GetByCodeAndItemAsync(string item, string? code)
         {
             if (string.IsNullOrWhiteSpace(item))
                 return null;
@@ -94,6 +94,48 @@ namespace RentalManager.Repositories.SystemCodeItemRepository
                         .Include(cs => cs.SystemCode)
                         .Where(sc => sc.SystemCode.Code.ToLower() == codeName.ToLower())
                         .ToListAsync();
+        }
+
+        public async Task<List<SystemCodeItem>> GetByIdsAndCodeAsync(
+            List<int> ids,
+            string codeName)
+        {
+            if (ids == null || !ids.Any())
+                return new List<SystemCodeItem>();
+
+            return await _context.SystemCodeItems
+                .Include(sc => sc.SystemCode)
+                .Where(sc =>
+                    ids.Contains(sc.Id) &&
+                    sc.SystemCode.Code.ToLower() == codeName.ToLower())
+                .ToListAsync();
+        }
+
+
+
+        public async Task<bool> ExistsByIdAndCodeAsync(
+            int id,
+            string codeName)
+        {
+            return await _context.SystemCodeItems
+                .AnyAsync(sc =>
+                    sc.Id == id &&
+                    sc.SystemCode.Code.ToLower() == codeName.ToLower());
+        }
+
+        public async Task<bool> AllExistByIdsAndCodeAsync(
+            List<int> ids,
+            string codeName)
+        {
+            if (ids == null || !ids.Any())
+                return true;
+
+            var count = await _context.SystemCodeItems
+                .CountAsync(sc =>
+                    ids.Contains(sc.Id) &&
+                    sc.SystemCode.Code.ToLower() == codeName.ToLower());
+
+            return count == ids.Distinct().Count();
         }
 
     }

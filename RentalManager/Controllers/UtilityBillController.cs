@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
 using RentalManager.Data;
 using RentalManager.DTOs.Property;
@@ -13,9 +14,9 @@ using System.Security.Cryptography;
 
 namespace RentalManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
-    public class UtilityBillController : ControllerBase
+    public class UtilityBillController : BaseController
     {
         private readonly IUtilityBillService _service;
 
@@ -23,26 +24,29 @@ namespace RentalManager.Controllers
         {
             _service = service;
         }
+        
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
-        [HttpGet]
-        public async Task<IActionResult> GetUtilityBills()
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBills")]
+        public async Task<IActionResult> GetUtilityBills([FromQuery] UtilityBillQueryFilter filter)
         {
-            try
-            {
-                var bills = await _service.GetAll();
-                return Ok(bills);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var result = await _service.GetFiltered(filter);
+            return HandleResponse(result);
         }
 
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
-        [HttpGet("{id}")]
+
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBill/Lookups")]
+        public async Task<IActionResult> GetLookups()
+        {
+            var result = await _service.GetAllLookups();
+            return HandleResponse(result);
+        }
+
+
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBill/{id}")]
         public async Task<IActionResult> GetUtilityBillById(int id)
         {
             try
@@ -57,31 +61,24 @@ namespace RentalManager.Controllers
             }
         }
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Write)]
-        [HttpPost]
+        [Authorize(Policy = PermissionNames.UtilityBill.Create)]
+        [HttpPost("UtilityBill")]
         public async Task<IActionResult> AddUtilityBill([FromBody] CREATEUtilityBillDto AddedCharge)
         {
-            try
-            {
-                var bill = await _service.Add(AddedCharge);
-                return Ok(bill);
+            var result = await _service.Add(AddedCharge);
 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(result);
         }
 
 
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Update)]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditUtilityBill(int id, [FromBody] UPDATEUtilityBillDto UpdatedBill)
+        [Authorize(Policy = PermissionNames.UtilityBill.Update)]
+        [HttpPatch("UtilityBill/{id}")]
+        public async Task<IActionResult> EditUtilityBill(int id, [FromBody] PATCHUtilityDto UpdatedBill)
         {
             try
             {
-                var bill = await _service.Update(id, UpdatedBill);
+                var bill = await _service.Patch(id, UpdatedBill);
                 return Ok(bill);
             }
             catch (Exception ex)
@@ -91,8 +88,8 @@ namespace RentalManager.Controllers
 
         }
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Delete)]
-        [HttpDelete("{id}")]
+        [Authorize(Policy = PermissionNames.UtilityBill.Delete)]
+        [HttpDelete("UtilityBill/{id}")]
         public async Task<IActionResult> DeleteUtilityBill(int id)
         {
             try
@@ -107,25 +104,32 @@ namespace RentalManager.Controllers
         }
 
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
-        [HttpGet("By-Property/{PropertyId}")]
-        public async Task<IActionResult> GetUtilityBillsByProperty(int PropertyId)
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBill/By-Property/{propertyId}")]
+        public async Task<IActionResult> GetUtilityBillsByProperty(
+            int propertyId,
+            [FromQuery] bool? isMetered = null
+        )
         {
-            try
-            {
-                var bills = await _service.GetByPropertyId(PropertyId);
-                return Ok(bills);
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var bills = await _service.GetByPropertyId(propertyId, isMetered);
+            return HandleResponse(bills);
         }
 
 
-        [Authorize(Policy = PolicyNames.UtilityBill.Read)]
-        [HttpGet("By-TenantId/{TenantId}")]
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBill/By-Unit/{unitId}")]
+        public async Task<IActionResult> GetUtilityBillsByUnit(
+            int unitId,
+            [FromQuery] bool? isMetered = null
+        )
+        {
+            var bills = await _service.GetByUnitId(unitId, isMetered);
+            return HandleResponse(bills);
+        }
+
+
+        [Authorize(Policy = PermissionNames.UtilityBill.Read)]
+        [HttpGet("UtilityBill/By-TenantId/{TenantId}")]
         public async Task<IActionResult> GetUtilityBillsByTenant(int TenantId)
         {
             try

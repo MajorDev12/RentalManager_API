@@ -27,7 +27,7 @@ namespace RentalManager.Services.RoleService
 
                 if (roles == null)
                 {
-                    return new ApiResponse<List<READRoleDto>>("Data Not Found.");
+                    return new ApiResponse<List<READRoleDto>>("Items Not Found.");
                 }
 
                 var roleDtos = roles.Select(it => it.ToReadDto()).ToList();
@@ -47,7 +47,7 @@ namespace RentalManager.Services.RoleService
                 var role = await _repo.GetByIdAsync(id);
                 if (role == null)
                 {
-                    return new ApiResponse<READRoleDto>("No Such Data");
+                    return new ApiResponse<READRoleDto>("No Such Items");
                 }
 
                 var roleDto = role.ToReadDto();
@@ -82,13 +82,13 @@ namespace RentalManager.Services.RoleService
             {
                 var existing = await _repo.FindAsync(id);
 
-                if (existing == null) return new ApiResponse<READRoleDto>(null, "No Such Data.");
+                if (existing == null) return new ApiResponse<READRoleDto>(null, "No Such Items.");
 
                 var updateRole = role.ToEntity(id);
                 var saved = await _repo.UpdateAsync(updateRole);
 
                 if (saved == null)
-                    return new ApiResponse<READRoleDto>(null, "Data Not Found.");
+                    return new ApiResponse<READRoleDto>(null, "Items Not Found.");
 
                 return new ApiResponse<READRoleDto>(saved.ToReadDto(), "Updated Successfully");
             }

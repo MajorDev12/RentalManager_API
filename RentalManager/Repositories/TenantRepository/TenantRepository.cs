@@ -37,6 +37,13 @@ namespace RentalManager.Repositories.TenantRepository
                 .FirstOrDefaultAsync();
         }
 
+        public async Task<int?> GetUserIdByTenantIdAsync(int tenantId)
+        {
+            return await _context.Tenants
+                .Where(u => u.Id == tenantId)
+                .Select(u => u.UserId)
+                .FirstOrDefaultAsync();
+        }
 
         public async Task<Tenant?> GetByUserIdAsync(int userId)
         {
@@ -63,6 +70,19 @@ namespace RentalManager.Repositories.TenantRepository
         }
 
 
+        public async Task<List<Tenant>?> GetAllByUnitId(int unitId)
+        {
+            var query = _context.Tenants
+                        .ByUnit(unitId)
+                        .ApplyRoleFilter(_currentuser, _context);
+
+
+            return await query
+                .WithDetails()
+                .ToListAsync();
+        }
+
+
         public async Task<Tenant> AddAsync(Tenant tenant)
         {
             _context.Tenants.Add(tenant);
@@ -72,17 +92,9 @@ namespace RentalManager.Repositories.TenantRepository
         }
 
 
-        public async Task<Tenant> UpdateAsync(Tenant tenant, User user)
+        public async Task<int> UpdateAsync()
         {
-            var existingTenant= await FindAsync(tenant.Id);
-
-            if (existingTenant == null) return null;
-
-            var updatedEntity = tenant.UpdateEntity(tenant, user);
-
-            await _context.SaveChangesAsync();
-
-            return updatedEntity;
+            return await _context.SaveChangesAsync();
         }
 
 
@@ -125,7 +137,12 @@ namespace RentalManager.Repositories.TenantRepository
             if (tenant == null)
                 return null;
 
-            tenant.Status = tenantStatusId;
+            tenant.TenantStatusId = tenantStatusId;
+            // if status is not active
+            if(tenant.TenantStatus.Item != "Active")
+            {
+                tenant.UnitId = null;
+            }
 
             _context.Tenants.Update(tenant);
             await _context.SaveChangesAsync();

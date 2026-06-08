@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace RentalManager.Models
 {
-    public class Property : AuditableEntity, IAccountContext
+    public class Property : AuditableEntity
     {
         public int Id { get; set; }
 
@@ -30,10 +30,14 @@ namespace RentalManager.Models
 
         public string MobileNumber { get; set; } = string.Empty;
 
-        public ICollection<Unit> Units { get; set; } = new List<Unit>();
-
-
         public int AccountId { get; set; }
         public Account Account { get; set; } = null!;
+
+
+        public int PropertyTypeId { get; set; }
+        public SystemCodeItem PropertyType { get; set; } = null!;  
+
+        public ICollection<Unit> Units { get; set; } = new List<Unit>();
+        public ICollection<UtilityBill> Utilities { get; set; } = new List<UtilityBill>();
     }
 }

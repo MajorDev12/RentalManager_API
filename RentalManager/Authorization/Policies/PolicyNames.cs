@@ -71,5 +71,10 @@
             public const string Update = "Report.Update";
             public const string Delete = "Report.Delete";
         }
+
+        public static class Notification
+        {
+            public const string Read = "Read";
+        }
     }
 }

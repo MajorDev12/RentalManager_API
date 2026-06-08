@@ -4,20 +4,15 @@ namespace RentalManager.DTOs.Unit
 {
     public class CREATEUnitDto
     {
-        [Required]
-        [MaxLength(50)]
+        public int PropertyId { get; set; }
+        public int UnitTypeId { get; set; }
+        public int BillingCycleId { get; set; }
+        public int RentalTypeId { get; set; }
+        public int Floor { get; set; } = 0;
         public string Name { get; set; } = string.Empty;
 
-        [Required]
-        public int Amount { get; set; }
+        public decimal Amount { get; set; }
 
-        [MaxLength(100)]
         public string? Notes { get; set; }
-
-        [Required]
-        public int UnitTypeId { get; set; }
-
-        [Required]
-        public int PropertyId { get; set; }
     }
 }

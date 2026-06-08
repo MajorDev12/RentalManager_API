@@ -2,6 +2,11 @@
 {
     public class AccountContext : IAccountContext
     {
-        public int AccountId {  get; set; }
+        public int AccountId {  get; private set; }
+
+        public void SetAccount(int accountId)
+        {
+            AccountId = accountId;
+        }
     }
 }

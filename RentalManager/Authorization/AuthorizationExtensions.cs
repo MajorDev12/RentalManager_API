@@ -18,9 +18,9 @@ namespace RentalManager.Authorization
                 TransactionPolicies.Register(options);
                 ExpensePolicies.Register(options);
                 ReportPolicies.Register(options);
+                NotificationPolicies.Register(options);
             });
 
-            services.AddSingleton<IAuthorizationHandler, AccountRoleHandler>();
 
             return services;
         }

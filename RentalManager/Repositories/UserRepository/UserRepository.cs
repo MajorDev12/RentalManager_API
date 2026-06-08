@@ -1,23 +1,31 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using RentalManager.Data;
 using RentalManager.Mappings;
 using RentalManager.Models;
+using RentalManager.Services.AccountAccessService;
 
 namespace RentalManager.Repositories.UserRepository
 {
     public class UserRepository : IUserRepository
     {
         private readonly ApplicationDbContext _context;
-        public UserRepository(ApplicationDbContext context)
+        private readonly UserManager<ApplicationUser> _usermanager;
+        private readonly IAccountContext _accountcontext;
+        public UserRepository(
+            ApplicationDbContext context,
+            IAccountContext accountcontext,
+            UserManager<ApplicationUser> usermanager)
         {
             _context = context;
+            _accountcontext = accountcontext;
+            _usermanager = usermanager;
         }
 
 
         public async Task<List<User>?> GetAllAsync()
         {
             return await _context.Users
-                .Include(ub => ub.Role)
                 .Include(ub => ub.Property)
                 .Include(ub => ub.UserStatus)
                 .Include(ub => ub.Gender)
@@ -28,11 +36,30 @@ namespace RentalManager.Repositories.UserRepository
         public async Task<User?> GetByIdAsync(int id)
         {
             return await _context.Users
-                .Include(ub => ub.Role)
                 .Include(c => c.Property)
                 .Include(ub => ub.UserStatus)
                 .Include(ub => ub.Gender)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
+        }
+
+
+
+        public async Task<ApplicationUser?> GetByApplicationUserIdAsync(int id)
+        {
+            return await _usermanager.Users
+                .Include(u => u.User)
+                    .ThenInclude(u => u.Gender)
+                .Include(u => u.User)
+                    .ThenInclude(u => u.UserStatus)
+                .FirstOrDefaultAsync(i => i.Id == id);
+        }
+
+        public async Task<int> GetIdByApplicationUserIdAsync(int appUserId)
+        {
+            return await _context.Users
+                    .Where(u => u.ApplicationUserId == appUserId)
+                    .Select(u => u.Id)
+                    .FirstOrDefaultAsync();
         }
 
 
@@ -47,15 +74,8 @@ namespace RentalManager.Repositories.UserRepository
 
         public async Task<User> UpdateAsync(User user)
         {
-            var existingUser = await FindAsync(user.Id);
-
-            if (existingUser == null) return null;
-
-            var updatedEntity = user.UpdateEntity(existingUser);
-
             await _context.SaveChangesAsync();
-
-            return updatedEntity;
+            return user;
         }
 
 
@@ -66,9 +86,27 @@ namespace RentalManager.Repositories.UserRepository
         }
 
 
+        public async Task<ApplicationUser?> GetByNumberAsync(string number)
+        {
+
+            return await _context.Set<ApplicationUser>()
+                .FirstOrDefaultAsync(u => u.PhoneNumber == number);
+        }
+
+
+
         public async Task<User?> FindAsync(int id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _context.Users
+                .Where(i => i.Id == id)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<ApplicationUser?> FindByAppUserIdAsync(int id)
+        {
+            return await _usermanager.Users
+                .Where(i => i.Id == id)
+                .FirstOrDefaultAsync();
         }
 
     }

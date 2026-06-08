@@ -8,6 +8,13 @@ namespace RentalManager.Models
         public int Id { get; set; }
 
         public string Item { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+
+        public string? IconKey { get; set; }
+
+        public string? Color { get; set; }
+
+        public int SortOrder { get; set; }
 
         public string? Notes { get; set; }
 

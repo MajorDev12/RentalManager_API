@@ -8,7 +8,7 @@ using RentalManager.Services.UserService;
 
 namespace RentalManager.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -19,7 +19,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-        [HttpGet]
+        [HttpGet("Users")]
         public async Task<IActionResult> GetUsers()
         {
             try
@@ -35,7 +35,7 @@ namespace RentalManager.Controllers
         }
 
 
-        [HttpGet("{id}")]
+        [HttpGet("User/{id}")]
         public async Task<IActionResult> GetUserById(int id)
         {
             try
@@ -51,8 +51,24 @@ namespace RentalManager.Controllers
         }
 
 
+        [HttpGet("Users/{id}")]
+        public async Task<IActionResult> GetUserByAppId(int id)
+        {
+            try
+            {
+                var result = await _service.GetByApplicationUserId(id);
+                return Ok(result);
 
-        [HttpPost]
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+
+
+        [HttpPost("Users")]
         public async Task<IActionResult> AddUser([FromBody] CREATEUserDto AddedUser)
         {
             try
@@ -70,7 +86,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpPut]
+        [HttpPut("Users/{id}")]
         public async Task<IActionResult> EditUser(int id, [FromBody] UPDATEUserDto updatedUser)
         {
 
@@ -90,7 +106,7 @@ namespace RentalManager.Controllers
 
 
 
-        [HttpDelete("{id}")]
+        [HttpDelete("Users/{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             try

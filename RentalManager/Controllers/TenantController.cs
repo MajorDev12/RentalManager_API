@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RentalManager.Authorization.Permissions;
 using RentalManager.Authorization.Policies;
 using RentalManager.DTOs.Tenant;
 using RentalManager.Services;
@@ -17,7 +18,7 @@ namespace RentalManager.Controllers
             _service = service;
         }
 
-        [Authorize(Policy = PolicyNames.Tenant.ReadAll)]
+        [Authorize(Policy = PermissionNames.Tenant.ReadAll)]
         [HttpGet("Tenants")]
         public async Task<IActionResult> GetTenants()
         {
@@ -36,7 +37,7 @@ namespace RentalManager.Controllers
             }
         }
 
-        [Authorize(Policy = PolicyNames.Tenant.ReadSelf)]
+        [Authorize(Policy = PermissionNames.Tenant.ReadSelf)]
         [HttpGet("Tenants/{id}")]
         public async Task<IActionResult> GetTenantById(int id)
         {
@@ -57,7 +58,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Tenant.Create)]
+        [Authorize(Policy = PermissionNames.Tenant.Create)]
         [HttpPost("Tenants")]
         public async Task<IActionResult> AddTenant([FromBody] CREATETenantDto AddedTenant)
         {
@@ -79,7 +80,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Tenant.Update)]
+        [Authorize(Policy = PermissionNames.Tenant.Update)]
         [HttpPut("Tenants/{id}")]
         public async Task<IActionResult> EditTenant(int id, [FromBody] UPDATETenantDto updatedTenant)
         {
@@ -101,7 +102,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Tenant.Delete)]
+        [Authorize(Policy = PermissionNames.Tenant.Delete)]
         [HttpDelete("Tenants/{id}")]
         public async Task<IActionResult> DeleteTenant(int id)
         {
@@ -122,7 +123,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Tenant.Assign)]
+        [Authorize(Policy = PermissionNames.Tenant.Assign)]
         [HttpPost("Tenants/AssignUnit")]
         public async Task<IActionResult> AssignUnit([FromBody] ASSIGNUnitDto unitAssigned)
         {
@@ -145,7 +146,7 @@ namespace RentalManager.Controllers
 
 
 
-        [Authorize(Policy = PolicyNames.Tenant.Assign)]
+        [Authorize(Policy = PermissionNames.Tenant.Assign)]
         [HttpPost("Tenants/AssignStatus")]
         public async Task<IActionResult> AssignStatus([FromBody] ASSIGNStatusDto status)
         {

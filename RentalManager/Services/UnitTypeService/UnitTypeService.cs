@@ -35,7 +35,7 @@ namespace RentalManager.Services.UnitTypeService
 
                 if (types == null)
                 {
-                    return new ApiResponse<List<READUnitTypeDto>>(null, "Data Not Found.");
+                    return new ApiResponse<List<READUnitTypeDto>>(null, "Items Not Found.");
                 }
 
                 var typeDtos = types.Select(it => it.ToReadDto()).ToList();
@@ -56,7 +56,7 @@ namespace RentalManager.Services.UnitTypeService
 
                 if (codes == null)
                 {
-                    return new ApiResponse<READUnitTypeDto>(null, "Data Not Found.");
+                    return new ApiResponse<READUnitTypeDto>(null, "Items Not Found.");
                 }
 
                 var codeDtos = codes.ToReadDto();
@@ -77,7 +77,7 @@ namespace RentalManager.Services.UnitTypeService
 
                 if (types == null || types.Count == 0)
                 {
-                    return new ApiResponse<List<READUnitTypeDto>>(null, "Data Not Found.");
+                    return new ApiResponse<List<READUnitTypeDto>>(null, "Items Not Found.");
                 }
 
                 var typeDto = types.Select(it => it.ToReadDto()).ToList();
@@ -94,7 +94,7 @@ namespace RentalManager.Services.UnitTypeService
         {
             try
             {
-                var property = await _propertyrepo.FindAsync(_currentuser,  type.PropertyId);
+                var property = await _propertyrepo.FindAsync(type.PropertyId);
 
                 if (property == null) return new ApiResponse<READUnitTypeDto>(null, "Property Does Not Exist.");
 
@@ -106,7 +106,7 @@ namespace RentalManager.Services.UnitTypeService
 
                 if (types == null)
                 {
-                    return new ApiResponse<READUnitTypeDto>(null, "Data Not Found.");
+                    return new ApiResponse<READUnitTypeDto>(null, "Items Not Found.");
                 }
 
 
@@ -126,9 +126,9 @@ namespace RentalManager.Services.UnitTypeService
 
                 var existing = await _repo.FindAsync(_currentuser, id);
 
-                if (existing == null) return new ApiResponse<READUnitTypeDto>(null, "No Such Data.");
+                if (existing == null) return new ApiResponse<READUnitTypeDto>(null, "No Such Items.");
 
-                var property = await _propertyrepo.FindAsync(_currentuser, type.PropertyId);
+                var property = await _propertyrepo.FindAsync(type.PropertyId);
 
                 if (property == null) return new ApiResponse<READUnitTypeDto>(null, "Property Does Not Exist.");
 
@@ -161,7 +161,7 @@ namespace RentalManager.Services.UnitTypeService
                 var entity = await _repo.FindAsync(_currentuser, id);
 
                 if (entity == null)
-                    return new ApiResponse<READUnitTypeDto>("Data Not Found.");
+                    return new ApiResponse<READUnitTypeDto>("Items Not Found.");
 
                 await _repo.DeleteAsync(entity);
 
@@ -177,7 +177,7 @@ namespace RentalManager.Services.UnitTypeService
         private static bool hasChanged(UnitType existing, UnitType updated)
         {
             return
-                existing.Name != updated.Name ||
+                existing.SystemCodeItem.Item != updated.SystemCodeItem.Item ||
                 existing.Notes != updated.Notes ||
                 existing.PropertyId != updated.PropertyId;
         }

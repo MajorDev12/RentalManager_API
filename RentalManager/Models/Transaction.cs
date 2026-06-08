@@ -2,9 +2,11 @@
 
 namespace RentalManager.Models
 {
-    public class Transaction : AuditableEntity, IAccountContext
+    public class Transaction : AuditableEntity
     {
         public int Id { get; set; }
+
+        public string TransactionNumber { get; set; } = null!;
 
         public int AccountId { get; set; }
         public Account Account { get; set; } = null!;
@@ -20,17 +22,9 @@ namespace RentalManager.Models
         public int? UnitId { get; set; }
         public Unit? Unit { get; set; }
 
+        public int? ReferenceId { get; set; }
+        public string? ReferenceType { get; set; }
 
-        public int? UtilityBillId { get; set; }
-        public UtilityBill? UtilityBill { get; set; }
-
-
-        public int? ExpenseId { get; set; }
-        public Expense? Expenses { get; set; }
-
-
-        public int? ExpenseCategoryId { get; set; }
-        public SystemCodeItem? ExpenseCategory { get; set; } 
 
 
         public int TransactionTypeId { get; set; }
@@ -51,19 +45,19 @@ namespace RentalManager.Models
         public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
 
-        public int MonthFor { get; set; }
+        public int? MonthFor { get; set; }
 
 
-        public int YearFor { get; set; }
+        public int? YearFor { get; set; }
 
 
         public string? Notes { get; set; }
 
+        public ICollection<TransactionAllocation> PaymentAllocations { get; set; } = new List<TransactionAllocation>();
+        public ICollection<TransactionAllocation> ChargeAllocations { get; set; } = new List<TransactionAllocation>();
 
-        public bool Combine { get; set; } = true;
-
-
-        public string? Status { get; set; }
+        public ICollection<TransactionRelation> FromRelations { get; set; } = new List<TransactionRelation>();
+        public ICollection<TransactionRelation> ToRelations { get; set; } = new List<TransactionRelation>();
 
     }
 }

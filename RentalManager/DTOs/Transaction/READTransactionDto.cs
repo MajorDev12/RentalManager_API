@@ -22,6 +22,9 @@ namespace RentalManager.DTOs.Transaction
 
         public string? UtilityBill { get; set; }
 
+        public int? ExpenseCategoryId { get; set; }
+        public string? ExpenseCategory { get; set; }
+
         public int TransactionTypeId { get; set; }
         public string TransactionType { get; set; } = string.Empty;
 

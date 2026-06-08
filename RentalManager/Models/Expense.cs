@@ -2,7 +2,7 @@
 
 namespace RentalManager.Models
 {
-    public class Expense : AuditableEntity, IAccountContext
+    public class Expense : AuditableEntity
     {
         public int Id { get; set; }
 
@@ -12,12 +12,13 @@ namespace RentalManager.Models
 
         public string? Notes { get; set; }
 
-        public int PropertyId { get; set; }
 
+        public int PropertyId { get; set; }
         public Property Property { get; set; } = null!;
 
-        public int AccountId {  get; set; }
 
+        public int AccountId {  get; set; }
         public Account Account { get; set; } = null!;
+
     }
 }

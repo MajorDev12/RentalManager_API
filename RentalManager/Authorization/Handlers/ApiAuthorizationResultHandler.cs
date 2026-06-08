@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
-using RentalManager.Models;
-using System.Text.Json;
 
 namespace RentalManager.Authorization.Handlers
 {
@@ -20,13 +18,11 @@ namespace RentalManager.Authorization.Handlers
                 context.Response.StatusCode = StatusCodes.Status403Forbidden;
                 context.Response.ContentType = "application/json";
 
-                var response = new ApiResponse<object>(
-                    null,
-                    "You are not authorized to access this resource",
-                    false
+                var response = ApiResponse<object>.FailResponse(
+                    "Access denied. You do not have permission to access this resource."
                 );
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                await context.Response.WriteAsJsonAsync(response);
                 return;
             }
 
@@ -35,13 +31,11 @@ namespace RentalManager.Authorization.Handlers
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 context.Response.ContentType = "application/json";
 
-                var response = new ApiResponse<object>(
-                    null,
-                    "Authentication required",
-                    false
+                var response = ApiResponse<object>.FailResponse(
+                    "Authentication required. Please log in."
                 );
 
-                await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+                await context.Response.WriteAsJsonAsync(response);
                 return;
             }
 
