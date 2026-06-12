@@ -1243,7 +1243,7 @@ namespace RentalManager.Migrations
 
             migrationBuilder.InsertData(
                 table: "AspNetRoles",
-                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                columns: new[] { "Id", "ConcurrencyStamp", "DisplayName", "NormalizedName" },
                 values: new object[,]
                 {
                     { 1, null, "SuperAdmin", "SUPERADMIN" },
@@ -1275,7 +1275,7 @@ namespace RentalManager.Migrations
 
             migrationBuilder.InsertData(
                 table: "Roles",
-                columns: new[] { "Id", "CreatedBy", "CreatedOn", "DeletedBy", "DeletedOn", "IsDeleted", "IsEnabled", "Name", "UpdatedBy", "UpdatedOn" },
+                columns: new[] { "Id", "CreatedBy", "CreatedOn", "DeletedBy", "DeletedOn", "IsDeleted", "IsEnabled", "DisplayName", "UpdatedBy", "UpdatedOn" },
                 values: new object[,]
                 {
                     { 1, null, new DateTime(2026, 6, 6, 13, 41, 8, 150, DateTimeKind.Local).AddTicks(4473), null, null, false, true, "SuperAdmin", null, null },
@@ -1459,7 +1459,7 @@ namespace RentalManager.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Permissions_Name",
                 table: "Permissions",
-                column: "Name",
+                column: "DisplayName",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -1762,7 +1762,7 @@ namespace RentalManager.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_UnitFeatures_AccountId_Name",
                 table: "UnitFeatures",
-                columns: new[] { "AccountId", "Name" },
+                columns: new[] { "AccountId", "DisplayName" },
                 unique: true);
 
             migrationBuilder.CreateIndex(

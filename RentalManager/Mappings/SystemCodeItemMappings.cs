@@ -23,6 +23,10 @@ namespace RentalManager.Mappings
         {
             Id = dto.Id,
             Item = dto.Item,
+            DisplayName = dto.DisplayName,
+            IconKey = dto.IconKey,
+            Color = dto.Color,
+            GroupKey = dto.GroupKey,
             Notes = dto.Notes,
             SystemCodeId = dto.SystemCodeId,
             SystemCodeName = dto.SystemCode.Code,

@@ -2,11 +2,13 @@
 {
     public class SystemCodeItemMetadata
     {
-        public string Name { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
 
         public string? IconKey { get; set; }
 
         public string? Color { get; set; }
+
+        public string? GroupKey { get; set; }
 
         public int SortOrder { get; set; }
     }

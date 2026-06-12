@@ -11,7 +11,9 @@ namespace RentalManager.Data
             // =========================
             // 1. Ensure Account exists
             // =========================
-            var account = await context.Accounts.FirstOrDefaultAsync();
+            var account = await context.Accounts
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync();
 
             if (account == null)
                 return; // or throw if you want strict seeding
@@ -20,6 +22,7 @@ namespace RentalManager.Data
             // 2. Get PropertyType (SystemCodeItem)
             // =========================
             var propertyType = await context.SystemCodeItems
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(x =>
                     x.SystemCode.Code == SystemCodeNames.Code.PropertyType &&
                     x.Item == SystemCodeNames.Item.PropertyType.Apartment);
@@ -30,7 +33,9 @@ namespace RentalManager.Data
             // =========================
             // 3. Check if property already exists
             // =========================
-            var exists = await context.Properties.AnyAsync(p =>
+            var exists = await context.Properties
+                .IgnoreQueryFilters()
+                .AnyAsync(p =>
                 p.Name == "Sunrise Apartments" &&
                 p.AccountId == account.Id);
 

@@ -20,6 +20,8 @@
             public const string ExpenseCategory = "EXPENSECATEGORY";
             public const string PropertyType = "PROPERTYTYPE";
             public const string RentalType = "RENTALTYPE";
+            public const string BookingStatus = "BOOKINGSTATUS";
+            public const string BookingSource = "BOOKINGSOURCE";
         }
 
         public static class Item
@@ -56,25 +58,37 @@
 
             public static class UnitType
             {
-                public const string SingleRoom = "Single Room";
-                public const string DoubleRoom = "Double Room";
-                public const string BedSitter = "BedSitter";
-                public const string Loft = "Loft";
-                public const string Shop = "Shop";
-                public const string Office = "Office";
-                public const string Duplex = "Duplex";
-                public const string PentHouse = "PentHouse";
-                public const string ConferenceRoom = "Conference Room";
-                public const string OneBedroom = "1-BR";
-                public const string TwoBedroom = "2-BR";
-                public const string ThreeBedroom = "3-BR";
-                public const string FourBedroom = "4-BR";
-                public const string FiveBedroom = "5-BR";
-                public const string SixBedroom = "6-BR";
-                public const string SevenBedroom = "7-BR";
-                public const string EightBedroom = "8-BR";
-                public const string NineBedroom = "9-BR";
-                public const string TenBedroom = "10-BR";
+                public const string SingleRoom = "SINGLE_ROOM";
+                public const string DoubleRoom = "DOUBLE_ROOM";
+                public const string BedSitter = "BEDSITTER";
+                public const string Studio = "STUDIO";
+
+                public const string OneBedroom = "ONE_BEDROOM";
+                public const string TwoBedroom = "TWO_BEDROOM";
+                public const string ThreeBedroom = "THREE_BEDROOM";
+                public const string FourBedroom = "FOUR_BEDROOM";
+                public const string FiveBedroom = "FIVE_BEDROOM";
+                public const string SixBedroom = "SIX_BEDROOM";
+                public const string SevenBedroom = "SEVEN_BEDROOM";
+                public const string EightBedroom = "EIGHT_BEDROOM";
+                public const string NineBedroom = "NINE_BEDROOM";
+                public const string TenBedroom = "TEN_BEDROOM";
+
+                public const string Duplex = "DUPLEX";
+                public const string PentHouse = "PENTHOUSE";
+
+                public const string Loft = "LOFT";
+                public const string Shop = "SHOP";
+                public const string Office = "OFFICE";
+                public const string OfficeSuite = "OFFICE_SUITE";
+                public const string ConferenceRoom = "CONFERENCE_ROOM";
+                public const string WarehouseSpace = "WAREHOUSE_SPACE";
+
+                public const string StandardRoom = "STANDARD_ROOM";
+                public const string DeluxeRoom = "DELUXE_ROOM";
+                public const string ExecutiveRoom = "EXECUTIVE_ROOM";
+                public const string FamilyRoom = "FAMILY_ROOM";
+                public const string DormitoryBed = "DORMITORY_BED";
             }
 
             public static class TenantStatus
@@ -175,12 +189,42 @@
                 public const string Commercial = "COMMERCIAL";
                 public const string Office = "OFFICE";
                 public const string MixedUse = "MIXEDUSE";
+
+                public const string Hostel = "HOSTEL";
+                public const string Hotel = "HOTEL";
+                public const string Lodge = "LODGE";
+                public const string Airbnb = "AIRBNB";
+
+                public const string Warehouse = "WAREHOUSE";
+                public const string Land = "LAND";
             }
+
+
             public static class LogLevel
             {
                 public const string Info = "INFO";
                 public const string Warning = "WARNING";
                 public const string Error = "ERROR";
+            }
+
+            public static class BookingStatus
+            {
+                public const string Pending = "PENDING";
+                public const string Confirmed = "CONFIRMED";
+                public const string CheckedIn = "CHECKED_IN";
+                public const string CheckedOut = "CHECKED_OUT";
+                public const string Cancelled = "CANCELLED";
+                public const string NoShow = "NO_SHOW";
+            }
+
+            public static class BookingSource
+            {
+                public const string WalkIn = "WALK_IN";
+                public const string Airbnb = "AIRBNB";
+                public const string BookingCom = "BOOKING_COM";
+                public const string Expedia = "EXPEDIA";
+                public const string Website = "WEBSITE";
+                public const string WhatsApp = "WHATSAPP";
             }
         }
     }

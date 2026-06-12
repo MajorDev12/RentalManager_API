@@ -117,7 +117,7 @@ namespace RentalManager.Mappings
             UnitId = dto.Unit?.Id,
             Unit = dto.Unit?.Name,
             //UtilityBillId = dto.UtilityBillId,
-            //UtilityBill = dto.UtilityBill?.Name,
+            //UtilityBill = dto.UtilityBill?.DisplayName,
             //ExpenseCategoryId = dto.ExpenseCategoryId,
             //ExpenseCategory = dto.ExpenseCategory?.Item,
             TransactionTypeId = dto.TransactionTypeId,

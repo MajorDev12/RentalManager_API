@@ -251,7 +251,7 @@ namespace RentalManager.Services.TransactionService
                 {
                     var category = await _systemcodeitemrepo.GetByIdAsync(item.TransactionCategoryId);
                     if (category == null)
-                        return ApiResponse<READTransactionDto>.FailResponse( $"Category {item.TransactionCategoryId} not found");
+                        return ApiResponse<READTransactionDto>.FailResponse( $"GroupKey {item.TransactionCategoryId} not found");
 
                     UtilityBill? utility = null;
 

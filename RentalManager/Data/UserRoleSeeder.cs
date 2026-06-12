@@ -41,11 +41,11 @@ namespace RentalManager.Data
                     continue;
                 }
 
-                var role = roles.FirstOrDefault(r => r.Id == user.Id);
+                var role = roles.FirstOrDefault(r => r.Name == user.FirstName);
 
                 if (role == null)
                 {
-                    Console.WriteLine("❌ Role not found");
+                    Console.WriteLine($"❌ Role not found for user {user.FirstName}");
                     continue;
                 }
 
@@ -78,7 +78,7 @@ namespace RentalManager.Data
                 }
 
                 // 🔹 Prevent duplicates
-                var exists = await context.UserRoles.AnyAsync(ur =>
+                var exists = await context.UserRoles.IgnoreQueryFilters().AnyAsync(ur =>
                     ur.UserId == user.Id &&
                     ur.RoleId == role.Id &&
                     ur.AccountId == user.AccountId &&

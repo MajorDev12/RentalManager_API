@@ -121,7 +121,7 @@ namespace RentalManager.Extensions.Query
                 PropertyName = g.Select(x => x.Unit.Property.Name)
                     .FirstOrDefault() ?? "",
 
-                //CategoryName = g.Key.Category,
+                //CategoryName = g.Key.GroupKey,
                 CategoryId = g.Key.CategoryId,
 
                 Month = g.Key.MonthFor,

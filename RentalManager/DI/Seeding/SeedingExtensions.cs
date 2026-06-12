@@ -14,22 +14,22 @@ namespace RentalManager.DI.Seeding
             var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             // ⚡ 1. Core tenant structure first
-            await AccountSeeder.SeedAsync(context);
-            await PropertySeeder.SeedAsync(context);
+            //await AccountSeeder.SeedAsync(context);
+            //await PropertySeeder.SeedAsync(context);
 
             // ⚡ 2. Identity + authorization foundation
-            await RoleSeeder.SeedAsync(context);
-            await PermissionSeeder.SeedAsync(context);
-            await RolePermissionSeeder.SeedAsync(context);
+            //await RoleSeeder.SeedAsync(context);
+            //await PermissionSeeder.SeedAsync(context);
+            //await RolePermissionSeeder.SeedAsync(context);
 
             // ⚡ 3. System configuration data
-            await SystemCodeSeeder.SeedAsync(context);
+            //await SystemCodeSeeder.SeedAsync(context);
 
             // ⚡ 4. Users (depends on Account + Roles)
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole<int>>>();
 
-            await UserSeeder.SeedAsync(context, userManager, roleManager);
+            //await UserSeeder.SeedAsync(context, userManager, roleManager);
             await UserRoleSeeder.SeedAsync(context);
         }
     }

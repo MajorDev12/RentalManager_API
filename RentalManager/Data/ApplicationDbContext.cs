@@ -86,106 +86,6 @@ namespace RentalManager.Data
             ApplyGlobalFilters(modelBuilder);
 
 
-            // SEED DATA
-            modelBuilder.Entity<IdentityRole<int>>().HasData(
-                new IdentityRole<int>
-                {
-                    Id = 1,
-                    Name = "SuperAdmin",
-                    NormalizedName = "SUPERADMIN"
-                },
-                new IdentityRole<int>
-                {
-                    Id = 2,
-                    Name = "Owner",
-                    NormalizedName = "OWNER"
-                },
-                new IdentityRole<int>
-                {
-                    Id = 3,
-                    Name = "Manager",
-                    NormalizedName = "MANAGER"
-                },
-                new IdentityRole<int>
-                {
-                    Id = 4,
-                    Name = "Landlord",
-                    NormalizedName = "LANDLORD"
-                },
-                new IdentityRole<int>
-                {
-                    Id = 6,
-                    Name = "Tenant",
-                    NormalizedName = "TENANT"
-                }
-            );
-
-            modelBuilder.Entity<Role>().HasData(
-                new Role { Id = 1, Name = "SuperAdmin", IsEnabled = true },
-                new Role { Id = 2, Name = "Owner", IsEnabled = true },
-                new Role { Id = 3, Name = "Manager", IsEnabled = true },
-                new Role { Id = 4, Name = "Admin", IsEnabled = true },
-                new Role { Id = 5, Name = "Landlord", IsEnabled = true },
-                new Role { Id = 7, Name = "Tenant", IsEnabled = true }
-            );
-
-            modelBuilder.Entity<NotificationPreference>().HasData(
-
-                // 🔔 TENANT_ADDED — Owner
-                new NotificationPreference
-                {
-                    Id = 1,
-                    AccountId = 1,
-                    UserId = null,
-                    EventType = "TENANT_ADDED",
-                    InAppEnabled = true,
-                    SmsEnabled = false,
-                    EmailEnabled = true,
-                    IsEnabled = true
-                },
-
-                // 🔔 TENANT_ADDED — Landlord
-                new NotificationPreference
-                {
-                    Id = 2,
-                    AccountId = 13,
-                    UserId = null,
-                    EventType = "TENANT_ADDED",
-                    InAppEnabled = true,
-                    SmsEnabled = false,
-                    EmailEnabled = false,
-                    IsEnabled = true
-                },
-
-                // 🔔 RENT_PAID — Owner
-                new NotificationPreference
-                {
-                    Id = 3,
-                    AccountId = 13,
-                    UserId = null,
-                    EventType = "RENT_PAID",
-                    InAppEnabled = true,
-                    SmsEnabled = true,
-                    EmailEnabled = true,
-                    IsEnabled = true
-                },
-
-                // 🔔 RENT_PAID — Tenant (receipt)
-                new NotificationPreference
-                {
-                    Id = 4,
-                    AccountId = 13,
-                    UserId = null,
-                    EventType = "RENT_PAID",
-                    InAppEnabled = true,
-                    SmsEnabled = false,
-                    EmailEnabled = false,
-                    IsEnabled = true
-                }
-            );
-
-
-
 
             modelBuilder.Entity<ApplicationUser>()
                 .Property(x => x.AccountId)
@@ -255,7 +155,8 @@ namespace RentalManager.Data
                 entity.Property(u => u.Item).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.DisplayName).HasMaxLength(50).IsRequired();
                 entity.Property(u => u.IconKey).HasMaxLength(50);
-                entity.Property(u => u.Color).HasMaxLength(50);
+                entity.Property(u => u.GroupKey).HasMaxLength(50);
+                entity.Property(u => u.Color).HasMaxLength(50); 
                 entity.Property(u => u.Notes).HasMaxLength(100);
                 entity.HasOne(u => u.SystemCode).WithMany(sc => sc.SystemCodeItems).HasForeignKey(u => u.SystemCodeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasIndex(e => new { e.SystemCodeId, e.Item }).IsUnique();
@@ -339,6 +240,8 @@ namespace RentalManager.Data
                 // Relationships
                 entity.HasOne(u => u.Account).WithMany(a => a.Properties).HasForeignKey(u => u.AccountId).IsRequired().OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(u => u.PropertyType).WithMany().HasForeignKey(u => u.PropertyTypeId).IsRequired().OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.Name }).IsUnique();
             });
 
 
@@ -569,6 +472,194 @@ namespace RentalManager.Data
 
 
 
+            modelBuilder.Entity<MaintenanceRequest>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Title)
+                    .HasMaxLength(100)
+                    .IsRequired();
+
+                entity.Property(x => x.Description)
+                    .HasMaxLength(1000);
+
+
+                entity.Property(x => x.RequestedAt)
+                    .IsRequired();
+
+                entity.Property(x => x.CompletedAt);
+
+                entity.HasOne(x => x.Account)
+                    .WithMany()
+                    .HasForeignKey(x => x.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Status)
+                    .WithMany()
+                    .HasForeignKey(x => x.StatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Property)
+                    .WithMany()
+                    .HasForeignKey(x => x.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Unit)
+                    .WithMany()
+                    .HasForeignKey(x => x.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.AssignedToUser)
+                    .WithMany()
+                    .HasForeignKey(x => x.AssignedToUserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            modelBuilder.Entity<Document>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Name)
+                    .HasMaxLength(100)
+                    .IsRequired();
+
+                entity.Property(x => x.FileName)
+                    .HasMaxLength(255)
+                    .IsRequired();
+
+                entity.Property(x => x.FilePath)
+                    .HasMaxLength(500)
+                    .IsRequired();
+
+                entity.Property(x => x.ContentType)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.FileSize)
+                    .IsRequired();
+
+                entity.HasOne(x => x.Account)
+                    .WithMany()
+                    .HasForeignKey(x => x.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Property)
+                    .WithMany()
+                    .HasForeignKey(x => x.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Unit)
+                    .WithMany()
+                    .HasForeignKey(x => x.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Tenant)
+                    .WithMany()
+                    .HasForeignKey(x => x.TenantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Lease)
+                    .WithMany()
+                    .HasForeignKey(x => x.LeaseId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            modelBuilder.Entity<Subscription>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.PlanName)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.Property(x => x.Amount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(x => x.StartDate)
+                    .IsRequired();
+
+                entity.Property(x => x.EndDate)
+                    .IsRequired();
+
+                entity.Property(x => x.IsTrial)
+                    .HasDefaultValue(false);
+
+                entity.Property(x => x.IsActive)
+                    .HasDefaultValue(true);
+
+                entity.HasOne(x => x.Account)
+                    .WithMany()
+                    .HasForeignKey(x => x.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+
+            modelBuilder.Entity<Booking>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.GuestName)
+                    .HasMaxLength(100)
+                    .IsRequired();
+
+                entity.Property(x => x.MobileNumber)
+                    .HasMaxLength(15)
+                    .IsRequired();
+
+                entity.Property(x => x.EmailAddress)
+                    .HasMaxLength(100);
+
+                entity.Property(x => x.NumberOfGuests)
+                    .IsRequired();
+
+                entity.Property(x => x.NightlyRate)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(x => x.TotalAmount)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(x => x.AmountPaid)
+                    .HasColumnType("decimal(18,2)");
+
+                entity.Property(x => x.Notes)
+                    .HasMaxLength(500);
+
+                entity.HasOne(x => x.Account)
+                    .WithMany()
+                    .HasForeignKey(x => x.AccountId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Property)
+                    .WithMany()
+                    .HasForeignKey(x => x.PropertyId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Unit)
+                    .WithMany()
+                    .HasForeignKey(x => x.UnitId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.BookingStatus)
+                    .WithMany()
+                    .HasForeignKey(x => x.BookingStatusId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.BookingSource)
+                    .WithMany()
+                    .HasForeignKey(x => x.BookingSourceId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
 
             // UNIT
             modelBuilder.Entity<Unit>(entity => {

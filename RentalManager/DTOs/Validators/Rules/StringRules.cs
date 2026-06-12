@@ -7,7 +7,7 @@ namespace RentalManager.DTOs.Validators.Rules
         public static IRuleBuilderOptions<T, string> RequiredName<T>(this IRuleBuilder<T, string> rule)
         {
             return rule
-                .NotEmpty().WithMessage("Name is required")
+                .NotEmpty().WithMessage("DisplayName is required")
                 .MaximumLength(50);
         }
 
